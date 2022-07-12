@@ -128,7 +128,6 @@ You can configure the `Tus-Max-Size` parameter and the default file storage uplo
 
 ```json
 {
-  // ...
   "SolidTUS": {
     "DirectoryPath": "/path/to/my/uploads",
     "MaxSize": "3000000"
