@@ -13,7 +13,7 @@ If you have any suggestions or improvements please do not hesitate to contribute
 * [tusdotnet](https://github.com/tusdotnet/tusdotnet)
 
 # Install
-Run `dotnet add package solidTUS` (TBD)
+Run `dotnet add package solidTUS`
 
 # Configuration
 The required configuration is to register the services in the startup process:
@@ -46,7 +46,7 @@ For the upload action:
 
 ```csharp
 [TusUpload]
-[RequestSizeLimit(5_000_000_000)] // <-- example: Set upload size for the action to 5Gb
+[RequestSizeLimit(5_000_000_000)] // <-- example: Set upload size for the action to 5 Gib
 [Route("url/path/to/upload/action/{fileId}")]
 public async Task<ActionResult> Upload(string fileId, TusUploadContext context)
 {
