@@ -31,5 +31,4 @@ public static class TusCorsExtensions
             TusHeaderNames.HttpMethodOverride
         });
     }
-
 }
