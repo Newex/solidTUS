@@ -11,6 +11,4 @@ public record FileStorageOptions
     /// The directory where to save the uploads
     /// </summary>
     public string DirectoryPath { get; set; } = Environment.CurrentDirectory;
-
-    internal const string FileStorageSection = "FileOptions";
 }
