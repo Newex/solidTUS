@@ -291,3 +291,5 @@ __pycache__/
 
 # Custom
 vssharper.json
+FILES
+appsettings.Development.json

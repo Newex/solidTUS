@@ -123,6 +123,21 @@ builder.Services
   });
 ```
 
+## Configuration from appSettings.json or environment variables
+You can configure the `Tus-Max-Size` parameter and the default file storage upload folder from the appSettings.json configuration:
+
+```json
+{
+  // ...
+  "SolidTUS": {
+    "DirectoryPath": "/path/to/my/uploads",
+    "MaxSize": "3000000"
+  }
+}
+```
+
+Environment variables are named as `SolidTUS__DirectoryPath` with a double underscore (so they also can be read from a linux environment). See [Microsofts documentation for naming](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#naming-of-environment-variables)
+
 ## Contexts
 The injected context classes are excluded from ModelBinding but do show up in Swagger SwashBuckle. Excluding the contexts from the Swagger document, will be left as an exercise for the reader.
 

@@ -18,7 +18,7 @@ function uploadFile() {
     upload = new tus.Upload(file,
         {
             // endpoint: 'files/',
-            endpoint: 'https://localhost:7030/hello',
+            endpoint: 'http://localhost:5000/upload',
             onError: onTusError,
             onProgress: onTusProgress,
             onSuccess: onTusSuccess,
