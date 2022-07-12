@@ -19,13 +19,6 @@ builder.Services.AddTus()
         options.DirectoryPath = "/path/to/folder");
 
 builder.Services.AddControllers();
-// builder.Services.AddCors(options =>
-// {
-//     options.AddPolicy("MyCorsPolicy", policy =>
-//     {
-//         policy.WithOrigins("https://localhost:7030/index.html");
-//     });
-// });
 
 var app = builder.Build();
 
