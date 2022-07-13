@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SolidTUS.Options;
 
 namespace SolidTUS.Extensions;
 
@@ -17,6 +19,20 @@ public static class ServiceCollectionExtensions
     /// <returns>A TUS builder</returns>
     public static TusBuilder AddTus(this IServiceCollection services)
     {
+        return TusBuilder.Create(services);
+    }
+
+    /// <summary>
+    /// Add services for TUS and load <see cref="TusOptions"/> and <see cref="FileStorageOptions"/> from configuration
+    /// </summary>
+    /// <param name="services">The services collection</param>
+    /// <param name="configuration">The configuration</param>
+    /// <returns>A TUS builder</returns>
+    public static TusBuilder AddTus(this IServiceCollection services, IConfiguration configuration)
+    {
+        var tusSection = configuration.GetSection(TusOptions.TusConfigurationSection);
+        services.Configure<TusOptions>(tusSection);
+        services.Configure<FileStorageOptions>(tusSection);
         return TusBuilder.Create(services);
     }
 }

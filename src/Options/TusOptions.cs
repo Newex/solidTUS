@@ -20,4 +20,9 @@ public record TusOptions
     /// Get or set the maximum TUS upload size
     /// </summary>
     public long? MaxSize { get; set; }
+
+    /// <summary>
+    /// Get the configuration section name
+    /// </summary>
+    internal const string TusConfigurationSection = "SolidTUS";
 }

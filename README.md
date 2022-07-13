@@ -13,7 +13,7 @@ If you have any suggestions or improvements please do not hesitate to contribute
 * [tusdotnet](https://github.com/tusdotnet/tusdotnet)
 
 # Install
-Run `dotnet add package solidTUS` (TBD)
+Run `dotnet add package solidTUS`
 
 # Configuration
 The required configuration is to register the services in the startup process:
@@ -46,7 +46,7 @@ For the upload action:
 
 ```csharp
 [TusUpload]
-[RequestSizeLimit(5_000_000_000)] // <-- example: Set upload size for the action to 5Gb
+[RequestSizeLimit(5_000_000_000)] // <-- example: Set upload size for the action to 5 Gib
 [Route("url/path/to/upload/action/{fileId}")]
 public async Task<ActionResult> Upload(string fileId, TusUploadContext context)
 {
@@ -122,6 +122,20 @@ builder.Services
     options.DirectoryPath = "path/to/where/save/upload/files";
   });
 ```
+
+## Configuration from appSettings.json or environment variables
+You can configure the `Tus-Max-Size` parameter and the default file storage upload folder from the appSettings.json configuration:
+
+```json
+{
+  "SolidTUS": {
+    "DirectoryPath": "/path/to/my/uploads",
+    "MaxSize": "3000000"
+  }
+}
+```
+
+Environment variables are named as `SolidTUS__DirectoryPath` with a double underscore (so they also can be read from a linux environment). See [Microsofts documentation for naming](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#naming-of-environment-variables)
 
 ## Contexts
 The injected context classes are excluded from ModelBinding but do show up in Swagger SwashBuckle. Excluding the contexts from the Swagger document, will be left as an exercise for the reader.
