@@ -12,7 +12,6 @@ namespace SolidTUS.Models;
 /// <summary>
 /// TUS context that is injected into the marked action method
 /// </summary>
-[BindNever]
 public class TusUploadContext
 {
     private readonly long? expectedUploadSize;

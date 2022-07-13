@@ -13,7 +13,7 @@ public class UploadController : ControllerBase
     [Route("{fileId}")]
     [TusUpload]
     [RequestSizeLimit(5_000_000_000)]
-    public async Task<ActionResult> Upload(string fileId, TusUploadContext context)
+    public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadContext context)
     {
         // Starting append a.k.a. upload
         await context.StartAppendDataAsync(fileId);
@@ -25,7 +25,7 @@ public class UploadController : ControllerBase
     }
 
     [TusCreation]
-    public async Task<ActionResult> CreateFile(TusCreationContext context)
+    public async Task<ActionResult> CreateFile([FromServices] TusCreationContext context)
     {
         // Read Metadata
         var filename = context.Metadata["filename"];

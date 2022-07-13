@@ -10,13 +10,15 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddTus(builder.Configuration);
-// builder.Services.AddTus()
-//     .Configuration(options =>
-//         options.MetadataValidator =
-//             (metadata) => metadata.ContainsKey("filename") && metadata.ContainsKey("contentType"))
-//     .FileStorageConfiguration(options =>
-//         options.DirectoryPath = "/path/to/folder");
+
+// Can load from configuration
+// builder.Services.AddTus(builder.Configuration);
+builder.Services.AddTus()
+    .Configuration(options =>
+        options.MetadataValidator =
+            (metadata) => metadata.ContainsKey("filename") && metadata.ContainsKey("contentType"))
+    .FileStorageConfiguration(options =>
+        options.DirectoryPath = "/path/to/folder");
 
 builder.Services.AddControllers();
 
