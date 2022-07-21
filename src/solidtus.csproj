@@ -8,6 +8,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Authors>Johnny Kristian Moeberg Sørensen</Authors>
     <Description>An implementation of the TUS protocol for dotnet</Description>
+    <RepositoryUrl>https://github.com/Newex/solidTUS</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
