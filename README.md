@@ -158,7 +158,7 @@ You can configure the `Tus-Max-Size` parameter and the default file storage uplo
 Environment variables are named as `SolidTUS__DirectoryPath` with a double underscore (so they also can be read from a linux environment). See [Microsofts documentation for naming](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#naming-of-environment-variables)
 
 ## Contexts
-The injected context classes are excluded from ModelBinding but do show up in Swagger SwashBuckle. Excluding the contexts from the Swagger document, will be left as an exercise for the reader.
+The injected context classes are excluded from ModelBinding but do show up in Swagger SwashBuckle. To exclude from Swagger SwashBuckle you can annotate the contexts with the `FromServices`-attribute.
 
 ### TusUploadContext
 Is responsible for starting or terminating the upload. A termination is a premature ending and signals to the client that the upload has been terminated.  
