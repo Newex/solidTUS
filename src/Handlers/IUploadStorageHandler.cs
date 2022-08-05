@@ -2,7 +2,6 @@ using System.IO;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
-using SolidTUS.Models;
 
 namespace SolidTUS.Handlers;
 
@@ -47,31 +46,6 @@ public interface IUploadStorageHandler
     Task<bool> OnPartialUploadSucceededAsync(string fileId, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Get the upload file info
-    /// </summary>
-    /// <param name="fileId">The file Id</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    /// <returns>An upload file info or null</returns>
-    Task<UploadFileInfo?> GetUploadFileInfoAsync(string fileId, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Set the file size in <see cref="UploadFileInfo.FileSize"/>
-    /// </summary>
-    /// <param name="fileId">The file Id</param>
-    /// <param name="totalFileSize">The total file size</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    /// <returns>True if set otherwise false</returns>
-    Task<bool> SetFileSizeAsync(string fileId, long totalFileSize, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Create file info resource
-    /// </summary>
-    /// <param name="fileInfo">The file info</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    /// <returns>True if created otherwise false</returns>
-    Task<bool> CreateResourceAsync(UploadFileInfo fileInfo, CancellationToken cancellationToken);
-
-    /// <summary>
     /// Retrieve the recently uploaded partial file
     /// </summary>
     /// <remarks>
@@ -82,4 +56,12 @@ public interface IUploadStorageHandler
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>A stream of the partial upload</returns>
     Task<Stream?> GetPartialUploadedStreamAsync(string fileId, long uploadSize, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Get the current upload size
+    /// </summary>
+    /// <param name="fileId">The file Id</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <returns>The number of bytes uploaded so far or null</returns>
+    ValueTask<long?> GetUploadSizeAsync(string fileId, CancellationToken cancellationToken);
 }

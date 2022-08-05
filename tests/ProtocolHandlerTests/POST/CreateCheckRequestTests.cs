@@ -123,7 +123,7 @@ public class CreateCheckRequestTests
 
         // Act
         var response = request.Map(c => PostRequestHandler.ParseMetadata(c));
-        var hasMetadata = response.IsRight;
+        var hasMetadata = response.IsSuccess();
 
         // Assert
         Assert.True(hasMetadata);

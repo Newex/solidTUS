@@ -5,6 +5,7 @@ using SolidTUS.Models;
 using SolidTUS.Parsers;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 using SolidTUS.Tests.Mocks;
+using SolidTUS.Tests.Tools;
 
 namespace SolidTUS.Tests.ProtocolHandlerTests.PATCH;
 
@@ -24,7 +25,7 @@ public class PreUploadChecksumRequestTests
 
         // Act
         var response = request.Map(c => ChecksumRequestHandler.ParseChecksum(c));
-        var result = response.IsRight;
+        var result = response.IsSuccess();
 
         // Assert
         Assert.True(result);
@@ -42,10 +43,7 @@ public class PreUploadChecksumRequestTests
 
         // Act
         var response = request.Map(c => ChecksumRequestHandler.ParseChecksum(c));
-        var result = response.Match(
-            r => r.IsSome,
-            _ => throw new NotImplementedException()
-        );
+        var result = response.IsSuccess();
 
         // Assert
         Assert.False(result);

@@ -2,9 +2,7 @@ using System;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
-using LanguageExt;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using SolidTUS.Handlers;
 
 namespace SolidTUS.Models;
@@ -21,7 +19,7 @@ public class TusUploadContext
     private readonly Action<HttpError> onError;
     private readonly CancellationToken cancellationToken;
     private Func<UploadFileInfo, Task>? onUploadFinishedAsync;
-    private readonly Option<ChecksumContext> checksumContext;
+    private readonly ChecksumContext? checksumContext;
 
     /// <summary>
     /// Instantiates a new object of <see cref="TusUploadContext"/>
@@ -35,13 +33,13 @@ public class TusUploadContext
     /// <param name="uploadFileInfo">The upload file info</param>
     /// <param name="cancellationToken">The cancellation token</param>
     public TusUploadContext(
-        Option<ChecksumContext> checksumContext,
+        ChecksumContext? checksumContext,
         long? expectedUploadSize,
         IUploadStorageHandler uploadStorageHandler,
         PipeReader reader,
         Action<long> onDone,
         Action<HttpError> onError,
-        UploadFileInfo? uploadFileInfo,
+        UploadFileInfo uploadFileInfo,
         CancellationToken cancellationToken
     )
     {
@@ -58,7 +56,7 @@ public class TusUploadContext
     /// <summary>
     /// The requested upload file
     /// </summary>
-    public UploadFileInfo? UploadFileInfo { get; }
+    public UploadFileInfo UploadFileInfo { get; }
 
     internal bool UploadHasBeenCalled { get; private set; }
 
@@ -83,22 +81,15 @@ public class TusUploadContext
     public async Task StartAppendDataAsync(string fileId)
     {
         UploadHasBeenCalled = true;
-        if (UploadFileInfo is null)
-        {
-            throw new InvalidOperationException("Cannot find upload file to append data to");
-        }
-        if (fileId != UploadFileInfo.ID)
-        {
-            throw new ArgumentException("Mismatch between the provided file ID and the parsed file ID from the request", nameof(fileId));
-        }
 
         // Can append if we dont need to worry about checksum
-        var savedBytes = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, UploadFileInfo.ByteOffset, expectedUploadSize, checksumContext.IsNone, cancellationToken);
+        var hasChecksum = checksumContext is not null;
+        var savedBytes = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, UploadFileInfo.ByteOffset, expectedUploadSize, !hasChecksum, cancellationToken);
         var totalSavedBytes = UploadFileInfo.ByteOffset + savedBytes;
 
         // Determine if the checksum is valid
         var isValidChecksum = true;
-        if (checksumContext)
+        if (hasChecksum)
         {
             var discarded = false;
             try
@@ -111,12 +102,8 @@ public class TusUploadContext
                     return;
                 }
 
-                isValidChecksum = await checksumContext.BindAsync(async c =>
-                {
-                    var checksum = c.Checksum;
-                    var validator = c.Validator;
-                    return await validator.BindAsync(async v => await v.ValidateChecksumAsync(stream, checksum));
-                });
+                var checksum = checksumContext!.Checksum;
+                isValidChecksum = await checksumContext!.Validator.ValidateChecksumAsync(stream, checksum);
 
                 if (isValidChecksum)
                 {

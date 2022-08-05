@@ -1,5 +1,4 @@
 using System.Threading;
-using LanguageExt;
 using Microsoft.AspNetCore.Http;
 using SolidTUS.Constants;
 using SolidTUS.ProtocolHandlers;
@@ -52,7 +51,7 @@ public record RequestContext
     /// <summary>
     /// Get the upload file info
     /// </summary>
-    public Option<UploadFileInfo> UploadFileInfo { get; init; }
+    public UploadFileInfo UploadFileInfo { get; init; } = new();
 
     /// <summary>
     /// The checksum context
@@ -70,11 +69,14 @@ public record RequestContext
     /// <param name="request">The request</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Either a success of <see cref="RequestContext"/> or an error of <see cref="HttpError"/></returns>
-    public static Either<HttpError, RequestContext> Create(HttpRequest request, CancellationToken cancellationToken)
+    public static Result<RequestContext> Create(HttpRequest request, CancellationToken cancellationToken)
     {
         var context = new RequestContext(request.Method, request.Headers, cancellationToken);
-        var result = CommonRequestHandler.CheckTusVersion(context);
-        result.IfRight(c => c.ResponseHeaders.Add(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion));
-        return result;
+        var checkVersion = CommonRequestHandler.CheckTusVersion(context);
+        return checkVersion.Map(c =>
+        {
+            c.ResponseHeaders.Add(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion);
+            return c;
+        });
     }
 }

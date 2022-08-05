@@ -1,4 +1,3 @@
-using LanguageExt;
 using SolidTUS.Validators;
 
 namespace SolidTUS.Models;
@@ -21,5 +20,5 @@ public record ChecksumContext
     /// <summary>
     /// The optional checksum validator
     /// </summary>
-    public Option<IChecksumValidator> Validator { get; init; }
+    public IChecksumValidator Validator { get; init; } = default!;
 }

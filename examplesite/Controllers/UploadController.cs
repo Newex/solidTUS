@@ -30,8 +30,6 @@ public class UploadController : ControllerBase
         // Read Metadata
         var filename = context.Metadata["filename"];
         var mime = context.Metadata["contentType"];
-        context.ActualFileName = filename;
-        context.MimeType = mime;
 
         // Construct upload URL
         var id = Guid.NewGuid().ToString("N");

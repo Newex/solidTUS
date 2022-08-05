@@ -1,4 +1,5 @@
 using System.Threading;
+using SolidTus.Tests.ProtocolHandlerTests.COMMON;
 using SolidTUS.Constants;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;
@@ -65,12 +66,11 @@ public class CommonRequestTests
     {
         // Arrange
         var file = RandomEntities.UploadFileInfo();
-        var uploadStorageHandler = MockHandlers.UploadStorageHandler(file);
         var http = MockHttps.HttpRequest("SOME_HTTP_METHOD",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
         var request = RequestContext.Create(http, CancellationToken.None);
-        var handler = new CommonRequestHandler(uploadStorageHandler);
+        var handler = Setup.CommonRequestHandler(file);
 
         // Act
         var response = await request.BindAsync(async c => await handler.CheckUploadFileInfoExistsAsync(c));
@@ -84,12 +84,11 @@ public class CommonRequestTests
     public async void Non_existing_metadata_file_returns_404_error()
     {
         // Arrange
-        var uploadStorageHandler = MockHandlers.UploadStorageHandler(file: null);
         var http = MockHttps.HttpRequest("SOME_HTTP_METHOD",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
         var request = RequestContext.Create(http, CancellationToken.None);
-        var handler = new CommonRequestHandler(uploadStorageHandler);
+        var handler = Setup.CommonRequestHandler();
 
         // Act
         var response = await request.BindAsync(async c => await handler.CheckUploadFileInfoExistsAsync(c));

@@ -27,16 +27,16 @@ public static class HeadRequestHandler
     /// <returns>Either an error or a request context</returns>
     public static RequestContext SetUploadLengthOrDeferred(RequestContext context)
     {
-        var fileSize = context.UploadFileInfo.Bind(
-            file => Optional(file.FileSize)
-        );
+        var hasFileSize = context.UploadFileInfo.FileSize.HasValue;
+        if (!hasFileSize)
+        {
+            context.ResponseHeaders.Add(TusHeaderNames.UploadDeferLength, "1");
+        }
+        else
+        {
+            context.ResponseHeaders.Add(TusHeaderNames.UploadLength, context.UploadFileInfo.FileSize!.Value.ToString());
+        }
 
-        var response = fileSize.Match(
-            size => (TusHeaderNames.UploadLength, size.ToString()),
-            (TusHeaderNames.UploadDeferLength, "1")
-        );
-
-        context.ResponseHeaders.Add(response.Item1, response.Item2);
         return context;
     }
 
@@ -44,14 +44,10 @@ public static class HeadRequestHandler
     /// Set the raw metadata header if exists
     /// </summary>
     /// <param name="context">The request context</param>
-    /// <returns>Either an error or a request context</returns>
+    /// <returns>A request context</returns>
     public static RequestContext SetMetadataHeader(RequestContext context)
     {
-        var metadata = context.UploadFileInfo.Bind(
-            file => Optional(file.RawMetadata)
-        );
-
-        metadata.IfSome(m => context.ResponseHeaders.Add(TusHeaderNames.UploadMetadata, m));
+        context.ResponseHeaders.Add(TusHeaderNames.UploadMetadata, context.UploadFileInfo.RawMetadata);
         return context;
     }
 
@@ -63,13 +59,9 @@ public static class HeadRequestHandler
     public static RequestContext SetUploadOffsetHeader(RequestContext context)
     {
         var file = context.UploadFileInfo;
-        var offset = from f in file
-                     select f.ByteOffset.ToString();
+        var offset = file.ByteOffset.ToString();
 
-        offset.IfSome(o =>
-            context.ResponseHeaders.Add(TusHeaderNames.UploadOffset, o)
-        );
-
+        context.ResponseHeaders.Add(TusHeaderNames.UploadOffset, offset);
         return context;
     }
 }

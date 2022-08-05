@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using LanguageExt;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
 using SolidTUS.Handlers;
@@ -13,17 +12,17 @@ namespace SolidTUS.ProtocolHandlers;
 /// </summary>
 public class PatchRequestHandler
 {
-    private readonly IUploadStorageHandler uploadStorageHandler;
+    private readonly IUploadMetaHandler uploadMetaHandler;
 
     /// <summary>
     /// Instantiate a new object of <see cref="PatchRequestHandler"/>
     /// </summary>
-    /// <param name="uploadStorageHandler">The upload storage handler</param>
+    /// <param name="uploadMetaHandler">The upload meta handler</param>
     public PatchRequestHandler(
-        IUploadStorageHandler uploadStorageHandler
+        IUploadMetaHandler uploadMetaHandler
     )
     {
-        this.uploadStorageHandler = uploadStorageHandler;
+        this.uploadMetaHandler = uploadMetaHandler;
     }
 
     /// <summary>
@@ -31,28 +30,34 @@ public class PatchRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public async Task<Either<HttpError, RequestContext>> CheckUploadLengthAsync(RequestContext context)
+    public async ValueTask<Result<RequestContext>> CheckUploadLengthAsync(RequestContext context)
     {
-        var hasSize = context.UploadFileInfo.Match(f => f.FileSize.HasValue, false);
+        var hasSize = context.UploadFileInfo.FileSize.HasValue;
         if (hasSize)
         {
-            return context;
+            return context.Wrap();
         }
 
         // Must have Upload-Length since it was not supplied during resource creation!
-        var givenFileSize = parseLong(context.RequestHeaders[TusHeaderNames.UploadLength]);
-        var isSet = await givenFileSize.BindAsync(async size => await uploadStorageHandler.SetFileSizeAsync(context.FileID, size, context.CancellationToken));
-
+        var hasGivenFileSize = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadLength], out var size);
+        if (!hasGivenFileSize)
+        {
+            return HttpError.BadRequest("Missing Upload-Length header").Wrap();
+        }
+        var isSet = await uploadMetaHandler.SetFileSizeAsync(context.FileID, size, context.CancellationToken);
         if (!isSet)
         {
-            return HttpError.InternalServerError();
+            return HttpError.InternalServerError().Wrap();
         }
 
         // The given file size must be non zero
-        return givenFileSize.Match<Either<HttpError, RequestContext>>(
-            s => s > 0 ? context : HttpError.BadRequest("Upload-Length header must have a non-negative value"),
-            HttpError.BadRequest("Missing Upload-Length header")
-        );
+        var isValid = size > 0;
+        if (!isValid)
+        {
+            return HttpError.BadRequest("Upload-Length header must have a non-negative value").Wrap();
+        }
+
+        return context.Wrap();
     }
 
     /// <summary>
@@ -60,15 +65,15 @@ public class PatchRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public static Either<HttpError, RequestContext> CheckContentType(RequestContext context)
+    public static Result<RequestContext> CheckContentType(RequestContext context)
     {
         var supportMedia = context.RequestHeaders[HeaderNames.ContentType].Equals(TusHeaderValues.PatchContentType);
         if (!supportMedia)
         {
-            return HttpError.UnsupportedMediaType();
+            return HttpError.UnsupportedMediaType().Wrap();
         }
 
-        return context;
+        return context.Wrap();
     }
 
     /// <summary>
@@ -76,18 +81,20 @@ public class PatchRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public static Either<HttpError, RequestContext> CheckUploadOffset(RequestContext context)
+    public static Result<RequestContext> CheckUploadOffset(RequestContext context)
     {
-        var uploadOffset = parseLong(context.RequestHeaders[TusHeaderNames.UploadOffset]);
-        var isValid = from o in uploadOffset
-                      select (o >= 0L);
+        var hasUploadOffset = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadOffset], out var uploadOffset);
+        if (!hasUploadOffset)
+        {
+            return HttpError.BadRequest("Missing Upload-Offset header").Wrap();
+        }
 
-        return match(isValid,
-            Some: v => v
-                ? Either.Right(context)
-                : HttpError.BadRequest("Upload-Offset must have a non-negative value"),
-            None: () => HttpError.BadRequest("Missing Upload-Offset header")
-        );
+        if (uploadOffset < 0)
+        {
+            return HttpError.BadRequest("Upload-Offset must have a non-negative value").Wrap();
+        }
+
+        return context.Wrap();
     }
 
     /// <summary>
@@ -95,19 +102,23 @@ public class PatchRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public static Either<HttpError, RequestContext> CheckConsistentByteOffset(RequestContext context)
+    public static Result<RequestContext> CheckConsistentByteOffset(RequestContext context)
     {
-        var uploadOffset = parseLong(context.RequestHeaders[TusHeaderNames.UploadOffset]);
+        var hasUploadOffset = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadOffset], out var uploadOffset);
         var fileInfo = context.UploadFileInfo;
 
-        var isValid = from offset in uploadOffset
-                      from f in fileInfo
-                      select f.ByteOffset == offset;
+        if (!hasUploadOffset)
+        {
+            return HttpError.BadRequest("Missing Upload-Offset header").Wrap();
+        }
 
-        return isValid.Match(
-            v => v ? Either.Right(context) : HttpError.Conflict("Conflicting file byte offset"),
-            HttpError.BadRequest("Missing Upload-Offset header")
-        );
+        var isValid = fileInfo.ByteOffset == uploadOffset;
+        if (!isValid)
+        {
+            return HttpError.Conflict("Conflicting file byte offset").Wrap();
+        }
+
+        return context.Wrap();
     }
 
     /// <summary>
@@ -115,19 +126,23 @@ public class PatchRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public static Either<HttpError, RequestContext> CheckUploadExceedsFileSize(RequestContext context)
+    public static Result<RequestContext> CheckUploadExceedsFileSize(RequestContext context)
     {
-        var uploadOffset = parseLong(context.RequestHeaders[TusHeaderNames.UploadOffset]);
-        var uploadSize = parseLong(context.RequestHeaders[HeaderNames.ContentLength]);
-        var fileSize = context.UploadFileInfo.Bind(f => Optional(f.FileSize));
+        var hasUploadOffset = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadOffset], out var uploadOffset);
+        var uploadSize = context.RequestHeaders.ContentLength;
+        var fileSize = context.UploadFileInfo.FileSize;
+        var hasHeaders = hasUploadOffset && uploadSize.HasValue && fileSize.HasValue;
+        if (!hasHeaders)
+        {
+            return HttpError.BadRequest("Missing either Upload-Length header or Content-Length header").Wrap();
+        }
 
-        var isValid = from u in uploadSize
-                      from s in fileSize
-                      from o in uploadOffset
-                      select (u + o <= s);
+        var isValid = uploadSize + uploadOffset <= fileSize;
+        if (!isValid)
+        {
+            return HttpError.BadRequest("Data will exceed the specified file size").Wrap();
+        }
 
-        return isValid.Match<Either<HttpError, RequestContext>>(
-            Some: v => v ? context : HttpError.BadRequest("Data will exceed the specified file size"),
-            None: () => HttpError.BadRequest("Missing either Upload-Length header or Content-Length header"));
+        return context.Wrap();
     }
 }

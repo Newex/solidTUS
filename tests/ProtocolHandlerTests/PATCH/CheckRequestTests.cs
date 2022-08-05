@@ -241,6 +241,24 @@ public class CheckRequestTests
     }
 
     [Fact]
+    public void Request_with_zero_Upload_Offset_header_returns_success()
+    {
+        // Arrange
+        var http = MockHttps.HttpRequest("PATCH",
+            (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
+            (TusHeaderNames.UploadOffset, 0L.ToString())
+        );
+        var request = RequestContext.Create(http, CancellationToken.None);
+
+        // Act
+        var response = request.Bind(c => PatchRequestHandler.CheckUploadOffset(c));
+        var result = response.IsSuccess();
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
     public async void Error_during_setting_file_size_returns_500_status_code()
     {
         // Arrange
@@ -248,13 +266,13 @@ public class CheckRequestTests
         {
             FileSize = null
         };
-        var uploadStorageHandler = MockHandlers.UploadStorageHandler(file, setFileSize: false);
+        var uploadMetaHandler = MockHandlers.UploadMetaHandler(file, setFileSize: false);
         var http = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadLength, 200L.ToString())
         );
         var request = RequestContext.Create(http, CancellationToken.None);
-        var handler = new PatchRequestHandler(uploadStorageHandler);
+        var handler = new PatchRequestHandler(uploadMetaHandler);
 
         // Act
         var response = await request.BindAsync(async c => await handler.CheckUploadLengthAsync(c));
@@ -272,13 +290,13 @@ public class CheckRequestTests
         {
             FileSize = null
         };
-        var uploadStorageHandler = MockHandlers.UploadStorageHandler(file, setFileSize: true);
+        var uploadMetaHandler = MockHandlers.UploadMetaHandler(file, setFileSize: true);
         var http = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadLength, 200L.ToString())
         );
         var request = RequestContext.Create(http, CancellationToken.None);
-        var handler = new PatchRequestHandler(uploadStorageHandler);
+        var handler = new PatchRequestHandler(uploadMetaHandler);
 
         // Act
         var response = await request.BindAsync(async c => await handler.CheckUploadLengthAsync(c));

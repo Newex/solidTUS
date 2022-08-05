@@ -13,7 +13,7 @@ If you have any suggestions or improvements please do not hesitate to contribute
 * [tusdotnet](https://github.com/tusdotnet/tusdotnet)
 
 # Install
-Run `dotnet add package solidTUS`
+Run `dotnet add package SolidTUS`
 
 # Configuration
 The required configuration is to register the services in the startup process:

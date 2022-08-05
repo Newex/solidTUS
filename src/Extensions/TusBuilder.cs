@@ -18,6 +18,7 @@ namespace SolidTUS.Extensions;
 /// </summary>
 public sealed class TusBuilder
 {
+    private readonly ServiceDescriptor uploadMetaDescriptor = new(typeof(IUploadMetaHandler), typeof(FileUploadMetaHandler), ServiceLifetime.Scoped);
     private readonly ServiceDescriptor uploadStorageDescriptor = new(typeof(IUploadStorageHandler), typeof(FileUploadStorageHandler), ServiceLifetime.Scoped);
 
     private readonly IServiceCollection services;
@@ -37,6 +38,19 @@ public sealed class TusBuilder
     {
         services.Remove(uploadStorageDescriptor);
         services.TryAddScoped<IUploadStorageHandler, T>();
+        return this;
+    }
+
+    /// <summary>
+    /// Add an upload meta handler
+    /// </summary>
+    /// <typeparam name="T">The specific upload meta handler</typeparam>
+    /// <returns>builder</returns>
+    public TusBuilder AddMetaHandler<T>()
+        where T : class, IUploadMetaHandler
+    {
+        services.Remove(uploadMetaDescriptor);
+        services.TryAddScoped<IUploadMetaHandler, T>();
         return this;
     }
 
@@ -86,6 +100,7 @@ public sealed class TusBuilder
         builder.services.TryAddScoped<UploadFlow>();
         builder.services.TryAddScoped<CreationFlow>();
         builder.services.TryAddScoped<ChecksumRequestHandler>();
+        builder.services.Add(builder.uploadMetaDescriptor);
         builder.services.Add(builder.uploadStorageDescriptor);
         builder.services.Configure<TusOptions>(_ => { });
         builder.services.Configure<MvcOptions>(options =>

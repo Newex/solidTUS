@@ -18,7 +18,10 @@ builder.Services.AddTus()
         options.MetadataValidator =
             (metadata) => metadata.ContainsKey("filename") && metadata.ContainsKey("contentType"))
     .FileStorageConfiguration(options =>
-        options.DirectoryPath = "/path/to/folder");
+    {
+        options.DirectoryPath = "/home/johnny/DigifySolutions/Projekter/Sanasa/projectweb/filetransfer/solidTUS/FILES";
+        options.MetaDirectoryPath = "/home/johnny/DigifySolutions/Projekter/Sanasa/projectweb/filetransfer/solidTUS/FILES";
+    });
 
 builder.Services.AddControllers();
 
