@@ -12,24 +12,25 @@ If you have any suggestions or improvements please do not hesitate to contribute
 ### Other TUS libraries for C#
 * [tusdotnet](https://github.com/tusdotnet/tusdotnet)
 
-# Install
-Run `dotnet add package SolidTUS`
+# Quickstart
 
-# Configuration
-The required configuration is to register the services in the startup process:
+Add the package to your project:  
+```
+$ `dotnet add package SolidTUS`
+```
+
+Register the service in the startup process:
 
 ```csharp
 // Register TUS services
 builder.Services.AddTUS();
 ```
-# Usage
-Then in the `Controller` you mark the 2 actions that will be the TUS file creation endpoint with a `TusCreation`-attribute and the upload action with a `TusUpload`-attribute:
 
-Each `Action` will be injected with a context class: `TusCreationContext` and `TusUploadContext`.
+In your `Controller` add the `TusCreation`-attribute to the action method endpoint and the `TusCreationContext` as parameter.
 
 ```csharp
 [TusCreation]
-public async Task<ActionResult> CreateUpload(TusCreationContext context)
+public async Task<ActionResult> CreateUpload([FromServices] TusCreationContext context)
 {
   // ... Construct a file ID and an URL route to the Upload endpoint
   var fileID = "myFileID";
@@ -42,13 +43,17 @@ public async Task<ActionResult> CreateUpload(TusCreationContext context)
 }
 ```
 
-For the upload action:
+This will not upload any file (unless the client explicitly uses the TUS-extension `Creation-With-Upload` feature).  
+This only sets the ground work for getting information such as file size, and where to upload the data.
+
+Next the actual upload.
+
+Set the `TusUpload`-attribute and add the `TusUploadContext` as a parameter
 
 ```csharp
 [TusUpload]
-[RequestSizeLimit(5_000_000_000)] // <-- example: Set upload size for the action to 5 Gib
 [Route("url/path/to/upload/action/{fileId}")]
-public async Task<ActionResult> Upload(string fileId, TusUploadContext context)
+public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadContext context)
 {
   // ... stuff
   await context.StartAppendDataAsync(fileId);
@@ -57,6 +62,8 @@ public async Task<ActionResult> Upload(string fileId, TusUploadContext context)
   return NoContent();
 }
 ```
+
+_And done..._
 
 # TUS-features
 * Core-protocol v.1.0.0 (stop and resume uploads)
@@ -123,6 +130,19 @@ builder.Services
   });
 ```
 
+another option is to determine where each file should be uploaded on per upload basis. In the `Controller` you can specify the file path:
+
+
+```csharp
+[TusUpload]
+public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadContext context)
+{
+    // ... omitted
+    await context.StartAppendDataAsync(fileId, "determine/path/per/upload");
+    // ... omitted
+}
+```
+
 ## Configuration from appSettings.json or environment variables
 You can configure the `Tus-Max-Size` parameter and the default file storage upload folder from the appSettings.json configuration:
 
@@ -144,7 +164,6 @@ The injected context classes are excluded from ModelBinding but do show up in Sw
 Is responsible for starting or terminating the upload. A termination is a premature ending and signals to the client that the upload has been terminated.  
 The class contains the following members:
 
-* `UploadFileInfo` - Upload file metadata (file size, offset, TUS-metadata and id)
 * `OnUploadFinished` - A method that takes an awaitable callback. When the whole file has been completely uploaded the callback is invoked.
 * `StartAppendDataAsync` - Starts accepting the upload stream from the client
 * `TerminateUpload` - Returns an error http response (default: 400 BadRequest)
@@ -228,9 +247,9 @@ Tus-Resumable: 1.0.0
 
 ```
 
-The upload starts from byte 70 and has a total size of 100, the missing 30 bytes are in the PATCH body. This data is directed to the `OnPartialUploadAsync` method in the `IUploadStorageHandler`.
+After some while the upload starts from byte 70 and has a total size of 100, the missing 30 bytes are in the PATCH body. This data is directed to the `OnPartialUploadAsync` method in the `IUploadStorageHandler`.
 
-On success the server responds:
+When finished successfully the server responds:
 
 ```
 HTTP/1.1 204 No Content
@@ -240,11 +259,6 @@ Upload-Offset: 100
 
 # Test methodology
 Using unit tests and manually making TUS-request with the official javascript client in the examples folder.
-
-# Dependencies
-
-This package uses the [C# functional extensions package](https://github.com/louthy/language-ext), which can be a very opinionated library.  
-In the future I would like to not depend on this library so the consumer wouldn't have to deal with function pollutions.
 
 # References
 * [TUS-protocol](https://tus.io/protocols/resumable-upload.html#core-protocol)
