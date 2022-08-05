@@ -45,7 +45,7 @@ public class CommonRequestHandler
             return HttpError.NotFound("File resource does not exists").Wrap();
         }
 
-        var size = await uploadStorageHandler.GetUploadSizeAsync(context.FileID, context.CancellationToken);
+        var size = await uploadStorageHandler.GetUploadSizeAsync(context.FileID, context.CancellationToken, fileInfo.FilePath);
         var info = fileInfo with
         {
             ByteOffset = size ?? 0L

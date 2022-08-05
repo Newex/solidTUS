@@ -28,7 +28,7 @@ public class FileUploadMetaHandler : IUploadMetaHandler
     }
 
     /// <inheritdoc />
-    public ValueTask<bool> CreateResourceAsync(string fileId, UploadFileInfo fileInfo, CancellationToken cancellationToken)
+    public Task<bool> CreateResourceAsync(string fileId, UploadFileInfo fileInfo, CancellationToken cancellationToken)
     {
         try
         {
@@ -37,21 +37,21 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         catch (Exception)
         {
             // Oops
-            return new ValueTask<bool>(false);
+            return Task.FromResult(false);
         }
 
-        return new ValueTask<bool>(true);
+        return Task.FromResult(true);
     }
 
     /// <inheritdoc />
-    public ValueTask<UploadFileInfo?> GetUploadFileInfoAsync(string fileId, CancellationToken cancellationToken)
+    public Task<UploadFileInfo?> GetUploadFileInfoAsync(string fileId, CancellationToken cancellationToken)
     {
         var fileInfo = ReadUploadFileInfo(fileId);
-        return new ValueTask<UploadFileInfo?>(fileInfo);
+        return Task.FromResult(fileInfo);
     }
 
     /// <inheritdoc />
-    public ValueTask<bool> SetFileSizeAsync(string fileId, long totalFileSize, CancellationToken cancellationToken)
+    public Task<bool> SetFileSizeAsync(string fileId, long totalFileSize, CancellationToken cancellationToken)
     {
         var fileInfo = ReadUploadFileInfo(fileId);
         if (fileInfo is not null)
@@ -63,19 +63,19 @@ public class FileUploadMetaHandler : IUploadMetaHandler
 
             WriteUploadFileInfo(fileId, updates);
 
-            return new ValueTask<bool>(true);
+            return Task.FromResult(true);
         }
 
-        return new ValueTask<bool>(false);
+        return Task.FromResult(false);
     }
 
     /// <inheritdoc />
-    public ValueTask<bool> SetTotalUploadedBytesAsync(string fileId, long totalBytes)
+    public Task<bool> SetTotalUploadedBytesAsync(string fileId, long totalBytes)
     {
         var fileInfo = ReadUploadFileInfo(fileId);
         if (fileInfo is null)
         {
-            return new ValueTask<bool>(false);
+            return Task.FromResult(false);
         }
 
         var update = fileInfo with
@@ -83,7 +83,40 @@ public class FileUploadMetaHandler : IUploadMetaHandler
             ByteOffset = totalBytes
         };
         WriteUploadFileInfo(fileId, update);
-        return new ValueTask<bool>(true);
+        return Task.FromResult(true);
+    }
+
+    /// <inheritdoc />
+    public Task<bool> SetFilePathForUploadAsync(string fileId, string filePath)
+    {
+        var fileInfo = ReadUploadFileInfo(fileId);
+        if (fileInfo is null)
+        {
+            return Task.FromResult(false);
+        }
+
+        var update = fileInfo with
+        {
+            FilePath = filePath
+        };
+        WriteUploadFileInfo(fileId, update);
+        return Task.FromResult(true);
+    }
+
+    /// <inheritdoc />
+    public Task<bool> DeleteUploadFileInfoAsync(string fileId, CancellationToken cancellationToken)
+    {
+        var path = MetadataFullFilenamePath(fileId);
+        var exists = File.Exists(path);
+        if (!exists)
+        {
+            // Does not exists uhm so it is? deleted
+            return Task.FromResult(true);
+        }
+
+        File.Delete(path);
+        var deleted = !File.Exists(path);
+        return Task.FromResult(deleted);
     }
 
     private void WriteUploadFileInfo(string fileId, UploadFileInfo fileInfo)
@@ -96,6 +129,12 @@ public class FileUploadMetaHandler : IUploadMetaHandler
     private UploadFileInfo? ReadUploadFileInfo(string fileId)
     {
         var filename = MetadataFullFilenamePath(fileId);
+        var exists = File.Exists(filename);
+        if (!exists)
+        {
+            return null;
+        }
+
         var fileInfoTxt = File.ReadAllText(filename);
         var fileInfo = JsonSerializer.Deserialize<UploadFileInfo>(fileInfoTxt);
         return fileInfo!;

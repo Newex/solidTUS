@@ -86,10 +86,15 @@ public class TusCreationContext
     /// <summary>
     /// Start resource creation
     /// </summary>
+    /// <remarks>
+    /// The metadata upload file info will only be deleted if the request contains the whole upload. Otherwise the client will be directed to the upload location.
+    /// </remarks>
     /// <param name="fileId">The file Id</param>
     /// <param name="uploadLocationUrl">The upload location URL</param>
+    /// <param name="filePath">The optional file path</param>
+    /// <param name="deleteInfoOnDone">True if the metadata upload info file should be deleted when upload has been finished otherwise false</param>
     /// <returns>An awaitable task</returns>
-    public async Task StartCreationAsync(string fileId, string uploadLocationUrl)
+    public async Task StartCreationAsync(string fileId, string uploadLocationUrl, string? filePath = null, bool deleteInfoOnDone = false)
     {
         var created = await uploadMetaHandler.CreateResourceAsync(fileId, uploadFileInfo, cancellationToken);
 
@@ -108,16 +113,22 @@ public class TusCreationContext
         if (withUpload)
         {
             // Can append if we dont need to worry about checksum
-            var written = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, 0L, uploadFileInfo.FileSize, true, cancellationToken);
+            var written = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, 0L, uploadFileInfo.FileSize, true, cancellationToken, filePath);
 
             // First server callback -->
             onUpload(written);
 
             // Finished upload -->
-            if (onUploadFinishedAsync is not null && written == uploadFileInfo.FileSize)
+            var isFinished = written == uploadFileInfo.FileSize;
+            if (isFinished && onUploadFinishedAsync is not null)
             {
                 // Client callback -->
                 await onUploadFinishedAsync();
+            }
+
+            if (isFinished && deleteInfoOnDone)
+            {
+                await uploadMetaHandler.DeleteUploadFileInfoAsync(fileId, cancellationToken);
             }
         }
     }

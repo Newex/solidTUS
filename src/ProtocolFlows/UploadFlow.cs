@@ -20,6 +20,7 @@ public class UploadFlow
     private readonly PatchRequestHandler patch;
     private readonly ChecksumRequestHandler checksumHandler;
     private readonly IUploadStorageHandler uploadStorageHandler;
+    private readonly IUploadMetaHandler uploadMetaHandler;
 
     /// <summary>
     /// Instantiate a new object of <see cref="UploadFlow"/>
@@ -28,17 +29,20 @@ public class UploadFlow
     /// <param name="patchRequestHandler">The patch request handler</param>
     /// <param name="checksumRequestHandler"></param>
     /// <param name="uploadStorageHandler">The upload storage handler</param>
+    /// <param name="uploadMetaHandler">The upload meta handler</param>
     public UploadFlow(
         CommonRequestHandler commonRequestHandler,
         PatchRequestHandler patchRequestHandler,
         ChecksumRequestHandler checksumRequestHandler,
-        IUploadStorageHandler uploadStorageHandler
+        IUploadStorageHandler uploadStorageHandler,
+        IUploadMetaHandler uploadMetaHandler
     )
     {
         common = commonRequestHandler;
         patch = patchRequestHandler;
         checksumHandler = checksumRequestHandler;
         this.uploadStorageHandler = uploadStorageHandler;
+        this.uploadMetaHandler = uploadMetaHandler;
     }
 
     /// <summary>
@@ -121,6 +125,7 @@ public class UploadFlow
         return new TusUploadContext(
             requestContext.ChecksumContext,
             contentLength,
+            uploadMetaHandler,
             uploadStorageHandler,
             reader,
             onDone,

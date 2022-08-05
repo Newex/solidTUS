@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace SolidTUS.Models;
 
@@ -30,4 +31,10 @@ public record UploadFileInfo
     /// Get the original raw metadata
     /// </summary>
     public string? RawMetadata { get; init; }
+
+    /// <summary>
+    /// Get the file path for this file
+    /// </summary>
+    [JsonInclude]
+    public string? FilePath { get; internal set; }
 }

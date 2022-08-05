@@ -32,7 +32,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     }
 
     /// <inheritdoc />
-    public async Task<long> OnPartialUploadAsync(string fileId, PipeReader reader, long offset, long? expectedSize, bool append, CancellationToken cancellationToken)
+    public async Task<long> OnPartialUploadAsync(string fileId, PipeReader reader, long offset, long? expectedSize, bool append, CancellationToken cancellationToken, string? filePath = null)
     {
         // Get upload file info metadata
         var fileInfo = await uploadMetaHandler.GetUploadFileInfoAsync(fileId, cancellationToken);
@@ -43,7 +43,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
 
         var hasContentLength = expectedSize.HasValue;
         var written = 0L;
-        var fileExists = UploadFileExists(fileId);
+        var fileExists = UploadFileExists(fileId, filePath);
         var firstCreation = offset == 0 && !fileExists;
 
         if (!firstCreation)
@@ -63,7 +63,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
                 // System.IO.IOException client reset request stream
                 var result = await reader.ReadAsync(cancellationToken);
                 var buffer = result.Buffer;
-                var filename = append ? FullFilenamePath(fileId) : FullChunkFilenamePath(fileId);
+                var filename = append ? FullFilenamePath(fileId, filePath) : FullChunkFilenamePath(fileId, filePath);
                 var writeMode = append ? FileMode.Append : FileMode.Create;
                 using var fs = new FileStream(filename, writeMode);
                 var end = (int)buffer.Length;
@@ -95,11 +95,11 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     }
 
     /// <inheritdoc />
-    public Task<Stream?> GetPartialUploadedStreamAsync(string fileId, long uploadSize, CancellationToken cancellationToken)
+    public Task<Stream?> GetPartialUploadedStreamAsync(string fileId, long uploadSize, CancellationToken cancellationToken, string? filePath = null)
     {
-        var chunkPath = FullChunkFilenamePath(fileId);
+        var chunkPath = FullChunkFilenamePath(fileId, filePath);
         var hasChunk = File.Exists(chunkPath);
-        var filename = FullFilenamePath(fileId);
+        var filename = FullFilenamePath(fileId, filePath);
         var hasFile = File.Exists(filename);
 
         if (!hasChunk && !hasFile)
@@ -124,11 +124,11 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     }
 
     /// <inheritdoc />
-    public async Task<bool> OnDiscardPartialUploadAsync(string fileId, long toByteOffset, CancellationToken cancellationToken)
+    public async Task<bool> OnDiscardPartialUploadAsync(string fileId, long toByteOffset, CancellationToken cancellationToken, string? filePath = null)
     {
-        var chunkPath = FullChunkFilenamePath(fileId);
+        var chunkPath = FullChunkFilenamePath(fileId, filePath);
         var hasChunk = File.Exists(chunkPath);
-        var filename = FullFilenamePath(fileId);
+        var filename = FullFilenamePath(fileId, filePath);
         var hasFile = File.Exists(filename);
 
         if (!hasChunk && !hasFile)
@@ -143,11 +143,11 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     }
 
     /// <inheritdoc />
-    public Task<bool> OnPartialUploadSucceededAsync(string fileId, CancellationToken cancellationToken)
+    public Task<bool> OnPartialUploadSucceededAsync(string fileId, CancellationToken cancellationToken, string? filePath = null)
     {
-        var chunkPath = FullChunkFilenamePath(fileId);
+        var chunkPath = FullChunkFilenamePath(fileId, filePath);
         var hasChunk = File.Exists(chunkPath);
-        var filename = FullFilenamePath(fileId);
+        var filename = FullFilenamePath(fileId, filePath);
         var hasFile = File.Exists(filename);
 
         if (!hasChunk && !hasFile)
@@ -168,9 +168,9 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     }
 
     /// <inheritdoc />
-    public ValueTask<long?> GetUploadSizeAsync(string fileId, CancellationToken cancellationToken)
+    public ValueTask<long?> GetUploadSizeAsync(string fileId, CancellationToken cancellationToken, string? filePath = null)
     {
-        var filename = FullFilenamePath(fileId);
+        var filename = FullFilenamePath(fileId, filePath);
         var exists = File.Exists(filename);
         if (!exists)
         {
@@ -181,7 +181,24 @@ public class FileUploadStorageHandler : IUploadStorageHandler
         return new ValueTask<long?>(size);
     }
 
-    private bool UploadFileExists(string fileId) => File.Exists(FullFilenamePath(fileId));
-    private string FullFilenamePath(string fileId) => Path.Combine(directoryPath, fileId);
-    private string FullChunkFilenamePath(string fileId) => Path.Combine(directoryPath, $"{fileId}.chunk");
+    private bool UploadFileExists(string fileId, string? filePath) => File.Exists(FullFilenamePath(fileId, filePath));
+    private string FullFilenamePath(string fileId, string? filePath)
+    {
+        if (filePath is not null)
+        {
+            return Path.Combine(filePath, fileId);
+        }
+
+        return Path.Combine(directoryPath, fileId);
+    }
+
+    private string FullChunkFilenamePath(string fileId, string? filePath)
+    {
+        if (filePath is not null)
+        {
+            return Path.Combine(filePath, $"{fileId}.chunk");
+        }
+
+        return Path.Combine(directoryPath, $"{fileId}.chunk");
+    }
 }

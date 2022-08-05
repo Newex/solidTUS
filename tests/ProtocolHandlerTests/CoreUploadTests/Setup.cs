@@ -12,6 +12,7 @@ public static class Setup
 {
     public static UploadFlow UploadFlow(IUploadMetaHandler? uploadMetaHandler = null)
     {
+        var metaHandler = MockHandlers.UploadMetaHandler();
         var storageHandler = MockHandlers.UploadStorageHandler();
         var upload = uploadMetaHandler ?? MockHandlers.UploadMetaHandler();
         var common = new CommonRequestHandler(storageHandler, upload);
@@ -21,7 +22,8 @@ public static class Setup
             common,
             patch,
             checksum,
-            storageHandler
+            storageHandler,
+            metaHandler
         );
     }
 }
