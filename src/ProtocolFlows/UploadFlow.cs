@@ -2,9 +2,8 @@ using System;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
-using LanguageExt;
-using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
+using SolidTUS.Extensions;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;
@@ -21,6 +20,7 @@ public class UploadFlow
     private readonly PatchRequestHandler patch;
     private readonly ChecksumRequestHandler checksumHandler;
     private readonly IUploadStorageHandler uploadStorageHandler;
+    private readonly IUploadMetaHandler uploadMetaHandler;
 
     /// <summary>
     /// Instantiate a new object of <see cref="UploadFlow"/>
@@ -29,26 +29,29 @@ public class UploadFlow
     /// <param name="patchRequestHandler">The patch request handler</param>
     /// <param name="checksumRequestHandler"></param>
     /// <param name="uploadStorageHandler">The upload storage handler</param>
+    /// <param name="uploadMetaHandler">The upload meta handler</param>
     public UploadFlow(
         CommonRequestHandler commonRequestHandler,
         PatchRequestHandler patchRequestHandler,
         ChecksumRequestHandler checksumRequestHandler,
-        IUploadStorageHandler uploadStorageHandler
+        IUploadStorageHandler uploadStorageHandler,
+        IUploadMetaHandler uploadMetaHandler
     )
     {
         common = commonRequestHandler;
         patch = patchRequestHandler;
         checksumHandler = checksumRequestHandler;
         this.uploadStorageHandler = uploadStorageHandler;
+        this.uploadMetaHandler = uploadMetaHandler;
     }
 
     /// <summary>
     /// A HEAD request determines the current status of an upload
     /// </summary>
     /// <param name="context">The request context</param>
-    /// <param name="fileId">The file ID</param>
+    /// <param name="fileId">The file Id</param>
     /// <returns>Either an error or a request context</returns>
-    public async Task<Either<HttpError, RequestContext>> GetUploadStatusAsync(RequestContext context, string fileId)
+    public async ValueTask<Result<RequestContext>> GetUploadStatusAsync(RequestContext context, string fileId)
     {
         context.FileID = fileId;
         var noStoreCache = HeadRequestHandler.SetResponseCacheControl(context);
@@ -67,7 +70,7 @@ public class UploadFlow
     /// <param name="context">The request context</param>
     /// <param name="fileId">The file ID</param>
     /// <returns>Either an error or a request context</returns>
-    public async Task<Either<HttpError, RequestContext>> StartUploadingAsync(RequestContext context, string fileId)
+    public async ValueTask<Result<RequestContext>> StartUploadingAsync(RequestContext context, string fileId)
     {
         // Core protocol, start -->
         context.FileID = fileId;
@@ -87,21 +90,17 @@ public class UploadFlow
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an http error or a request context</returns>
-    public Either<HttpError, RequestContext> ChecksumFlow(RequestContext context)
+    public Result<RequestContext> ChecksumFlow(RequestContext context)
     {
         var hasChecksum = context.RequestHeaders.ContainsKey(TusHeaderNames.UploadChecksum);
         if (!hasChecksum)
         {
-            return context;
+            return context.Wrap();
         }
 
         // Check checksum
         var parse = ChecksumRequestHandler.ParseChecksum(context);
-        var setChecksum = parse.Map(t => checksumHandler.SetChecksum(context, t));
-        return setChecksum.Match<Either<HttpError, RequestContext>>(
-            Some: c => c,
-            None: HttpError.BadRequest("Not supported or invalid checksum request")
-        );
+        return checksumHandler.SetChecksum(context, parse);
     }
 
     /// <summary>
@@ -113,19 +112,20 @@ public class UploadFlow
     /// <param name="onError">The callback function when an error occurs</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>An upload context or null</returns>
-    public TusUploadContext? CreateUploadContext(Either<HttpError, RequestContext> context, PipeReader reader, Action<long> onDone, Action<HttpError> onError, CancellationToken cancellationToken)
+    public TusUploadContext? CreateUploadContext(Result<RequestContext> context, PipeReader reader, Action<long> onDone, Action<HttpError> onError, CancellationToken cancellationToken)
     {
-        var requestContext = context.MatchUnsafe(c => c, _ => null);
+        var requestContext = context.Match(c => c, _ => null!);
         if (requestContext is null)
         {
             return null;
         }
 
-        var contentLength = parseLong(requestContext.RequestHeaders[HeaderNames.ContentLength]).IfNone(0);
-        var uploadFileInfo = requestContext.UploadFileInfo.IfNoneUnsafe(() => null);
+        var contentLength = requestContext.RequestHeaders.ContentLength;
+        var uploadFileInfo = requestContext!.UploadFileInfo;
         return new TusUploadContext(
             requestContext.ChecksumContext,
             contentLength,
+            uploadMetaHandler,
             uploadStorageHandler,
             reader,
             onDone,

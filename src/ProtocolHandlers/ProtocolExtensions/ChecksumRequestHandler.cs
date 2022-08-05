@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using LanguageExt;
 using SolidTUS.Constants;
+using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.Parsers;
 using SolidTUS.Validators;
@@ -32,10 +32,10 @@ public class ChecksumRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>An option tuple containing the algorithm name and the hash cipher</returns>
-    public static Option<(string AlgorithmName, byte[] Cipher)> ParseChecksum(RequestContext context)
+    public static (string AlgorithmName, byte[] Cipher)? ParseChecksum(RequestContext context)
     {
         var raw = context.RequestHeaders[TusHeaderNames.UploadChecksum];
-        return Optional(ChecksumValueParser.DecodeCipher(raw));
+        return ChecksumValueParser.DecodeCipher(raw);
     }
 
     /// <summary>
@@ -44,17 +44,29 @@ public class ChecksumRequestHandler
     /// <param name="context">The request context</param>
     /// <param name="checksum">The checksum</param>
     /// <returns>The request context</returns>
-    public RequestContext SetChecksum(RequestContext context, (string AlgorithmName, byte[] Cipher) checksum)
+    public Result<RequestContext> SetChecksum(RequestContext context, (string AlgorithmName, byte[] Cipher)? checksum)
     {
-        var validator = Optional(validators.SingleOrDefault(v => v.AlgorithmName.Equals(checksum.AlgorithmName, StringComparison.OrdinalIgnoreCase)));
-        return context with
+        if (checksum is null)
+        {
+            return HttpError.BadRequest("Invalid checksum request").Wrap();
+        }
+
+        var validator = validators.SingleOrDefault(v => v.AlgorithmName.Equals(checksum.Value.AlgorithmName, StringComparison.OrdinalIgnoreCase));
+        if (validator is null)
+        {
+            return HttpError.BadRequest("Checksum not supported").Wrap();
+        }
+
+        var result = context with
         {
             ChecksumContext = new ChecksumContext
             {
-                AlgorithmName = checksum.AlgorithmName,
-                Checksum = checksum.Cipher,
+                AlgorithmName = checksum.Value.AlgorithmName,
+                Checksum = checksum.Value.Cipher,
                 Validator = validator
             }
         };
+
+        return result.Wrap();
     }
 }

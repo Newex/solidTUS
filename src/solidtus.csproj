@@ -12,13 +12,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LanguageExt.Core" Version="4.2.9">
-        <!-- TODO: Remove this reference, it's cool but is too leaky
-        <PrivateAssets>contentFiles; analyzers; build</PrivateAssets>
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-        -->
-    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

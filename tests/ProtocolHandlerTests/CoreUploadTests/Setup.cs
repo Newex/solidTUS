@@ -10,17 +10,20 @@ namespace SolidTUS.Tests.ProtocolHandlerTests.CoreUploadTests;
 
 public static class Setup
 {
-    public static UploadFlow UploadFlow(IUploadStorageHandler? uploadStorageHandler = null)
+    public static UploadFlow UploadFlow(IUploadMetaHandler? uploadMetaHandler = null)
     {
-        var upload = uploadStorageHandler ?? MockHandlers.UploadStorageHandler();
-        var common = new CommonRequestHandler(upload);
+        var metaHandler = MockHandlers.UploadMetaHandler();
+        var storageHandler = MockHandlers.UploadStorageHandler();
+        var upload = uploadMetaHandler ?? MockHandlers.UploadMetaHandler();
+        var common = new CommonRequestHandler(storageHandler, upload);
         var patch = new PatchRequestHandler(upload);
         var checksum = new ChecksumRequestHandler(new List<IChecksumValidator>());
         return new UploadFlow(
             common,
             patch,
             checksum,
-            upload
+            storageHandler,
+            metaHandler
         );
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using LanguageExt;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
@@ -18,7 +17,7 @@ namespace SolidTUS.ProtocolHandlers;
 public class PostRequestHandler
 {
     private readonly Func<Dictionary<string, string>, bool> metadataValidator;
-    private readonly Option<long> maxSize;
+    private readonly long? maxSize;
 
     /// <summary>
     /// Instantiate a new object of <see cref="PostRequestHandler"/>
@@ -29,7 +28,7 @@ public class PostRequestHandler
     )
     {
         metadataValidator = options.Value.MetadataValidator;
-        maxSize = Optional(options.Value.MaxSize);
+        maxSize = options.Value.MaxSize;
     }
 
     /// <summary>
@@ -37,32 +36,33 @@ public class PostRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public static Either<HttpError, RequestContext> CheckUploadLengthOrDeferred(RequestContext context)
+    public static Result<RequestContext> CheckUploadLengthOrDeferred(RequestContext context)
     {
         var hasDefer = context.RequestHeaders.ContainsKey(TusHeaderNames.UploadDeferLength);
         var hasLength = context.RequestHeaders.ContainsKey(TusHeaderNames.UploadLength);
 
         if (!(hasDefer ^ hasLength))
         {
-            return HttpError.BadRequest("Must have either Upload-Length or Upload-Defer-Length header and not both");
+            return HttpError.BadRequest("Must have either Upload-Length or Upload-Defer-Length header and not both").Wrap();
         }
 
-        var defer = parseInt(context.RequestHeaders[TusHeaderNames.UploadDeferLength]);
-        var validDefer = defer.Bind(v => v == 1 ? Some(true) : None).Match<Either<HttpError, RequestContext>>(
-            Some: _ => context,
-            None: HttpError.BadRequest("Invalid Upload-Defer-Length header")
-        );
-
-        if (hasDefer)
+        var isDefer = int.TryParse(context.RequestHeaders[TusHeaderNames.UploadDeferLength], out var defer);
+        if (isDefer && defer != 1)
         {
-            return validDefer;
+            return HttpError.BadRequest("Invalid Upload-Defer-Length header").Wrap();
+        }
+        else if (isDefer)
+        {
+            return context.Wrap();
         }
 
-        var length = parseLong(context.RequestHeaders[TusHeaderNames.UploadLength]);
-        return length.Bind(l => l > 0 ? Some(true) : None).Match<Either<HttpError, RequestContext>>(
-            Some: _ => context,
-            None: HttpError.BadRequest("Invalid Upload-Length header")
-        );
+        var isLength = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadLength], out var length);
+        if (!isLength || length <= 0)
+        {
+            return HttpError.BadRequest("Invalid Upload-Length header").Wrap();
+        }
+
+        return context.Wrap();
     }
 
     /// <summary>
@@ -70,17 +70,24 @@ public class PostRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public Either<HttpError, RequestContext> CheckMaximumSize(RequestContext context)
+    public Result<RequestContext> CheckMaximumSize(RequestContext context)
     {
-        var size = parseLong(context.RequestHeaders[TusHeaderNames.UploadLength]);
-        var isValid = from s in size
-                      from m in maxSize
-                      select (s <= m);
+        var hasHeader = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadLength], out var size);
+        if (!hasHeader)
+        {
+            return HttpError.BadRequest("Missing Upload-Length header").Wrap();
+        }
 
-        return isValid.Match(
-            v => v ? Either.Right(context) : HttpError.EntityTooLarge("File upload is bigger than server restrictions"),
-            context // MaxSize is None (What if Size is None?)
-        );
+        if (maxSize is not null)
+        {
+            var allowed = size <= maxSize.Value;
+            if (!allowed)
+            {
+                return HttpError.EntityTooLarge("File upload is bigger than server restrictions").Wrap();
+            }
+        }
+
+        return context.Wrap();
     }
 
     /// <summary>
@@ -101,10 +108,10 @@ public class PostRequestHandler
     /// <param name="context">THe request context</param>
     /// <param name="metadata">The parsed metadata</param>
     /// <returns>Either an error or a request context</returns>
-    public Either<HttpError, RequestContext> ValidateMetadata(RequestContext context, Dictionary<string, string> metadata)
+    public Result<RequestContext> ValidateMetadata(RequestContext context, Dictionary<string, string> metadata)
     {
         var isValid = metadataValidator(metadata);
-        return isValid ? context : HttpError.BadRequest("Invalid Upload-Metadata");
+        return isValid ? context.Wrap() : HttpError.BadRequest("Invalid Upload-Metadata").Wrap();
     }
 
     /// <summary>
@@ -115,8 +122,7 @@ public class PostRequestHandler
     /// <returns>Either an error or a request context</returns>
     public static RequestContext SetNewMetadata(RequestContext context, (StringValues, Dictionary<string, string>) metadata)
     {
-        var info = context.UploadFileInfo;
-        var uploadInfo = info.IfNone(() => new());
+        var uploadInfo = context.UploadFileInfo;
         var update = uploadInfo with
         {
             RawMetadata = metadata.Item1,
@@ -136,11 +142,13 @@ public class PostRequestHandler
     /// <returns>An updated context with file size</returns>
     public static RequestContext SetFileSize(RequestContext context)
     {
-        var info = context.UploadFileInfo.IfNone(() => new());
-        var size = parseLong(context.RequestHeaders[TusHeaderNames.UploadLength]).MatchUnsafe<long?>(
-            Some: s => s,
-            None: () => null
-        );
+        var info = context.UploadFileInfo;
+        var hasLength = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadLength], out var size);
+        if (!hasLength)
+        {
+            return context;
+        }
+
         var update = info with
         {
             FileSize = size
@@ -157,18 +165,16 @@ public class PostRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public static Either<HttpError, RequestContext> CheckIsValidUpload(RequestContext context)
+    public static Result<RequestContext> CheckIsValidUpload(RequestContext context)
     {
-        var contentLength = parseLong(context.RequestHeaders[HeaderNames.ContentLength]);
-        var contentType = Optional(context.RequestHeaders[HeaderNames.ContentType]).Map(v => v.ToString());
+        var contentType = context.RequestHeaders[HeaderNames.ContentType];
 
-        var isValid = from size in contentLength
-                      from trait in contentType
-                      select (size > 0 && trait.Equals(TusHeaderValues.PatchContentType, StringComparison.OrdinalIgnoreCase));
+        var isValid = string.Equals(contentType, TusHeaderValues.PatchContentType, StringComparison.OrdinalIgnoreCase);
+        if (!isValid)
+        {
+            return HttpError.BadRequest("Must include proper Content-Type header value: application/offset+octet-stream").Wrap();
+        }
 
-        return isValid.Match(
-            Some: b => b ? Either.Right(context) : HttpError.BadRequest("Must include proper Content-Type header value: application/offset+octet-stream"),
-            HttpError.BadRequest("Content-Length must be non-negative value ")
-        );
+        return context.Wrap();
     }
 }

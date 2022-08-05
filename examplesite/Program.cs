@@ -18,7 +18,10 @@ builder.Services.AddTus()
         options.MetadataValidator =
             (metadata) => metadata.ContainsKey("filename") && metadata.ContainsKey("contentType"))
     .FileStorageConfiguration(options =>
-        options.DirectoryPath = "/path/to/folder");
+    {
+        options.DirectoryPath = "/path/to/uploads";
+        options.MetaDirectoryPath = "/path/to/meta/info/file";
+    });
 
 builder.Services.AddControllers();
 

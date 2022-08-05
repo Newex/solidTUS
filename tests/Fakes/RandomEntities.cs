@@ -10,8 +10,6 @@ public static class RandomEntities
     {
         var faker = new Faker<UploadFileInfo>();
 
-        faker.RuleFor(f => f.ID, f => f.Database.Random.String(6));
-        faker.RuleFor(f => f.ActualFilename, f => f.System.FileName());
         faker.RuleFor(f => f.ByteOffset, f => f.Random.Long(0));
         faker.RuleFor(f => f.FileSize, f => f.Random.Long(0).OrNull(f, 0.5f));
 

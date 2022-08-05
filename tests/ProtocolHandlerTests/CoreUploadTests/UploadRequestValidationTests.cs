@@ -1,5 +1,4 @@
 using System.Threading;
-using LanguageExt.Pipes;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
 using SolidTUS.Models;
@@ -24,7 +23,7 @@ public class UploadRequestValidationTests
             FileSize = 100,
             ByteOffset = 70
         };
-        var uploadStorageHandler = MockHandlers.UploadStorageHandler(file);
+        var uploadMetaHandler = MockHandlers.UploadMetaHandler(file);
         var http = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (HeaderNames.ContentType, TusHeaderValues.PatchContentType),
@@ -32,10 +31,10 @@ public class UploadRequestValidationTests
             (TusHeaderNames.UploadOffset, file.ByteOffset.ToString())
         );
         var request = RequestContext.Create(http, CancellationToken.None);
-        var handler = Setup.UploadFlow(uploadStorageHandler);
+        var handler = Setup.UploadFlow(uploadMetaHandler);
 
         // Act
-        var process = await request.BindAsync(async c => await handler.StartUploadingAsync(c, file.ID));
+        var process = await request.BindAsync(async c => await handler.StartUploadingAsync(c, c.FileID));
         var result = process.IsSuccess();
 
         // Assert
@@ -51,7 +50,7 @@ public class UploadRequestValidationTests
             FileSize = 100,
             ByteOffset = 70
         };
-        var uploadStorageHandler = MockHandlers.UploadStorageHandler(file);
+        var uploadMetaHandler = MockHandlers.UploadMetaHandler(file);
         var http = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (HeaderNames.ContentType, TusHeaderValues.PatchContentType),
@@ -59,10 +58,10 @@ public class UploadRequestValidationTests
             (TusHeaderNames.UploadOffset, "XX") // <-- Bad header value
         );
         var request = RequestContext.Create(http, CancellationToken.None);
-        var handler = Setup.UploadFlow(uploadStorageHandler);
+        var handler = Setup.UploadFlow(uploadMetaHandler);
 
         // Act
-        var process = await request.BindAsync(async c => await handler.StartUploadingAsync(c, file.ID));
+        var process = await request.BindAsync(async c => await handler.StartUploadingAsync(c, c.FileID));
         var result = process.IsSuccess();
 
         // Assert

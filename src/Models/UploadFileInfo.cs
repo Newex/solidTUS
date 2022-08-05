@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace SolidTUS.Models;
 
@@ -7,21 +9,6 @@ namespace SolidTUS.Models;
 /// </summary>
 public record UploadFileInfo
 {
-    /// <summary>
-    /// Get the upload file ID
-    /// </summary>
-    public string ID { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Get the actual upload file name
-    /// </summary>
-    public string ActualFilename { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Get the MIME type
-    /// </summary>
-    public string MimeType { get; init; } = string.Empty;
-
     /// <summary>
     /// Get the bytes that have been uploaded so-far
     /// </summary>
@@ -38,10 +25,16 @@ public record UploadFileInfo
     /// <summary>
     /// Get the parsed TUS metadata
     /// </summary>
-    public Dictionary<string, string> Metadata { get; init; } = new();
+    public Dictionary<string, string> Metadata { get; init; } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Get the original raw metadata
     /// </summary>
     public string? RawMetadata { get; init; }
+
+    /// <summary>
+    /// Get the file path for this file
+    /// </summary>
+    [JsonInclude]
+    public string? FilePath { get; internal set; }
 }

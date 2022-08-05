@@ -16,9 +16,11 @@ public class UploadController : ControllerBase
     public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadContext context)
     {
         // Starting append a.k.a. upload
-        await context.StartAppendDataAsync(fileId);
+        // Can set path per file or use default from global configuration
+        await context.StartAppendDataAsync(fileId, "/path/per/file");
 
-        context.OnUploadFinished(async _ => await Task.CompletedTask);
+        // context.OnUploadFinished(async _ => await Task.CompletedTask);
+        // context.TerminateUpload(fileId);
 
         // Must always return 204 on upload success with no Body content
         return NoContent();
@@ -30,8 +32,6 @@ public class UploadController : ControllerBase
         // Read Metadata
         var filename = context.Metadata["filename"];
         var mime = context.Metadata["contentType"];
-        context.ActualFileName = filename;
-        context.MimeType = mime;
 
         // Construct upload URL
         var id = Guid.NewGuid().ToString("N");

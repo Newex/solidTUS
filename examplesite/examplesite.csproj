@@ -3,7 +3,6 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <PackageId>SolidTUS</PackageId>
     <RepositoryUrl>https://github.com/Newex/solidTUS</RepositoryUrl>
   </PropertyGroup>
 

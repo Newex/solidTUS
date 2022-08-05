@@ -1,8 +1,4 @@
-using System;
-using System.Threading;
 using System.Threading.Tasks;
-using LanguageExt;
-using Microsoft.AspNetCore.Http;
 using SolidTUS.Constants;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
@@ -17,16 +13,20 @@ namespace SolidTUS.ProtocolHandlers;
 public class CommonRequestHandler
 {
     private readonly IUploadStorageHandler uploadStorageHandler;
+    private readonly IUploadMetaHandler uploadMetaHandler;
 
     /// <summary>
     /// Instantiate a new object of <see cref="CommonRequestHandler"/>
     /// </summary>
     /// <param name="uploadStorageHandler"></param>
+    /// <param name="uploadMetaHandler">The upload meta handler</param>
     public CommonRequestHandler(
-        IUploadStorageHandler uploadStorageHandler
+        IUploadStorageHandler uploadStorageHandler,
+        IUploadMetaHandler uploadMetaHandler
     )
     {
         this.uploadStorageHandler = uploadStorageHandler;
+        this.uploadMetaHandler = uploadMetaHandler;
     }
 
     /// <summary>
@@ -37,47 +37,25 @@ public class CommonRequestHandler
     /// </remarks>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public async Task<Either<HttpError, RequestContext>> CheckUploadFileInfoExistsAsync(RequestContext context)
+    public async ValueTask<Result<RequestContext>> CheckUploadFileInfoExistsAsync(RequestContext context)
     {
-        var fileInfo = Optional(await uploadStorageHandler.GetUploadFileInfoAsync(context.FileID, context.CancellationToken));
-        return match(fileInfo,
-            Some: info => Either.Right(context with
-            {
-                UploadFileInfo = info
-            }),
-            None: () => HttpError.NotFound("File resource does not exists")
-        );
-    }
-
-    /// <summary>
-    /// Create TUS response
-    /// </summary>
-    /// <param name="request">The http request</param>
-    /// <returns>A TUS http response</returns>
-    [Obsolete("Delete me")]
-    public static TusHttpResponse CreateResponse(HttpRequest request)
-    {
-        var result = new TusHttpResponse();
-        var isOptions = request.Method == "OPTIONS";
-        if (isOptions)
+        var fileInfo = await uploadMetaHandler.GetUploadFileInfoAsync(context.FileID, context.CancellationToken);
+        if (fileInfo is null)
         {
-            // Nothing -> delegate this to OPTIONS request handler
-            result.IsSuccess = true;
-            return result;
+            return HttpError.NotFound("File resource does not exists").Wrap();
         }
 
-        var isSupported = TusVersionValidator.IsValidVersion(request.Headers[TusHeaderNames.Resumable]);
-        if (!isSupported)
+        var size = await uploadStorageHandler.GetUploadSizeAsync(context.FileID, context.CancellationToken, fileInfo.FilePath);
+        var info = fileInfo with
         {
-            result.IsSuccess = false;
-            result.StatusCode = 412;
-            result.Headers.Add(TusHeaderNames.Version, TusHeaderValues.TusServerVersions);
-            return result;
-        }
+            ByteOffset = size ?? 0L
+        };
+        var result = context with
+        {
+            UploadFileInfo = info
+        };
 
-        result.IsSuccess = true;
-        result.Headers.Add(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion);
-        return result;
+        return result.Wrap();
     }
 
     /// <summary>
@@ -85,11 +63,11 @@ public class CommonRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an http error or a request context</returns>
-    public static Either<HttpError, RequestContext> CheckTusVersion(RequestContext context)
+    public static Result<RequestContext> CheckTusVersion(RequestContext context)
     {
         if (context.Method == "OPTIONS")
         {
-            return context;
+            return context.Wrap();
         }
 
         var isSupported = TusVersionValidator.IsValidVersion(context.RequestHeaders[TusHeaderNames.Resumable]);
@@ -98,9 +76,9 @@ public class CommonRequestHandler
             var error = HttpError.PreconditionFailed();
 
             error.Headers.Add(TusHeaderNames.Version, TusHeaderValues.TusServerVersions);
-            return error;
+            return error.Wrap();
         }
 
-        return context;
+        return context.Wrap();
     }
 }
