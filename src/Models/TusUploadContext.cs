@@ -97,9 +97,9 @@ public class TusUploadContext
             await uploadMetaHandler.SetFilePathForUploadAsync(fileId, filePath);
             uploadFileInfo.FilePath = filePath;
         }
-        else if (filePath is null && uploadFileInfo.FilePath is not null)
+        else if (uploadFileInfo.FilePath is not null)
         {
-            // "Load" file path from the resource
+            // "Load" file path from the resource if there is a pre-existing path
             filePath = uploadFileInfo.FilePath;
         }
 
