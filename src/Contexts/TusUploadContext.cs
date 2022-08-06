@@ -4,8 +4,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using SolidTUS.Handlers;
+using SolidTUS.Models;
 
-namespace SolidTUS.Models;
+namespace SolidTUS.Contexts;
 
 /// <summary>
 /// TUS context that is injected into the marked action method

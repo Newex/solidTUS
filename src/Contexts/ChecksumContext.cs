@@ -1,6 +1,6 @@
 using SolidTUS.Validators;
 
-namespace SolidTUS.Models;
+namespace SolidTUS.Contexts;
 
 /// <summary>
 /// A checksum context
