@@ -14,7 +14,6 @@ namespace SolidTUS.Contexts;
 public class TusCreationContext
 {
     private readonly bool withUpload;
-    private readonly UploadFileInfo uploadFileInfo;
     private readonly PipeReader reader;
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
@@ -47,9 +46,8 @@ public class TusCreationContext
         CancellationToken cancellationToken
 )
     {
-        Metadata = new(uploadFileInfo.Metadata);
         this.withUpload = withUpload;
-        this.uploadFileInfo = uploadFileInfo;
+        UploadFileInfo = uploadFileInfo;
         this.onCreated = onCreated;
         this.onUpload = onUpload;
         this.reader = reader;
@@ -59,9 +57,9 @@ public class TusCreationContext
     }
 
     /// <summary>
-    /// Get the upload metadata
+    /// Get the upload file info
     /// </summary>
-    public ReadOnlyDictionary<string, string> Metadata { get; init; }
+    public UploadFileInfo UploadFileInfo { get; init; }
 
     /// <summary>
     /// Function called when resource has been created
@@ -97,7 +95,7 @@ public class TusCreationContext
     /// <returns>An awaitable task</returns>
     public async Task StartCreationAsync(string fileId, string uploadLocationUrl, string? filePath = null, bool deleteInfoOnDone = false)
     {
-        var created = await uploadMetaHandler.CreateResourceAsync(fileId, uploadFileInfo, cancellationToken);
+        var created = await uploadMetaHandler.CreateResourceAsync(fileId, UploadFileInfo, cancellationToken);
 
         if (created)
         {
@@ -107,20 +105,20 @@ public class TusCreationContext
             if (onResourceCreatedAsync is not null)
             {
                 // Client side callback
-                await onResourceCreatedAsync(uploadFileInfo);
+                await onResourceCreatedAsync(UploadFileInfo);
             }
         }
 
         if (withUpload)
         {
             // Can append if we dont need to worry about checksum
-            var written = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, 0L, uploadFileInfo.FileSize, true, cancellationToken, filePath);
+            var written = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, 0L, UploadFileInfo.FileSize, true, cancellationToken, filePath);
 
             // First server callback -->
             onUpload(written);
 
             // Finished upload -->
-            var isFinished = written == uploadFileInfo.FileSize;
+            var isFinished = written == UploadFileInfo.FileSize;
             if (isFinished && onUploadFinishedAsync is not null)
             {
                 // Client callback -->
