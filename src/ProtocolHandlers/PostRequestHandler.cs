@@ -126,7 +126,7 @@ public class PostRequestHandler
         var update = uploadInfo with
         {
             RawMetadata = metadata.Item1,
-            Metadata = metadata.Item2
+            Metadata = new(new Dictionary<string, string>(metadata.Item2, StringComparer.OrdinalIgnoreCase))
         };
 
         return context with
