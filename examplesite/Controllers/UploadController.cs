@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using SolidTUS.Attributes;
 using SolidTUS.Contexts;
-using SolidTUS.Models;
 
 namespace ExampleSite.Controllers;
 
