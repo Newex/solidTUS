@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using SolidTUS.Attributes;
-using SolidTUS.Models;
+using SolidTUS.Contexts;
 
 namespace ExampleSite.Controllers;
 
@@ -30,8 +30,8 @@ public class UploadController : ControllerBase
     public async Task<ActionResult> CreateFile([FromServices] TusCreationContext context)
     {
         // Read Metadata
-        var filename = context.Metadata["filename"];
-        var mime = context.Metadata["contentType"];
+        var filename = context.UploadFileInfo.Metadata["filename"];
+        var mime = context.UploadFileInfo.Metadata["contentType"];
 
         // Construct upload URL
         var id = Guid.NewGuid().ToString("N");

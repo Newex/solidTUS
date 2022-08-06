@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 
 namespace SolidTUS.Models;
@@ -25,7 +26,7 @@ public record UploadFileInfo
     /// <summary>
     /// Get the parsed TUS metadata
     /// </summary>
-    public Dictionary<string, string> Metadata { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+    public ReadOnlyDictionary<string, string> Metadata { get; init; } = new(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
 
     /// <summary>
     /// Get the original raw metadata
