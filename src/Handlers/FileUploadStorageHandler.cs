@@ -5,6 +5,7 @@ using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
+using SolidTUS.Models;
 using SolidTUS.Options;
 
 namespace SolidTUS.Handlers;
@@ -14,25 +15,21 @@ namespace SolidTUS.Handlers;
 /// </summary>
 public class FileUploadStorageHandler : IUploadStorageHandler
 {
-    private readonly string directoryPath;
     private readonly IUploadMetaHandler uploadMetaHandler;
 
     /// <summary>
     /// Instantiate a new object of <see cref="FileUploadStorageHandler"/>
     /// </summary>
     /// <param name="uploadMetaHandler">The upload meta handler</param>
-    /// <param name="options">The file storage options</param>
     public FileUploadStorageHandler(
-        IUploadMetaHandler uploadMetaHandler,
-        IOptions<FileStorageOptions> options
+        IUploadMetaHandler uploadMetaHandler
     )
     {
-        directoryPath = options.Value.DirectoryPath;
         this.uploadMetaHandler = uploadMetaHandler;
     }
 
     /// <inheritdoc />
-    public async Task<long> OnPartialUploadAsync(string fileId, PipeReader reader, long offset, long? expectedSize, bool append, CancellationToken cancellationToken, string? filePath = null)
+    public async Task<long> OnPartialUploadAsync(string fileId, PipeReader reader, UploadFileInfo uploadInfo, long? expectedSize, bool append, CancellationToken cancellationToken)
     {
         // Get upload file info metadata
         var fileInfo = await uploadMetaHandler.GetUploadFileInfoAsync(fileId, cancellationToken);
@@ -43,18 +40,6 @@ public class FileUploadStorageHandler : IUploadStorageHandler
 
         var hasContentLength = expectedSize.HasValue;
         var written = 0L;
-        var fileExists = UploadFileExists(fileId, filePath);
-        var firstCreation = offset == 0 && !fileExists;
-
-        if (!firstCreation)
-        {
-            var currentSize = fileInfo.ByteOffset;
-            var sameOffset = currentSize == offset;
-            if (!sameOffset)
-            {
-                throw new ArgumentException("Mismatching bytes between expected offset and actual offset", nameof(offset));
-            }
-        }
 
         try
         {
@@ -63,7 +48,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
                 // System.IO.IOException client reset request stream
                 var result = await reader.ReadAsync(cancellationToken);
                 var buffer = result.Buffer;
-                var filename = append ? FullFilenamePath(fileId, filePath) : FullChunkFilenamePath(fileId, filePath);
+                var filename = append ? FullFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath) : FullChunkFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath);
                 var writeMode = append ? FileMode.Append : FileMode.Create;
                 using var fs = new FileStream(filename, writeMode);
                 var end = (int)buffer.Length;
@@ -95,11 +80,11 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     }
 
     /// <inheritdoc />
-    public Task<Stream?> GetPartialUploadedStreamAsync(string fileId, long uploadSize, CancellationToken cancellationToken, string? filePath = null)
+    public Task<Stream?> GetPartialUploadedStreamAsync(string fileId, long uploadSize, UploadFileInfo uploadInfo, CancellationToken cancellationToken)
     {
-        var chunkPath = FullChunkFilenamePath(fileId, filePath);
+        var chunkPath = FullChunkFilenamePath(fileId, uploadInfo.FileDirectoryPath);
         var hasChunk = File.Exists(chunkPath);
-        var filename = FullFilenamePath(fileId, filePath);
+        var filename = FullFilenamePath(fileId, uploadInfo.FileDirectoryPath);
         var hasFile = File.Exists(filename);
 
         if (!hasChunk && !hasFile)
@@ -124,11 +109,11 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     }
 
     /// <inheritdoc />
-    public async Task<bool> OnDiscardPartialUploadAsync(string fileId, long toByteOffset, CancellationToken cancellationToken, string? filePath = null)
+    public async Task<bool> OnDiscardPartialUploadAsync(string fileId, long resetOffset, UploadFileInfo uploadInfo, CancellationToken cancellationToken)
     {
-        var chunkPath = FullChunkFilenamePath(fileId, filePath);
+        var chunkPath = FullChunkFilenamePath(fileId, uploadInfo.FileDirectoryPath);
         var hasChunk = File.Exists(chunkPath);
-        var filename = FullFilenamePath(fileId, filePath);
+        var filename = FullFilenamePath(fileId, uploadInfo.FileDirectoryPath);
         var hasFile = File.Exists(filename);
 
         if (!hasChunk && !hasFile)
@@ -138,16 +123,16 @@ public class FileUploadStorageHandler : IUploadStorageHandler
 
         var path = hasChunk ? chunkPath : filename;
         File.Delete(path);
-        await uploadMetaHandler.SetTotalUploadedBytesAsync(fileId, toByteOffset);
+        await uploadMetaHandler.SetTotalUploadedBytesAsync(fileId, resetOffset);
         return !File.Exists(path);
     }
 
     /// <inheritdoc />
-    public Task<bool> OnPartialUploadSucceededAsync(string fileId, CancellationToken cancellationToken, string? filePath = null)
+    public Task<bool> OnPartialUploadSucceededAsync(string fileId, UploadFileInfo uploadInfo, CancellationToken cancellationToken)
     {
-        var chunkPath = FullChunkFilenamePath(fileId, filePath);
+        var chunkPath = FullChunkFilenamePath(fileId, uploadInfo.FileDirectoryPath);
         var hasChunk = File.Exists(chunkPath);
-        var filename = FullFilenamePath(fileId, filePath);
+        var filename = FullFilenamePath(fileId, uploadInfo.FileDirectoryPath);
         var hasFile = File.Exists(filename);
 
         if (!hasChunk && !hasFile)
@@ -168,9 +153,9 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     }
 
     /// <inheritdoc />
-    public ValueTask<long?> GetUploadSizeAsync(string fileId, CancellationToken cancellationToken, string? filePath = null)
+    public ValueTask<long?> GetUploadSizeAsync(string fileId, UploadFileInfo uploadInfo, CancellationToken cancellationToken)
     {
-        var filename = FullFilenamePath(fileId, filePath);
+        var filename = FullFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath);
         var exists = File.Exists(filename);
         if (!exists)
         {
@@ -181,24 +166,13 @@ public class FileUploadStorageHandler : IUploadStorageHandler
         return new ValueTask<long?>(size);
     }
 
-    private bool UploadFileExists(string fileId, string? filePath) => File.Exists(FullFilenamePath(fileId, filePath));
-    private string FullFilenamePath(string fileId, string? filePath)
+    private static string FullFilenamePath(string filename, string filePath)
     {
-        if (filePath is not null)
-        {
-            return Path.Combine(filePath, fileId);
-        }
-
-        return Path.Combine(directoryPath, fileId);
+        return Path.Combine(filePath, filename);
     }
 
-    private string FullChunkFilenamePath(string fileId, string? filePath)
+    private static string FullChunkFilenamePath(string filename, string filePath)
     {
-        if (filePath is not null)
-        {
-            return Path.Combine(filePath, $"{fileId}.chunk");
-        }
-
-        return Path.Combine(directoryPath, $"{fileId}.chunk");
+        return Path.Combine(filePath, $"{filename}.chunk");
     }
 }

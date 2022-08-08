@@ -97,7 +97,7 @@ public class FileUploadMetaHandler : IUploadMetaHandler
 
         var update = fileInfo with
         {
-            FilePath = filePath
+            FileDirectoryPath = filePath
         };
         WriteUploadFileInfo(fileId, update);
         return Task.FromResult(true);

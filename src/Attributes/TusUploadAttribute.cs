@@ -37,7 +37,7 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
     /// </summary>
     public IEnumerable<string> HttpMethods => new List<string>
     {
-        "HEAD", "PATCH"
+        "HEAD", "PATCH", "POST"
     };
 
     /// <inheritdoc />
@@ -47,7 +47,7 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         var request = http.Request;
 
         var isHead = IsHead(request.Method);
-        var isPatch = IsPatch(request.Method) || IsPatch(request.Headers[TusHeaderNames.HttpMethodOverride]);
+        var isPatch = IsPatch(request.Method) || (IsPost(request.Method) && IsPatch(request.Headers[TusHeaderNames.HttpMethodOverride]));
 
         if (!isHead && !isPatch)
         {

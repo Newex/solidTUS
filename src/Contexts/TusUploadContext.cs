@@ -83,11 +83,10 @@ public class TusUploadContext
     /// If the meta upload file info exists, then the client will be notified that the file already exists and no additional uploads will be done.
     /// </remarks>
     /// <param name="fileId">The file Id</param>
-    /// <param name="filePath">The optional file path</param>
     /// <param name="deleteInfoOnDone">True if the metadata upload info file should be deleted when upload has been finished otherwise false</param>
     /// <returns>An awaitable task</returns>
     /// <exception cref="InvalidOperationException">Thrown when missing the upload file info</exception>
-    public async Task StartAppendDataAsync(string fileId, string? filePath = null, bool deleteInfoOnDone = false)
+    public async Task StartAppendDataAsync(string fileId, bool deleteInfoOnDone = false)
     {
         // Only call start append once
         if (UploadHasBeenCalled)
@@ -97,47 +96,35 @@ public class TusUploadContext
 
         UploadHasBeenCalled = true;
 
-        if (filePath is not null && UploadFileInfo.FilePath is null)
-        {
-            await uploadMetaHandler.SetFilePathForUploadAsync(fileId, filePath);
-            UploadFileInfo.FilePath = filePath;
-        }
-        else if (UploadFileInfo.FilePath is not null)
-        {
-            // "Load" file path from the resource if there is a pre-existing path
-            filePath = UploadFileInfo.FilePath;
-        }
-
         // Can append if we dont need to worry about checksum
-        var hasChecksum = checksumContext is not null;
-        var savedBytes = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, UploadFileInfo.ByteOffset, expectedUploadSize, !hasChecksum, cancellationToken, filePath);
+        var savedBytes = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, UploadFileInfo, expectedUploadSize, checksumContext is null, cancellationToken);
         var totalSavedBytes = UploadFileInfo.ByteOffset + savedBytes;
 
         // Determine if the checksum is valid
         var isValidChecksum = true;
-        if (hasChecksum)
+        if (checksumContext is not null)
         {
             var discarded = false;
             try
             {
-                using var stream = await uploadStorageHandler.GetPartialUploadedStreamAsync(fileId, savedBytes, cancellationToken, filePath);
+                using var stream = await uploadStorageHandler.GetPartialUploadedStreamAsync(fileId, savedBytes, UploadFileInfo, cancellationToken);
                 if (stream is null)
                 {
                     const string Message = "Could not get the uploaded stream to validate checksum";
-                    discarded = await DiscardUploadedDataAsync(fileId, UploadFileInfo.ByteOffset, Message, filePath, cancellationToken);
+                    discarded = await DiscardUploadedDataAsync(fileId, UploadFileInfo.ByteOffset, UploadFileInfo, Message, cancellationToken);
                     return;
                 }
 
-                var checksum = checksumContext!.Checksum;
-                isValidChecksum = await checksumContext!.Validator.ValidateChecksumAsync(stream, checksum);
+                var checksum = checksumContext.Checksum;
+                isValidChecksum = await checksumContext.Validator.ValidateChecksumAsync(stream, checksum);
 
                 if (isValidChecksum)
                 {
-                    var append = await uploadStorageHandler.OnPartialUploadSucceededAsync(fileId, cancellationToken, filePath);
+                    var append = await uploadStorageHandler.OnPartialUploadSucceededAsync(fileId, UploadFileInfo, cancellationToken);
                     if (!append)
                     {
                         const string Message = "Could not append the uploaded file into the original file";
-                        discarded = await DiscardUploadedDataAsync(fileId, UploadFileInfo.ByteOffset, Message, filePath, cancellationToken);
+                        discarded = await DiscardUploadedDataAsync(fileId, UploadFileInfo.ByteOffset, UploadFileInfo, Message, cancellationToken);
                         return;
                     }
                 }
@@ -145,7 +132,7 @@ public class TusUploadContext
                 {
                     // Hopefully the byte offset has been reset?!
                     const string Message = "Could not reset byte offset after checksum mismatch";
-                    discarded = await uploadStorageHandler.OnDiscardPartialUploadAsync(fileId, UploadFileInfo.ByteOffset, cancellationToken, filePath);
+                    discarded = await uploadStorageHandler.OnDiscardPartialUploadAsync(fileId, UploadFileInfo.ByteOffset, UploadFileInfo, cancellationToken);
                     if (!discarded)
                     {
                         onError(HttpError.InternalServerError(Message));
@@ -165,7 +152,7 @@ public class TusUploadContext
             {
                 if (!discarded)
                 {
-                    _ = await uploadStorageHandler.OnDiscardPartialUploadAsync(fileId, UploadFileInfo.ByteOffset, cancellationToken, filePath);
+                    _ = await uploadStorageHandler.OnDiscardPartialUploadAsync(fileId, UploadFileInfo.ByteOffset, UploadFileInfo, cancellationToken);
                 }
             }
         }
@@ -206,9 +193,9 @@ public class TusUploadContext
         onError(error);
     }
 
-    private async Task<bool> DiscardUploadedDataAsync(string fileId, long offset, string? message, string? filePath, CancellationToken cancellationToken)
+    private async Task<bool> DiscardUploadedDataAsync(string fileId, long offset, UploadFileInfo uploadInfo, string? message, CancellationToken cancellationToken)
     {
-        var discarded = await uploadStorageHandler.OnDiscardPartialUploadAsync(fileId, offset, cancellationToken, filePath);
+        var discarded = await uploadStorageHandler.OnDiscardPartialUploadAsync(fileId, offset, uploadInfo, cancellationToken);
         if (!discarded)
         {
             // Completely inconsistent state! What to do? Could not delete partial upload

@@ -1,6 +1,6 @@
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Collections.Immutable;
+using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace SolidTUS.Models;
@@ -26,7 +26,7 @@ public record UploadFileInfo
     /// <summary>
     /// Get the parsed TUS metadata
     /// </summary>
-    public ReadOnlyDictionary<string, string> Metadata { get; init; } = new(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
+    public ImmutableDictionary<string, string> Metadata { get; init; } = Enumerable.Empty<KeyValuePair<string, string>>().ToImmutableDictionary();
 
     /// <summary>
     /// Get the original raw metadata
@@ -34,8 +34,21 @@ public record UploadFileInfo
     public string? RawMetadata { get; init; }
 
     /// <summary>
-    /// Get the file path for this file
+    /// Get the file directory path for this file
     /// </summary>
+    /// <remarks>
+    /// The directory path
+    /// </remarks>
     [JsonInclude]
-    public string? FilePath { get; internal set; }
+    public string FileDirectoryPath { get; internal set; } = string.Empty;
+
+    /// <summary>
+    /// Get the filename as it is on the disk
+    /// </summary>
+    /// <remarks>
+    /// This filename is different from the given actual filename.
+    /// It is recommended to change filename when saving uploaded file to avoid any exploits and filename collisions
+    /// </remarks>
+    [JsonInclude]
+    public string OnDiskFilename { get; internal set; } = string.Empty;
 }
