@@ -12,10 +12,10 @@ public static class MockHandlers
     {
         var mock = new Mock<IUploadStorageHandler>();
 
-        mock.Setup(s => s.GetPartialUploadedStreamAsync(It.IsAny<string>(), It.IsAny<long>(), It.IsAny<CancellationToken>(), It.IsAny<string>()))
+        mock.Setup(s => s.GetPartialUploadedStreamAsync(It.IsAny<string>(), It.IsAny<long>(), It.IsAny<UploadFileInfo>(), It.IsAny<CancellationToken>()))
         .ReturnsAsync(new MemoryStream());
 
-        mock.Setup(s => s.OnDiscardPartialUploadAsync(It.IsAny<string>(), It.IsAny<long>(), It.IsAny<CancellationToken>(), It.IsAny<string>()))
+        mock.Setup(s => s.OnDiscardPartialUploadAsync(It.IsAny<string>(), It.IsAny<long>(), It.IsAny<UploadFileInfo>(), It.IsAny<CancellationToken>()))
         .ReturnsAsync(discarded);
 
         return mock.Object;

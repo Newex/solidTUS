@@ -20,7 +20,8 @@ builder.Services.AddTus()
     .FileStorageConfiguration(options =>
     {
         options.DirectoryPath = "/path/to/uploads";
-        options.MetaDirectoryPath = "/path/to/meta/info/file";
+        // options.MetaDirectoryPath = "/path/to/meta/info/file";
+        options.MetaDirectoryPath = "/home/johnny/DigifySolutions/Projekter/Sanasa/projectweb/filetransfer/solidTUS/FILES";
     });
 
 builder.Services.AddControllers();

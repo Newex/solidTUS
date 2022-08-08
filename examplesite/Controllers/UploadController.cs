@@ -17,7 +17,7 @@ public class UploadController : ControllerBase
     {
         // Starting append a.k.a. upload
         // Can set path per file or use default from global configuration
-        await context.StartAppendDataAsync(fileId, "/path/per/file");
+        await context.StartAppendDataAsync(fileId);
 
         // context.OnUploadFinished(async _ => await Task.CompletedTask);
         // context.TerminateUpload(fileId);
@@ -38,7 +38,7 @@ public class UploadController : ControllerBase
         var uploadTo = Url.Action(nameof(Upload), new { fileId = id }) ?? string.Empty;
 
         // Start creation (IuploadStorageHandler.CreateResource())
-        await context.StartCreationAsync(id, uploadTo);
+        await context.StartCreationAsync(id, uploadTo, "/home/johnny/DigifySolutions/Projekter/Sanasa/projectweb/filetransfer/solidTUS/FILES");
 
         // Converts a success to 201 created
         return Ok();

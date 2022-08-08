@@ -3,8 +3,10 @@ using System.Collections.ObjectModel;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
+using SolidTUS.Options;
 
 namespace SolidTUS.Contexts;
 
@@ -13,6 +15,7 @@ namespace SolidTUS.Contexts;
 /// </summary>
 public class TusCreationContext
 {
+    private readonly string defaultFileDirectory;
     private readonly bool withUpload;
     private readonly PipeReader reader;
     private readonly IUploadStorageHandler uploadStorageHandler;
@@ -27,6 +30,7 @@ public class TusCreationContext
     /// <summary>
     /// Instantiate a new object of <see cref="TusCreationContext"/>
     /// </summary>
+    /// <param name="options">The options</param>
     /// <param name="withUpload">True if request includes upload otherwise false</param>
     /// <param name="uploadFileInfo">The upload file info</param>
     /// <param name="onCreated">Callback when resource has been created</param>
@@ -36,6 +40,7 @@ public class TusCreationContext
     /// <param name="uploadMetaHandler">The upload meta handler</param>
     /// <param name="cancellationToken">The cancellation token</param>
     public TusCreationContext(
+        IOptions<FileStorageOptions> options,
         bool withUpload,
         UploadFileInfo uploadFileInfo,
         Action<string> onCreated,
@@ -46,6 +51,7 @@ public class TusCreationContext
         CancellationToken cancellationToken
 )
     {
+        defaultFileDirectory = options.Value.DirectoryPath;
         this.withUpload = withUpload;
         UploadFileInfo = uploadFileInfo;
         this.onCreated = onCreated;
@@ -90,13 +96,13 @@ public class TusCreationContext
     /// </remarks>
     /// <param name="fileId">The file Id</param>
     /// <param name="uploadLocationUrl">The upload location URL</param>
-    /// <param name="filePath">The optional file path</param>
+    /// <param name="directoryPath">The optional file directory path</param>
     /// <param name="deleteInfoOnDone">True if the metadata upload info file should be deleted when upload has been finished otherwise false</param>
     /// <returns>An awaitable task</returns>
-    public async Task StartCreationAsync(string fileId, string uploadLocationUrl, string? filePath = null, bool deleteInfoOnDone = false)
+    public async Task StartCreationAsync(string fileId, string uploadLocationUrl, string? directoryPath = null, bool deleteInfoOnDone = false)
     {
+        UploadFileInfo.FileDirectoryPath = directoryPath ?? defaultFileDirectory;
         var created = await uploadMetaHandler.CreateResourceAsync(fileId, UploadFileInfo, cancellationToken);
-
         if (created)
         {
             // Server side callback
@@ -112,7 +118,7 @@ public class TusCreationContext
         if (withUpload)
         {
             // Can append if we dont need to worry about checksum
-            var written = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, 0L, UploadFileInfo.FileSize, true, cancellationToken, filePath);
+            var written = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, UploadFileInfo, UploadFileInfo.FileSize, true, cancellationToken);
 
             // First server callback -->
             onUpload(written);

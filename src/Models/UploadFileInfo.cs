@@ -1,6 +1,6 @@
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Collections.Immutable;
+using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace SolidTUS.Models;
@@ -26,7 +26,7 @@ public record UploadFileInfo
     /// <summary>
     /// Get the parsed TUS metadata
     /// </summary>
-    public ReadOnlyDictionary<string, string> Metadata { get; init; } = new(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
+    public ImmutableDictionary<string, string> Metadata { get; init; } = Enumerable.Empty<KeyValuePair<string, string>>().ToImmutableDictionary();
 
     /// <summary>
     /// Get the original raw metadata
@@ -40,5 +40,5 @@ public record UploadFileInfo
     /// The directory path
     /// </remarks>
     [JsonInclude]
-    public string? FileDirectoryPath { get; internal set; }
+    public string FileDirectoryPath { get; internal set; } = string.Empty;
 }

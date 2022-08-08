@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO.Pipelines;
 using System.Threading;
+using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Contexts;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
+using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers;
 
 namespace SolidTUS.ProtocolFlows;
@@ -15,6 +17,7 @@ namespace SolidTUS.ProtocolFlows;
 /// </summary>
 public class CreationFlow
 {
+    private readonly IOptions<FileStorageOptions> options;
     private readonly PostRequestHandler post;
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
@@ -22,15 +25,18 @@ public class CreationFlow
     /// <summary>
     /// Instantiate a new object of <see cref="CreationFlow"/>
     /// </summary>
+    /// <param name="options">The file storage options</param>
     /// <param name="post">The post request handler</param>
     /// <param name="uploadStorageHandler">The upload storage handler</param>
     /// <param name="uploadMetaHandler">The upload meta handler</param>
     public CreationFlow(
+        IOptions<FileStorageOptions> options,
         PostRequestHandler post,
         IUploadStorageHandler uploadStorageHandler,
         IUploadMetaHandler uploadMetaHandler
     )
     {
+        this.options = options;
         this.post = post;
         this.uploadStorageHandler = uploadStorageHandler;
         this.uploadMetaHandler = uploadMetaHandler;
@@ -88,6 +94,7 @@ public class CreationFlow
         var info = requestContext.UploadFileInfo;
 
         return new TusCreationContext(
+            options,
             uploadSize > 0,
             info,
             onCreated,
