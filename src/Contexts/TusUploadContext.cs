@@ -97,13 +97,12 @@ public class TusUploadContext
         UploadHasBeenCalled = true;
 
         // Can append if we dont need to worry about checksum
-        var hasChecksum = checksumContext is not null;
-        var savedBytes = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, UploadFileInfo, expectedUploadSize, !hasChecksum, cancellationToken);
+        var savedBytes = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, UploadFileInfo, expectedUploadSize, checksumContext is null, cancellationToken);
         var totalSavedBytes = UploadFileInfo.ByteOffset + savedBytes;
 
         // Determine if the checksum is valid
         var isValidChecksum = true;
-        if (hasChecksum)
+        if (checksumContext is not null)
         {
             var discarded = false;
             try
@@ -116,8 +115,8 @@ public class TusUploadContext
                     return;
                 }
 
-                var checksum = checksumContext!.Checksum;
-                isValidChecksum = await checksumContext!.Validator.ValidateChecksumAsync(stream, checksum);
+                var checksum = checksumContext.Checksum;
+                isValidChecksum = await checksumContext.Validator.ValidateChecksumAsync(stream, checksum);
 
                 if (isValidChecksum)
                 {
