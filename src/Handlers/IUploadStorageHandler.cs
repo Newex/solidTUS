@@ -65,8 +65,8 @@ public interface IUploadStorageHandler
     /// Get the current upload size
     /// </summary>
     /// <param name="fileId">The file Id</param>
-    /// <param name="filePath">The optional file path</param>
+    /// <param name="uploadInfo">The upload information</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>The number of bytes uploaded so far or null</returns>
-    ValueTask<long?> GetUploadSizeAsync(string fileId, string filePath, CancellationToken cancellationToken);
+    ValueTask<long?> GetUploadSizeAsync(string fileId, UploadFileInfo uploadInfo, CancellationToken cancellationToken);
 }

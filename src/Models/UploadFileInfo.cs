@@ -41,4 +41,14 @@ public record UploadFileInfo
     /// </remarks>
     [JsonInclude]
     public string FileDirectoryPath { get; internal set; } = string.Empty;
+
+    /// <summary>
+    /// Get the filename as it is on the disk
+    /// </summary>
+    /// <remarks>
+    /// This filename is different from the given actual filename.
+    /// It is recommended to change filename when saving uploaded file to avoid any exploits and filename collisions
+    /// </remarks>
+    [JsonInclude]
+    public string OnDiskFilename { get; internal set; } = string.Empty;
 }

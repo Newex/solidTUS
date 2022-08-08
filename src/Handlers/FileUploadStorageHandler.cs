@@ -48,7 +48,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
                 // System.IO.IOException client reset request stream
                 var result = await reader.ReadAsync(cancellationToken);
                 var buffer = result.Buffer;
-                var filename = append ? FullFilenamePath(fileId, uploadInfo.FileDirectoryPath) : FullChunkFilenamePath(fileId, uploadInfo.FileDirectoryPath);
+                var filename = append ? FullFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath) : FullChunkFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath);
                 var writeMode = append ? FileMode.Append : FileMode.Create;
                 using var fs = new FileStream(filename, writeMode);
                 var end = (int)buffer.Length;
@@ -153,9 +153,9 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     }
 
     /// <inheritdoc />
-    public ValueTask<long?> GetUploadSizeAsync(string fileId, string filePath, CancellationToken cancellationToken)
+    public ValueTask<long?> GetUploadSizeAsync(string fileId, UploadFileInfo uploadInfo, CancellationToken cancellationToken)
     {
-        var filename = FullFilenamePath(fileId, filePath);
+        var filename = FullFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath);
         var exists = File.Exists(filename);
         if (!exists)
         {
@@ -166,14 +166,13 @@ public class FileUploadStorageHandler : IUploadStorageHandler
         return new ValueTask<long?>(size);
     }
 
-    private static bool UploadFileExists(string fileId, string filePath) => File.Exists(FullFilenamePath(fileId, filePath));
-    private static string FullFilenamePath(string fileId, string filePath)
+    private static string FullFilenamePath(string filename, string filePath)
     {
-        return Path.Combine(filePath, fileId);
+        return Path.Combine(filePath, filename);
     }
 
-    private static string FullChunkFilenamePath(string fileId, string filePath)
+    private static string FullChunkFilenamePath(string filename, string filePath)
     {
-        return Path.Combine(filePath, $"{fileId}.chunk");
+        return Path.Combine(filePath, $"{filename}.chunk");
     }
 }

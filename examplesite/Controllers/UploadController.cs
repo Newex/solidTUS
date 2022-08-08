@@ -38,7 +38,7 @@ public class UploadController : ControllerBase
         var uploadTo = Url.Action(nameof(Upload), new { fileId = id }) ?? string.Empty;
 
         // Start creation (IuploadStorageHandler.CreateResource())
-        await context.StartCreationAsync(id, uploadTo, "/home/johnny/DigifySolutions/Projekter/Sanasa/projectweb/filetransfer/solidTUS/FILES");
+        await context.StartCreationAsync(id, uploadTo, "/path/to/upload/directory");
 
         // Converts a success to 201 created
         return Ok();

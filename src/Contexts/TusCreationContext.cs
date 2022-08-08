@@ -93,14 +93,19 @@ public class TusCreationContext
     /// </summary>
     /// <remarks>
     /// The metadata upload file info will only be deleted if the request contains the whole upload. Otherwise the client will be directed to the upload location.
+    /// It is recommended to create a unique and different filename to avoid any malicious uploads overwriting other files.
+    /// The metadata.json file that is created by default by <see cref="FileUploadMetaHandler"/> creates a filename using the file id.
+    /// Be careful not to overwrite other uploads that are in progress by naming them the same.
     /// </remarks>
     /// <param name="fileId">The file Id</param>
     /// <param name="uploadLocationUrl">The upload location URL</param>
     /// <param name="directoryPath">The optional file directory path</param>
+    /// <param name="filename">The filename on disk. Defaults to <paramref name="fileId"/> value</param>
     /// <param name="deleteInfoOnDone">True if the metadata upload info file should be deleted when upload has been finished otherwise false</param>
     /// <returns>An awaitable task</returns>
-    public async Task StartCreationAsync(string fileId, string uploadLocationUrl, string? directoryPath = null, bool deleteInfoOnDone = false)
+    public async Task StartCreationAsync(string fileId, string uploadLocationUrl, string? directoryPath = null, string? filename = null, bool deleteInfoOnDone = false)
     {
+        UploadFileInfo.OnDiskFilename = filename ?? fileId;
         UploadFileInfo.FileDirectoryPath = directoryPath ?? defaultFileDirectory;
         var created = await uploadMetaHandler.CreateResourceAsync(fileId, UploadFileInfo, cancellationToken);
         if (created)
