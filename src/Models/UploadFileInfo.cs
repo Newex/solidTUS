@@ -34,8 +34,11 @@ public record UploadFileInfo
     public string? RawMetadata { get; init; }
 
     /// <summary>
-    /// Get the file path for this file
+    /// Get the file directory path for this file
     /// </summary>
+    /// <remarks>
+    /// The directory path
+    /// </remarks>
     [JsonInclude]
-    public string? FilePath { get; internal set; }
+    public string? FileDirectoryPath { get; internal set; }
 }
