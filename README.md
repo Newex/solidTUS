@@ -66,17 +66,17 @@ public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadCo
 _And done..._
 
 # TUS-features
-* Core-protocol v.1.0.0 (stop and resume uploads)
-* Creation (create upload)
-* Creation-with-upload (upload and create in a single step)
-* Checksum (validate partial uploads with a given algorithm and checksum)
-* Max-size (define a hard limit for upload size)
-* Tus-metadata validation
-* Options (server feature announcements)
+- [x] Core-protocol v.1.0.0 (stop and resume uploads)
+- [x] Creation (create upload)
+- [x] Creation-with-upload (upload and create in a single step)
+- [x] Checksum (validate partial uploads with a given algorithm and checksum)
+- [x] Max-size (define a hard limit for upload size)
+- [x] Tus-metadata validation
+- [x] Options (server feature announcements)
 
 Eventual future features (not implemented):
-* Expiration (deletion of unfinished uploads)
-* Concatenation (upload chunks and then combine the files)
+- [ ] Expiration (deletion of unfinished uploads)
+- [ ] Concatenation (upload chunks and then combine the files)
 
 Note that the checksum feature does not implement the trailing header feature, i.e. A checksum value must be provided upon sending the http request.
 
