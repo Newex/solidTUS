@@ -36,7 +36,7 @@ public class ChecksumRequestHandler
     public static (string AlgorithmName, byte[] Cipher)? ParseChecksum(RequestContext context)
     {
         var raw = context.RequestHeaders[TusHeaderNames.UploadChecksum];
-        return ChecksumValueParser.DecodeCipher(raw);
+        return ChecksumValueParser.DecodeCipher(raw!);
     }
 
     /// <summary>

@@ -47,7 +47,7 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         var request = http.Request;
 
         var isHead = IsHead(request.Method);
-        var isPatch = IsPatch(request.Method) || (IsPost(request.Method) && IsPatch(request.Headers[TusHeaderNames.HttpMethodOverride]));
+        var isPatch = IsPatch(request.Method) || (IsPost(request.Method) && IsPatch(request.Headers[TusHeaderNames.HttpMethodOverride]!));
 
         if (!isHead && !isPatch)
         {
@@ -122,7 +122,7 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         {
             var ctx = (ResultExecutingContext)state;
             var httpMethodOverride = ctx.HttpContext.Request.Headers["X-HTTP-Method-Override"];
-            var isPatch = IsPatch(ctx.HttpContext.Request.Method) || IsPatch(httpMethodOverride);
+            var isPatch = IsPatch(ctx.HttpContext.Request.Method) || IsPatch(httpMethodOverride!);
             var response = ctx.HttpContext.Response;
             var isSuccess = response.StatusCode >= 200 && response.StatusCode < 300;
             if (isPatch && isSuccess)

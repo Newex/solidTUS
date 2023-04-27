@@ -99,7 +99,7 @@ public class PostRequestHandler
     public static (StringValues Raw, Dictionary<string, string> Parsed) ParseMetadata(RequestContext context)
     {
         var rawMetadata = context.RequestHeaders[TusHeaderNames.UploadMetadata];
-        var metadata = MetadataParser.Parse(rawMetadata);
+        var metadata = MetadataParser.Parse(rawMetadata!);
         return (rawMetadata, metadata);
     }
 

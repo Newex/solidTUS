@@ -7,7 +7,7 @@ namespace SolidTUS.Models;
 /// A result type
 /// </summary>
 /// <typeparam name="R">The success result type</typeparam>
-public record struct Result<R>
+public readonly record struct Result<R>
 {
     private readonly R? success;
     private readonly HttpError? error;
