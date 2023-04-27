@@ -1,5 +1,5 @@
 # What is it?
-A C# dotnet 6 implementation of the [TUS-protocol](https://tus.io/protocols/resumable-upload.html#core-protocol) for resumable file uploads for an ASP.NET Core application.
+A C# dotnet 7 implementation of the [TUS-protocol](https://tus.io/protocols/resumable-upload.html#core-protocol) for resumable file uploads for an ASP.NET Core application.
 
 **Why create another TUS library?**  
 This library's purpose is to be simple and give the consumer more options on how to authorize and authenticate requests.  
@@ -98,7 +98,7 @@ builder.Services
     options.MaxSize = 5_000_000_000;
   });
 ```
-Note: to change request size limits see: [Microsoft documentation](https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-6.0#kestrel-maximum-request-body-size)
+Note: to change request size limits see: [Microsoft documentation](https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-7.0#kestrel-maximum-request-body-size)
 
 If you don't want to use the default FileUploadStorageHandler you can provide your own, maybe you want to save the files to a database?
 
@@ -155,7 +155,7 @@ You can configure the `Tus-Max-Size` parameter and the default file storage uplo
 }
 ```
 
-Environment variables are named as `SolidTUS__DirectoryPath` with a double underscore (so they also can be read from a linux environment). See [Microsofts documentation for naming](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#naming-of-environment-variables)
+Environment variables are named as `SolidTUS__DirectoryPath` with a double underscore (so they also can be read from a linux environment). See [Microsofts documentation for naming](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-7.0#naming-of-environment-variables)
 
 ## Contexts
 The injected context classes are excluded from ModelBinding but do show up in Swagger SwashBuckle. To exclude from Swagger SwashBuckle you can annotate the contexts with the `FromServices`-attribute.
