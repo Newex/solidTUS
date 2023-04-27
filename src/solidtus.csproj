@@ -1,13 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <RootNamespace>SolidTUS</RootNamespace>
     <AssemblyName>SolidTUS</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Authors>Johnny Kristian Moeberg Sørensen</Authors>
     <Description>An implementation of the TUS protocol for dotnet</Description>
+    <PackageProjectUrl>https://github.com/Newex/solidTUS</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Newex/solidTUS</RepositoryUrl>
   </PropertyGroup>
 
