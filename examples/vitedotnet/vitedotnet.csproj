@@ -3,7 +3,9 @@
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>ViteDotnet</AssemblyName>
+    <RootNamespace>ViteDotnet</RootNamespace>
+    <Description>Example site for SolidTus using Vite</Description>
   </PropertyGroup>
 
 </Project>
