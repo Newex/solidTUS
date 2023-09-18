@@ -38,7 +38,7 @@ public class UploadController : ControllerBase
         var uploadTo = Url.Action(nameof(Upload), new { fileId = id }) ?? string.Empty;
 
         // Start creation (IuploadStorageHandler.CreateResource())
-        await context.StartCreationAsync(id, uploadTo, "/path/to/upload/directory");
+        await context.StartCreationAsync(id, uploadTo);
 
         // Converts a success to 201 created
         return Ok();

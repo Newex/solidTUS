@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\solidtus.csproj" />
+    <ProjectReference Include="..\..\src\solidtus.csproj" />
   </ItemGroup>
 
 </Project>

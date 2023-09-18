@@ -5,16 +5,16 @@
       "name": "root"
     },
     {
-      "path": "./src",
-      "name": "source"
+      "path": "./examples",
+      "name": "examples"
     },
     {
       "path": "./tests",
       "name": "tests"
     },
     {
-      "path": "./examplesite",
-      "name": "example-site"
-    }
+      "path": "./src",
+      "name": "source"
+    },
   ]
 }
