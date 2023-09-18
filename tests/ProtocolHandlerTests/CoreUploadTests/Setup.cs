@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SolidTUS.Handlers;
+using SolidTUS.Models;
 using SolidTUS.ProtocolFlows;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
@@ -10,11 +11,10 @@ namespace SolidTUS.Tests.ProtocolHandlerTests.CoreUploadTests;
 
 public static class Setup
 {
-    public static UploadFlow UploadFlow(IUploadMetaHandler? uploadMetaHandler = null)
+    public static UploadFlow UploadFlow(IUploadMetaHandler? uploadMetaHandler = null, UploadFileInfo? file = null)
     {
-        var metaHandler = MockHandlers.UploadMetaHandler();
-        var storageHandler = MockHandlers.UploadStorageHandler();
-        var upload = uploadMetaHandler ?? MockHandlers.UploadMetaHandler();
+        var storageHandler = MockHandlers.UploadStorageHandler(currentSize: file?.ByteOffset);
+        var upload = uploadMetaHandler ?? MockHandlers.UploadMetaHandler(file);
         var common = new CommonRequestHandler(storageHandler, upload);
         var patch = new PatchRequestHandler(upload);
         var checksum = new ChecksumRequestHandler(new List<IChecksumValidator>());
@@ -23,7 +23,7 @@ public static class Setup
             patch,
             checksum,
             storageHandler,
-            metaHandler
+            upload
         );
     }
 }

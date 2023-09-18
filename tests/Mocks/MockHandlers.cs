@@ -8,7 +8,7 @@ namespace SolidTUS.Tests.Mocks;
 
 public static class MockHandlers
 {
-    public static IUploadStorageHandler UploadStorageHandler(bool discarded = true)
+    public static IUploadStorageHandler UploadStorageHandler(bool discarded = true, long? currentSize = null)
     {
         var mock = new Mock<IUploadStorageHandler>();
 
@@ -17,6 +17,9 @@ public static class MockHandlers
 
         mock.Setup(s => s.OnDiscardPartialUploadAsync(It.IsAny<string>(), It.IsAny<long>(), It.IsAny<UploadFileInfo>(), It.IsAny<CancellationToken>()))
         .ReturnsAsync(discarded);
+
+        mock.Setup(s => s.GetUploadSizeAsync(It.IsAny<string>(), It.IsAny<UploadFileInfo>(), It.IsAny<CancellationToken>()))
+        .ReturnsAsync(currentSize);
 
         return mock.Object;
     }

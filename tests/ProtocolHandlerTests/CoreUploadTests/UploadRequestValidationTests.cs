@@ -23,7 +23,6 @@ public class UploadRequestValidationTests
             FileSize = 100,
             ByteOffset = 70
         };
-        var uploadMetaHandler = MockHandlers.UploadMetaHandler(file);
         var http = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (HeaderNames.ContentType, TusHeaderValues.PatchContentType),
@@ -31,7 +30,7 @@ public class UploadRequestValidationTests
             (TusHeaderNames.UploadOffset, file.ByteOffset.ToString())
         );
         var request = RequestContext.Create(http, CancellationToken.None);
-        var handler = Setup.UploadFlow(uploadMetaHandler);
+        var handler = Setup.UploadFlow(file: file);
 
         // Act
         var process = await request.BindAsync(async c => await handler.StartUploadingAsync(c, c.FileID));
