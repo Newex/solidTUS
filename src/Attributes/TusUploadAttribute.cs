@@ -84,7 +84,7 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         if (isPatch)
         {
             var coreProtocolUpload = await requestContext.BindAsync(async c => await uploadFlow.StartUploadingAsync(c, fileId));
-            var checksumExtension = coreProtocolUpload.Bind(c => uploadFlow.ChecksumFlow(c));
+            var checksumExtension = coreProtocolUpload.Bind(uploadFlow.ChecksumFlow);
             var uploadResponse = checksumExtension.GetTusHttpResponse();
             if (!uploadResponse.IsSuccess)
             {

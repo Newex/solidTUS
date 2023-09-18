@@ -4,9 +4,7 @@ using System.IO;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Options;
 using SolidTUS.Models;
-using SolidTUS.Options;
 
 namespace SolidTUS.Handlers;
 
