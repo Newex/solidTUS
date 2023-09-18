@@ -3,13 +3,11 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 .DS_Store
-CHECKLIST.md
 # User-specific files
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
-.vscode/
 
 
 # User-specific files (MonoDevelop/Xamarin Studio)
@@ -289,7 +287,16 @@ __pycache__/
 *.odx.cs
 *.xsd.cs
 
+##
+## Visual Studio Code
+##
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+
 # Custom
-vssharper.json
 FILES
 appsettings.Development.json
