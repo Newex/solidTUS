@@ -1,4 +1,9 @@
+using System;
+using System.IO;
+using System.IO.Pipelines;
+using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
 using SolidTUS.Models;
@@ -65,5 +70,43 @@ public class UploadRequestValidationTests
 
         // Assert
         Assert.False(result);
+    }
+
+    [Fact]
+    public async void CreateWithUpload_should_call_OnUploadFinished_callback_if_whole_file_is_uploaded()
+    {
+        // Arrange
+        var contentString = "Hello World!";
+        var fileSize = Encoding.UTF8.GetByteCount(contentString);
+        var array = Encoding.UTF8.GetBytes(contentString);
+        var file = RandomEntities.UploadFileInfo() with
+        {
+            FileSize = fileSize,
+            ByteOffset = 0
+        };
+        var http = MockHttps.HttpRequest("POST",
+            (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
+            (HeaderNames.ContentType, TusHeaderValues.PatchContentType),
+            (HeaderNames.ContentLength, "100"),
+            (TusHeaderNames.UploadOffset, file.ByteOffset.ToString())
+        );
+        var request = RequestContext.Create(http, CancellationToken.None);
+        using var memory = new MemoryStream(array);
+        var reader = PipeReader.Create(memory);
+        var handler = Setup.TusCreationContext(withUpload: true, reader, bytesWritten: fileSize, fileInfo: file);
+        var called = false;
+        Task OnUploadFinished()
+        {
+            called = true;
+            return Task.CompletedTask;
+        }
+
+        handler.OnUploadFinished(OnUploadFinished);
+
+        // Act
+        await handler.StartCreationAsync("file_123", "/upload-to-here");
+
+        // Assert
+        Assert.True(called);
     }
 }
