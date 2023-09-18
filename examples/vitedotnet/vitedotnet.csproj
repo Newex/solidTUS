@@ -8,4 +8,8 @@
     <Description>Example site for SolidTus using Vite</Description>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\solidtus.csproj" />
+  </ItemGroup>
+
 </Project>

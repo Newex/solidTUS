@@ -2,10 +2,23 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
+using SolidTUS.Extensions;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorPages();
+builder.Services.AddControllers();
+builder.Services.AddTus().Configuration(options =>
+{
+    options.MaxSize = 5_000_000_000;
+    options.MetadataValidator = (metadata) =>
+            metadata.ContainsKey("filename") && metadata.ContainsKey("contentType");
+})
+.FileStorageConfiguration(options =>
+{
+    options.DirectoryPath = "./FileUploads";
+    options.MetaDirectoryPath = "./FileUploads";
+});
 
 var app = builder.Build();
 
@@ -24,6 +37,7 @@ app.UseRouting();
 
 app.UseAuthorization();
 
+app.MapControllers();
 app.MapFallbackToFile("index.html");
 
 app.Run();
