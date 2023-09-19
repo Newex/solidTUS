@@ -16,15 +16,29 @@
         },
         {
             "label": "client",
-            "command": "npm",
+            "command": "bun",
             "type": "shell",
             "options": {
-                "cwd": "${workspaceFolder}/vite-project"
+                "cwd": "${workspaceFolder}/svelte"
             },
             "args": [
                 "run",
                 "build"
             ],
+            "group": "build"
+        },
+        {
+            "label": "move",
+            "command": "cp",
+            "type": "shell",
+            "args": [
+                "-RT",
+                "svelte/build",
+                "wwwroot"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
             "group": "build"
         },
         {
@@ -53,7 +67,8 @@
         },
         {
             "label": "build",
-            "dependsOn": ["client", "server" ],
+            "dependsOn": ["client", "move", "server" ],
+            "dependsOrder": "sequence"
         }
     ]
 }
