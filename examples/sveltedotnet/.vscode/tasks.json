@@ -16,7 +16,7 @@
         },
         {
             "label": "client",
-            "command": "bun",
+            "command": "npm",
             "type": "shell",
             "options": {
                 "cwd": "${workspaceFolder}/svelte"
