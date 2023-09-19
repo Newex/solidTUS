@@ -12,11 +12,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="SolidTUS" Version="0.0.17" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\solidtus.csproj" />
-  </ItemGroup>
 
 </Project>
