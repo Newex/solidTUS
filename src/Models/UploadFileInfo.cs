@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json.Serialization;
 
@@ -26,7 +27,7 @@ public record UploadFileInfo
     /// <summary>
     /// Get the parsed TUS metadata
     /// </summary>
-    public ImmutableDictionary<string, string> Metadata { get; init; } = Enumerable.Empty<KeyValuePair<string, string>>().ToImmutableDictionary();
+    public ReadOnlyDictionary<string, string> Metadata { get; init; } = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>());
 
     /// <summary>
     /// Get the original raw metadata
