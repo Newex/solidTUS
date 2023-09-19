@@ -367,3 +367,6 @@ dotnet_naming_style.s_camelcase.required_suffix =
 dotnet_naming_style.s_camelcase.word_separator = 
 dotnet_naming_style.s_camelcase.capitalization = camel_case
 
+# Using if statement is allowed for simple statements - jkms
+dotnet_style_coalesce_expression = off
+dotnet_diagnostic.IDE0270.severity = none
