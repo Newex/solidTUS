@@ -54,10 +54,9 @@ public class CreationFlow
         var parseMetadata = maxSize.Map(c => (Context: c, Metadata: PostRequestHandler.ParseMetadata(c)));
         var validate = parseMetadata.Bind(t =>
         {
-            var c = t.Context;
-            var m = t.Metadata;
-            var valid = post.ValidateMetadata(c, m.Parsed);
-            return valid.Map(r => (Context: r, Metadata: m));
+            var (ctx, meta) = t;
+            var valid = post.ValidateMetadata(ctx, meta.Parsed);
+            return valid.Map(c => (Context: c, Metadata: meta));
         });
         var setMetadata = validate.Map(t => PostRequestHandler.SetNewMetadata(t.Context, t.Metadata));
         var setFileSize = setMetadata.Map(PostRequestHandler.SetFileSize);
