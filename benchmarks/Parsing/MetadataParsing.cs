@@ -39,7 +39,7 @@ public class MetadataParsing
     public Dictionary<string, string> OldParse() => MetadataParser.Parse(metadata);
 
     [Benchmark]
-    public Dictionary<string, string> NewParse() => MetadataParser.Parse(metadata);
+    public Dictionary<string, string> NewParse() => MetadataParser.ParseFast(metadata);
 
 
 
