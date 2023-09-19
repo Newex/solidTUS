@@ -101,9 +101,8 @@ public class UploadRequestValidationTests
             return Task.CompletedTask;
         }
 
+        // Act: MUST call the on upload finished before starting upload!
         handler.OnUploadFinished(OnUploadFinished);
-
-        // Act
         await handler.StartCreationAsync("file_123", "/upload-to-here");
 
         // Assert
