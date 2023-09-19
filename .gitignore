@@ -300,3 +300,4 @@ __pycache__/
 # Custom
 FILES
 appsettings.Development.json
+examples/vitedotnet/wwwroot
