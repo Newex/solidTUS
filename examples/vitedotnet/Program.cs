@@ -12,7 +12,7 @@ builder.Services.AddTus().Configuration(options =>
 {
     options.MaxSize = 5_000_000_000;
     options.MetadataValidator = (metadata) =>
-            metadata.ContainsKey("filename") && metadata.ContainsKey("contentType");
+            metadata.ContainsKey("name") && metadata.ContainsKey("type");
 })
 .FileStorageConfiguration(options =>
 {

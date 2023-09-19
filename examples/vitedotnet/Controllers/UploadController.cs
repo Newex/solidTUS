@@ -9,7 +9,6 @@ using SolidTUS.Contexts;
 namespace ViteDotnet.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
 public class UploadController : ControllerBase
 {
     [Route("{fileId}")]
@@ -17,30 +16,47 @@ public class UploadController : ControllerBase
     [RequestSizeLimit(5_000_000_000)]
     public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadContext context)
     {
-        // Starting append a.k.a. upload
-        // Can set path per file or use default from global configuration
-        await context.StartAppendDataAsync(fileId);
+        // Do not await if you want the callback
+        var upload = context.StartAppendDataAsync(fileId);
 
-        // context.OnUploadFinished(async _ => await Task.CompletedTask);
-        // context.TerminateUpload(fileId);
+        // Callback
+        context.OnUploadFinished(async (file) =>
+        {
+            var filename = file.Metadata["name"];
+            Console.WriteLine($"Uploaded file {filename} with file size {file.FileSize}");
+            await Task.CompletedTask;
+        });
+
+        // Await after callback defined
+        await upload;
 
         // Must always return 204 on upload success with no Body content
         return NoContent();
     }
 
+    [HttpPost("/api/upload")]
     [TusCreation]
     public async Task<ActionResult> CreateFile([FromServices] TusCreationContext context)
     {
         // Read Metadata
-        var filename = context.UploadFileInfo.Metadata["filename"];
-        var mime = context.UploadFileInfo.Metadata["contentType"];
+        var filename = context.UploadFileInfo.Metadata["name"];
+        var mime = context.UploadFileInfo.Metadata["type"];
 
         // Construct upload URL
         var id = Guid.NewGuid().ToString("N");
         var uploadTo = Url.Action(nameof(Upload), new { fileId = id }) ?? string.Empty;
 
+        // Can define callback before starting upload (creation-with-upload)
+        context.OnUploadFinished(async () =>
+        {
+            // only if the upload HAS data will this be called
+            Console.WriteLine("Finished uploading this file: " + filename);
+            await Task.CompletedTask;
+        });
+
         // Start creation (IuploadStorageHandler.CreateResource())
         await context.StartCreationAsync(id, uploadTo);
+
 
         // Converts a success to 201 created
         return Ok();
