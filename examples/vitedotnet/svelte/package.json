@@ -12,6 +12,9 @@
   "devDependencies": {
     "@sveltejs/adapter-static": "^2.0.3",
     "@sveltejs/kit": "^1.20.4",
+    "@uppy/core": "^3.5.0",
+    "@uppy/dashboard": "^3.5.3",
+    "@uppy/svelte": "^3.0.2",
     "svelte": "^4.0.5",
     "svelte-check": "^3.4.3",
     "tslib": "^2.4.1",
