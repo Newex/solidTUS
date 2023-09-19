@@ -1,5 +1,3 @@
-using System;
-
 namespace SolidTUS.Constants;
 
 /// <summary>

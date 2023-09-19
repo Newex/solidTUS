@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "solidtus", "src\solidtus.cs
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tests", "tests\tests.csproj", "{EA13763D-18B2-405C-88A6-E33E70F4A02B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "benchmarks", "benchmarks\benchmarks.csproj", "{24E2658F-A7B3-4040-9794-DD976849DD8A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{EA13763D-18B2-405C-88A6-E33E70F4A02B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EA13763D-18B2-405C-88A6-E33E70F4A02B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EA13763D-18B2-405C-88A6-E33E70F4A02B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24E2658F-A7B3-4040-9794-DD976849DD8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24E2658F-A7B3-4040-9794-DD976849DD8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24E2658F-A7B3-4040-9794-DD976849DD8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24E2658F-A7B3-4040-9794-DD976849DD8A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -9,6 +9,10 @@
       "name": "examples"
     },
     {
+      "path": "./benchmarks",
+      "name": "benchmarks"
+    },
+    {
       "path": "./tests",
       "name": "tests"
     },
