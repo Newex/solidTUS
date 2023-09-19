@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AssemblyName>ExampleSite</AssemblyName>
+    <RootNamespace>ExampleSite</RootNamespace>
+    <Description>Example site for SolidTus using dotnet core as backend</Description>
+
+    <RepositoryUrl>https://github.com/Newex/solidTUS</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Newex/solidTUS</PackageProjectUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\solidtus.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO.Pipelines;
 using System.Threading;
 using Microsoft.Extensions.Options;
@@ -61,13 +60,13 @@ public class CreationFlow
             return valid.Map(r => (Context: r, Metadata: m));
         });
         var setMetadata = validate.Map(t => PostRequestHandler.SetNewMetadata(t.Context, t.Metadata));
-        var setFileSize = setMetadata.Map(c => PostRequestHandler.SetFileSize(c));
+        var setFileSize = setMetadata.Map(PostRequestHandler.SetFileSize);
 
         var hasContentLength = long.TryParse(context.RequestHeaders[HeaderNames.ContentLength], out var contentLength);
         var isUpload = hasContentLength && contentLength > 0;
         if (isUpload)
         {
-            return setFileSize.Bind(c => PostRequestHandler.CheckIsValidUpload(c));
+            return setFileSize.Bind(PostRequestHandler.CheckIsValidUpload);
         }
 
         return setFileSize;

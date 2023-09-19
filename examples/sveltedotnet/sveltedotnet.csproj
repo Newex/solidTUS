@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AssemblyName>SvelteDotnet</AssemblyName>
+    <RootNamespace>SvelteDotnet</RootNamespace>
+    <Description>Example site for SolidTus using Svelte</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SolidTUS" Version="0.0.17" />
+  </ItemGroup>
+
+</Project>

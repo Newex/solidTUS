@@ -77,7 +77,7 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
 
             var cancel = http.RequestAborted;
             var requestContext = RequestContext.Create(request, cancel);
-            var startCreation = requestContext.Bind(c => creationFlow.StartResourceCreation(c));
+            var startCreation = requestContext.Bind(creationFlow.StartResourceCreation);
             var creationResponse = startCreation.GetTusHttpResponse();
             if (!creationResponse.IsSuccess)
             {
@@ -90,8 +90,8 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
             }
 
             // Callbacks
-            var createdResource = (string location) => response.Headers.Add(HeaderNames.Location, location);
-            var partialUpload = (long written) => response.Headers.Add(TusHeaderNames.UploadOffset, written.ToString());
+            void createdResource(string location) => response.Headers.Add(HeaderNames.Location, location);
+            void partialUpload(long written) => response.Headers.Add(TusHeaderNames.UploadOffset, written.ToString());
 
             tusContext = creationFlow.CreateTusContext(
                 startCreation,

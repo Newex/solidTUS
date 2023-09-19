@@ -13,14 +13,12 @@ builder.Services.AddSwaggerGen();
 
 // Can load from configuration
 // builder.Services.AddTus(builder.Configuration);
-builder.Services.AddTus()
+builder.Services
+    .AddTus(builder.Configuration)
     .Configuration(options =>
-        options.MetadataValidator =
-            (metadata) => metadata.ContainsKey("filename") && metadata.ContainsKey("contentType"))
-    .FileStorageConfiguration(options =>
     {
-        options.DirectoryPath = "/path/to/uploads";
-        options.MetaDirectoryPath = "/path/to/meta/info/file";
+        options.MetadataValidator = (metadata) =>
+            metadata.ContainsKey("filename") && metadata.ContainsKey("contentType");
     });
 
 builder.Services.AddControllers();
@@ -34,11 +32,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthorization();
 
-app.UseEndpoints(endpoints => endpoints.MapControllers());
+app.MapControllers();
+app.MapFallbackToFile("index.html");
 
 app.Run();
