@@ -300,7 +300,7 @@ __pycache__/
 # Custom
 FILES
 appsettings.Development.json
-examples/vitedotnet/wwwroot
+examples/sveltedotnet/wwwroot
 node_modules
 /build
 /.svelte-kit
