@@ -97,16 +97,16 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
                 return;
             }
 
-            var finishedUpload = (long s) => response.Headers.Add(TusHeaderNames.UploadOffset, s.ToString());
-            var onError = (HttpError error) =>
+            void FinishedUpload(long s) => response.Headers.Add(TusHeaderNames.UploadOffset, s.ToString());
+            void OnError(HttpError error)
             {
                 context.Result = new ObjectResult(error.Message)
                 {
                     StatusCode = error.StatusCode
                 };
-            };
+            }
 
-            tusContext = uploadFlow.CreateUploadContext(checksumExtension, request.BodyReader, finishedUpload, onError, cancel);
+            tusContext = uploadFlow.CreateUploadContext(checksumExtension, request.BodyReader, FinishedUpload, OnError, cancel);
             context.ActionArguments[ContextParameterName] = tusContext;
         }
 

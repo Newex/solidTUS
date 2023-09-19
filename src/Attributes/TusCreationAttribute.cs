@@ -90,14 +90,14 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
             }
 
             // Callbacks
-            void createdResource(string location) => response.Headers.Add(HeaderNames.Location, location);
-            void partialUpload(long written) => response.Headers.Add(TusHeaderNames.UploadOffset, written.ToString());
+            void CreatedResource(string location) => response.Headers.Add(HeaderNames.Location, location);
+            void PartialUpload(long written) => response.Headers.Add(TusHeaderNames.UploadOffset, written.ToString());
 
             tusContext = creationFlow.CreateTusContext(
                 startCreation,
                 request.BodyReader,
-                createdResource,
-                partialUpload,
+                CreatedResource,
+                PartialUpload,
                 cancel
             );
             context.ActionArguments[ContextParameterName] = tusContext;
