@@ -8,6 +8,27 @@ SolidTUS is a more Controller/Action oriented and integrates well with a Web API
 
 If you have any suggestions or improvements please do not hesitate to contribute.
 
+### Current TUS features 
+SolidTUS currently implements the following.
+
+Basic features:
+- [x] Core-protocol v.1.0.0 (stop and resume uploads)
+- [x] Max-size (define a hard limit for upload size)
+- [x] Tus-metadata validation
+- [x] Options (server feature announcements)
+
+Extensions:
+- [x] [Creation](https://tus.io/protocols/resumable-upload#creation)
+- [x] [Creation-With-Upload](https://tus.io/protocols/resumable-upload#creation-with-upload)
+- [x] [Checksum](https://tus.io/protocols/resumable-upload#checksum)
+
+Note that the checksum feature does not implement the trailing header feature, i.e. A checksum value must be provided upon sending the http request.
+
+Future goals is to implement all the extensions:
+
+- [ ] [Expiration](https://tus.io/protocols/resumable-upload#expiration)
+- [ ] [Termination](https://tus.io/protocols/resumable-upload#termination)
+- [ ] [Concatenation](https://tus.io/protocols/resumable-upload#concatenation)
 
 ### Other TUS libraries for C#
 * [tusdotnet](https://github.com/tusdotnet/tusdotnet)
@@ -64,21 +85,6 @@ public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadCo
 ```
 
 _And done..._
-
-# TUS-features
-- [x] Core-protocol v.1.0.0 (stop and resume uploads)
-- [x] Creation (create upload)
-- [x] Creation-with-upload (upload and create in a single step)
-- [x] Checksum (validate partial uploads with a given algorithm and checksum)
-- [x] Max-size (define a hard limit for upload size)
-- [x] Tus-metadata validation
-- [x] Options (server feature announcements)
-
-Eventual future features (not implemented):
-- [ ] Expiration (deletion of unfinished uploads)
-- [ ] Concatenation (upload chunks and then combine the files)
-
-Note that the checksum feature does not implement the trailing header feature, i.e. A checksum value must be provided upon sending the http request.
 
 # Extra options
 ## Configurations
