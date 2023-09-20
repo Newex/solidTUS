@@ -76,11 +76,11 @@ public class UploadFlow
         // Core protocol, start -->
         context.FileID = fileId;
         var contentType = PatchRequestHandler.CheckContentType(context);
-        var uploadOffset = contentType.Bind(c => PatchRequestHandler.CheckUploadOffset(c));
+        var uploadOffset = contentType.Bind(PatchRequestHandler.CheckUploadOffset);
         var uploadInfoExists = await uploadOffset.BindAsync(async c => await common.CheckUploadFileInfoExistsAsync(c));
-        var byteOffset = uploadInfoExists.Bind(c => PatchRequestHandler.CheckConsistentByteOffset(c));
+        var byteOffset = uploadInfoExists.Bind(PatchRequestHandler.CheckConsistentByteOffset);
         var uploadLength = await byteOffset.BindAsync(async c => await patch.CheckUploadLengthAsync(c));
-        var uploadSize = uploadLength.Bind(c => PatchRequestHandler.CheckUploadExceedsFileSize(c));
+        var uploadSize = uploadLength.Bind(PatchRequestHandler.CheckUploadExceedsFileSize);
         // <-- end
 
         return uploadSize;
@@ -122,7 +122,7 @@ public class UploadFlow
         }
 
         var contentLength = requestContext.RequestHeaders.ContentLength;
-        var uploadFileInfo = requestContext!.UploadFileInfo;
+        var uploadFileInfo = requestContext.UploadFileInfo;
         return new TusUploadContext(
             requestContext.ChecksumContext,
             contentLength,

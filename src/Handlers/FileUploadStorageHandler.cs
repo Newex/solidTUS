@@ -30,13 +30,6 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     public async Task<long> OnPartialUploadAsync(string fileId, PipeReader reader, UploadFileInfo uploadInfo, long? expectedSize, bool append, CancellationToken cancellationToken)
     {
         // Note: Why have 2 different file infos?
-        // Get upload file info metadata
-        var fileInfo = await uploadMetaHandler.GetUploadFileInfoAsync(fileId, cancellationToken);
-        if (fileInfo is null)
-        {
-            throw new InvalidOperationException("Missing resource data");
-        }
-
         var hasContentLength = expectedSize.HasValue;
         var written = 0L;
 
@@ -80,7 +73,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
         }
         finally
         {
-            var total = fileInfo.ByteOffset + written;
+            var total = uploadInfo.ByteOffset + written;
             await uploadMetaHandler.SetTotalUploadedBytesAsync(fileId, total);
         }
 
@@ -161,18 +154,20 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     }
 
     /// <inheritdoc />
-    public ValueTask<long?> GetUploadSizeAsync(string fileId, UploadFileInfo uploadInfo, CancellationToken cancellationToken)
+    #pragma warning disable CS1998 // Async method lacks await
+    public async ValueTask<long?> GetUploadSizeAsync(string fileId, UploadFileInfo uploadInfo, CancellationToken cancellationToken)
     {
         var filename = FullFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath);
         var exists = File.Exists(filename);
         if (!exists)
         {
-            return new ValueTask<long?>();
+            return null;
         }
 
         var size = new FileInfo(filename).Length;
-        return new ValueTask<long?>(size);
+        return size;
     }
+    #pragma warning restore CS1998
 
     private static string FullFilenamePath(string filename, string filePath)
     {
