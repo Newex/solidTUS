@@ -29,6 +29,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     /// <inheritdoc />
     public async Task<long> OnPartialUploadAsync(string fileId, PipeReader reader, UploadFileInfo uploadInfo, long? expectedSize, bool append, CancellationToken cancellationToken)
     {
+        // Note: Why have 2 different file infos?
         // Get upload file info metadata
         var fileInfo = await uploadMetaHandler.GetUploadFileInfoAsync(fileId, cancellationToken);
         if (fileInfo is null)
@@ -41,14 +42,23 @@ public class FileUploadStorageHandler : IUploadStorageHandler
 
         try
         {
+            var filename = append
+                ? FullFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath)
+                : FullChunkFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath);
+
+            var writeMode = append ? FileMode.Append : FileMode.Create;
+            using var fs = new FileStream(filename, writeMode);
+
+            if (expectedSize.HasValue)
+            {
+                fs.SetLength(expectedSize.Value);
+            }
+
             while (!cancellationToken.IsCancellationRequested)
             {
                 // System.IO.IOException client reset request stream
                 var result = await reader.ReadAsync(cancellationToken);
                 var buffer = result.Buffer;
-                var filename = append ? FullFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath) : FullChunkFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath);
-                var writeMode = append ? FileMode.Append : FileMode.Create;
-                using var fs = new FileStream(filename, writeMode);
                 var end = (int)buffer.Length;
                 await fs.WriteAsync(buffer.ToArray().AsMemory(0, end), cancellationToken);
 
