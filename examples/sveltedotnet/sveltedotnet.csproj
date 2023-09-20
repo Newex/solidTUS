@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SolidTUS" Version="0.0.17" />
+    <ProjectReference Include="..\..\src\solidtus.csproj" />
   </ItemGroup>
 
 </Project>
