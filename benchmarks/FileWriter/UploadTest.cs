@@ -39,6 +39,64 @@ This currently gives ~ 4.621 seconds for 1 Gb.
 =~ 1731 Megabit per sec (216.4 Megabyte per second)
 
 [calculator used: https://www.omnicalculator.com/other/download-time]
+
+========================================================
+4 RUNS
+| Method               | Mean    | Error    | StdDev  |
+|--------------------- |--------:|---------:|--------:|
+| UploadPartialFileOld | 3.916 s | 10.473 s | 1.621 s |
+| UploadPartialFileNew | 4.763 s | 11.048 s | 1.710 s |
+========================================================
+// * Summary *
+
+BenchmarkDotNet v0.13.8, Ubuntu 23.04 (Lunar Lobster)
+AMD Ryzen 7 3700X, 1 CPU, 4 logical and 2 physical cores
+.NET SDK 7.0.111
+  [Host]     : .NET 7.0.11 (7.0.1123.42501), X64 RyuJIT AVX2
+  Job-ZVFQDE : .NET 7.0.11 (7.0.1123.42501), X64 RyuJIT AVX2
+
+InvocationCount=1  IterationCount=10  RunStrategy=Monitoring  
+UnrollFactor=1  WarmupCount=0  
+========================================================
+10 RUNES
+
+| Method               | Mean    | Error   | StdDev  |
+|--------------------- |--------:|--------:|--------:|
+| UploadPartialFileOld | 4.084 s | 2.989 s | 1.977 s |
+| UploadPartialFileNew | 5.041 s | 2.153 s | 1.424 s |
+========================================================
+// * Summary *
+
+BenchmarkDotNet v0.13.8, Ubuntu 23.04 (Lunar Lobster)
+AMD Ryzen 7 3700X, 1 CPU, 4 logical and 2 physical cores
+.NET SDK 7.0.111
+  [Host]     : .NET 7.0.11 (7.0.1123.42501), X64 RyuJIT AVX2
+  Job-VRKTYU : .NET 7.0.11 (7.0.1123.42501), X64 RyuJIT AVX2
+
+InvocationCount=1  IterationCount=10  RunStrategy=Monitoring  
+UnrollFactor=1  WarmupCount=0  
+
+| Method               | Mean    | Error   | StdDev  |
+|--------------------- |--------:|--------:|--------:|
+| UploadPartialFileOld | 5.248 s | 2.513 s | 1.663 s |
+| UploadPartialFileNew | 6.674 s | 2.641 s | 1.747 s |
+========================================================
+// * Summary *
+
+BenchmarkDotNet v0.13.8, Ubuntu 23.04 (Lunar Lobster)
+AMD Ryzen 7 3700X, 1 CPU, 4 logical and 2 physical cores
+.NET SDK 7.0.111
+  [Host]     : .NET 7.0.11 (7.0.1123.42501), X64 RyuJIT AVX2
+  Job-CJHKRK : .NET 7.0.11 (7.0.1123.42501), X64 RyuJIT AVX2
+
+InvocationCount=1  IterationCount=10  RunStrategy=Monitoring  
+UnrollFactor=1  WarmupCount=0  
+
+| Method               | Mean    | Error   | StdDev   |
+|--------------------- |--------:|--------:|---------:|
+| UploadPartialFileOld | 5.173 s | 1.915 s | 1.2668 s |
+| UploadPartialFileNew | 6.087 s | 1.058 s | 0.6997 s |
+========================================================
 */
 
 [SimpleJob(RunStrategy.Monitoring, warmupCount: 0, iterationCount: 10)]
@@ -84,7 +142,7 @@ public class UploadTest
     }
 
     [Benchmark]
-    public async Task UploadPartialFile()
+    public async Task UploadPartialFileOld()
     {
         if (uploadStorageHandler is null)
         {
