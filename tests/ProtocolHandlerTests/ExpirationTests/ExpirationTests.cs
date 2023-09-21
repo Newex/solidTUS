@@ -26,15 +26,13 @@ public class ExpirationTests
 
         // 1st of June 2020 is a Monday
         var now = new DateTimeOffset(year, month, day, hour, minutes, seconds, TimeSpan.FromHours(0));
-        var request = RequestContext.Create(http, CancellationToken.None).Map(c =>
+        var request = RequestContext.Create(http, CancellationToken.None).Map(c => c with
         {
-            return c with
+            UploadFileInfo = new()
             {
-                UploadFileInfo = new()
-                {
-                    CreatedDate = now
-                }
-            };
+                CreatedDate = now
+            }
+
         });
         var clock = MockOthers.Clock(now);
         var options = Options.Create(new TusOptions
