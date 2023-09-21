@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
@@ -53,4 +54,30 @@ public record UploadFileInfo
     /// </remarks>
     [JsonInclude]
     public string OnDiskFilename { get; internal set; } = string.Empty;
+
+    /// <summary>
+    /// Get the specific expiration strategy for this related upload.
+    /// </summary>
+    /// <remarks>
+    /// If null this means that the global <see cref="ExpirationStrategy"/> is used.
+    /// </remarks>
+    public ExpirationStrategy? ExpirationStrategy { get; internal set; }
+
+    /// <summary>
+    /// Get the specific date-time for the upload expiration.
+    /// </summary>
+    public DateTimeOffset? ExpirationDate { get; internal set; }
+
+    /// <summary>
+    /// Get the specific interval for this upload.
+    /// </summary>
+    /// <remarks>
+    /// If null, the global settings is used, if applicable.
+    /// </remarks>
+    public TimeSpan? Interval { get; internal set; }
+
+    /// <summary>
+    /// The created date of the upload and metadata
+    /// </summary>
+    public DateTimeOffset CreatedDate { get; internal set; }
 }

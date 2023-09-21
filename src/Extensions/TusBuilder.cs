@@ -1,4 +1,6 @@
 using System;
+
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.DependencyInjection;
@@ -93,10 +95,13 @@ public sealed class TusBuilder
     {
         var builder = new TusBuilder(services);
 
+        builder.services.TryAddSingleton<ISystemClock>();
+
         builder.services.TryAddScoped<CommonRequestHandler>();
         builder.services.TryAddScoped<PatchRequestHandler>();
         builder.services.TryAddScoped<PostRequestHandler>();
         builder.services.TryAddScoped<OptionsRequestHandler>();
+        builder.services.TryAddScoped<ExpirationRequestHandler>();
 
         builder.services.TryAddScoped<UploadFlow>();
         builder.services.TryAddScoped<CreationFlow>();

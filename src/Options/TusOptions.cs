@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+using SolidTUS.Models;
+
 namespace SolidTUS.Options;
 
 /// <summary>
@@ -20,6 +22,36 @@ public record TusOptions
     /// Get or set the maximum TUS upload size
     /// </summary>
     public long? MaxSize { get; set; }
+
+    /// <summary>
+    /// Get or set the global expiration strategy.
+    /// </summary>
+    /// <remarks>
+    /// Default <see cref="Models.ExpirationStrategy"/> is <see cref="ExpirationStrategy.Never"/>
+    /// </remarks>
+    public ExpirationStrategy ExpirationStrategy { get; set; } = ExpirationStrategy.Never;
+
+    /// <summary>
+    /// Get or set the global sliding expiration interval.
+    /// </summary>
+    /// <remarks>
+    /// Only used if <see cref="Models.ExpirationStrategy"/> is set to <see cref="ExpirationStrategy.SlidingExpiration"/> or <see cref="ExpirationStrategy.SlideAfterAbsoluteExpiration"/>.
+    /// <para>
+    /// The default interval is 10 minutes.
+    /// </para>
+    /// </remarks>
+    public TimeSpan SlidingInterval { get; set; } = TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// Get or set the global absolute interval.
+    /// </summary>
+    /// <remarks>
+    /// Only used if <see cref="Models.ExpirationStrategy"/> is set to <see cref="ExpirationStrategy.AbsoluteExpiration"/> or <see cref="ExpirationStrategy.SlideAfterAbsoluteExpiration"/>.
+    /// <para>
+    /// The default interval is 1 hour.
+    /// </para>
+    /// </remarks>
+    public TimeSpan AbsoluteInterval { get; set; } = TimeSpan.FromHours(1);
 
     /// <summary>
     /// Get the configuration section name
