@@ -29,7 +29,6 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     /// <inheritdoc />
     public async Task<long> OnPartialUploadAsync(string fileId, PipeReader reader, UploadFileInfo uploadInfo, long? expectedSize, bool append, CancellationToken cancellationToken)
     {
-        // Note: Why have 2 different file infos?
         var hasContentLength = expectedSize.HasValue;
         var written = 0L;
 
@@ -42,12 +41,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
             var writeMode = append ? FileMode.Append : FileMode.Create;
             using var fs = new FileStream(filename, writeMode);
 
-            if (expectedSize.HasValue)
-            {
-                fs.SetLength(expectedSize.Value);
-            }
-
-            while (!cancellationToken.IsCancellationRequested)
+            while (true)
             {
                 // System.IO.IOException client reset request stream
                 var result = await reader.ReadAsync(cancellationToken);
@@ -67,9 +61,9 @@ public class FileUploadStorageHandler : IUploadStorageHandler
                 }
             }
         }
-        catch (Exception)
+        catch (IOException)
         {
-            throw;
+
         }
         finally
         {
