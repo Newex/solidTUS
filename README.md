@@ -167,8 +167,12 @@ Environment variables are named as `SolidTUS__DirectoryPath` with a double under
 ## Contexts
 The injected context classes are excluded from ModelBinding but do show up in Swagger SwashBuckle. To exclude from Swagger SwashBuckle you can annotate the contexts with the `FromServices`-attribute.
 
+**IMPORTANT: Callbacks must be defined before upload starts.**  
+**The `StartCreationAsync` and `StartAppendDataAsync` starts upload.**
+
 ### TusUploadContext
 Is responsible for starting or terminating the upload. A termination is a premature ending and signals to the client that the upload has been terminated.  
+
 The class contains the following members:
 
 * `OnUploadFinished` - A method that takes an awaitable callback. When the whole file has been completely uploaded the callback is invoked.
