@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
@@ -146,7 +147,7 @@ public class TusUploadContext
             }
             catch (Exception)
             {
-                throw;
+                //
             }
             finally
             {
