@@ -11,6 +11,7 @@ using SolidTUS.Tests.Mocks;
 
 namespace SolidTus.Tests.ProtocolHandlerTests.ExpirationTests;
 
+[UnitTest]
 public class ExpirationTests
 {
     [Fact]
