@@ -14,8 +14,10 @@ namespace SolidTus.Tests.ProtocolHandlerTests.ExpirationTests;
 [UnitTest]
 public class ExpirationTests
 {
-    [Fact]
-    public void Setting_the_expiration_header_should_follow_RFC7231()
+    [Theory]
+    [InlineData(2020, 06, 01, 12, 30, 00, "Mon", "Jun")]
+    [InlineData(2014, 06, 25, 16, 00, 00, "Wed", "Jun")]
+    public void Setting_the_expiration_header_should_follow_RFC7231(int year, int month, int day, int hour, int minutes, int seconds, string dayName, string monthName)
     {
         // Arrange
         var http = MockHttps.HttpRequest("PATCH",
@@ -23,7 +25,7 @@ public class ExpirationTests
         );
 
         // 1st of June 2020 is a Monday
-        var now = new DateTimeOffset(2020, 06, 01, 12, 30, 0, TimeSpan.FromHours(0));
+        var now = new DateTimeOffset(year, month, day, hour, minutes, seconds, TimeSpan.FromHours(0));
         var request = RequestContext.Create(http, CancellationToken.None).Map(c =>
         {
             return c with
@@ -47,7 +49,7 @@ public class ExpirationTests
         var result = response.Headers[TusHeaderNames.Expiration];
 
         // Assert
-        var expected = "Mon, 01 Jun 2020 12:32:00 GMT";
+        var expected = $"{dayName}, {day:00} {monthName} {year:0000} {hour:00}:{minutes+2:00}:{seconds:00} GMT";
         Assert.Equal(expected, result);
     }
 }
