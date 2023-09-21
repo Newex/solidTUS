@@ -1,5 +1,9 @@
 using System;
 using System.Threading;
+
+using FluentAssertions;
+
+
 using Microsoft.Extensions.Options;
 using SolidTus.Tests.Mocks;
 using SolidTUS.Constants;
@@ -49,5 +53,39 @@ public class ExpirationTests
         // Assert
         var expected = $"{dayName}, {day:00} {monthName} {year:0000} {hour:00}:{minutes+2:00}:{seconds:00} GMT";
         Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public void Never_expires_should_not_have_expiration_header()
+    {
+        // Arrange
+        var http = MockHttps.HttpRequest("PATCH",
+            (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
+        );
+
+        // 1st of June 2020 is a Monday
+        var now = new DateTimeOffset(2020, 06, 01, 12, 00, 00, TimeSpan.FromHours(0));
+        var request = RequestContext.Create(http, CancellationToken.None).Map(c => c with
+        {
+            UploadFileInfo = new()
+            {
+                CreatedDate = now
+            }
+
+        });
+        var clock = MockOthers.Clock(now);
+        var options = Options.Create(new TusOptions
+        {
+            AbsoluteInterval = TimeSpan.FromMinutes(2),
+            ExpirationStrategy = ExpirationStrategy.Never
+        });
+        var handler = new ExpirationRequestHandler(clock, options);
+
+        // Act
+        var response = request.Map(handler.SetExpiration).GetTusHttpResponse();
+        var result = response.Headers[TusHeaderNames.Expiration];
+
+        // Assert
+        result.Should().BeNullOrEmpty();
     }
 }
