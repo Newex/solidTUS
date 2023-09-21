@@ -1,8 +1,6 @@
 using System;
 using System.Threading.Tasks;
-
 using Microsoft.AspNetCore.Mvc;
-
 using SolidTUS.Attributes;
 using SolidTUS.Contexts;
 
@@ -17,7 +15,6 @@ public class UploadController : ControllerBase
     public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadContext context)
     {
         // Do not await if you want the callback
-        var upload = context.StartAppendDataAsync(fileId);
 
         // Callback
         context.OnUploadFinished(async (file) =>
@@ -28,7 +25,8 @@ public class UploadController : ControllerBase
         });
 
         // Await after callback defined
-        await upload;
+        await context.StartAppendDataAsync(fileId);
+        // await upload;
 
         // Must always return 204 on upload success with no Body content
         return NoContent();

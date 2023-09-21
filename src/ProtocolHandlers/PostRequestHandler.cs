@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
+
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
@@ -127,7 +129,7 @@ public class PostRequestHandler
         var update = uploadInfo with
         {
             RawMetadata = metadata.Item1,
-            Metadata = metadata.Item2.ToImmutableDictionary()
+            Metadata = metadata.Item2.AsReadOnly()
         };
 
         return context with

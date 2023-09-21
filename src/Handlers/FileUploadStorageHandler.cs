@@ -29,26 +29,23 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     /// <inheritdoc />
     public async Task<long> OnPartialUploadAsync(string fileId, PipeReader reader, UploadFileInfo uploadInfo, long? expectedSize, bool append, CancellationToken cancellationToken)
     {
-        // Get upload file info metadata
-        var fileInfo = await uploadMetaHandler.GetUploadFileInfoAsync(fileId, cancellationToken);
-        if (fileInfo is null)
-        {
-            throw new InvalidOperationException("Missing resource data");
-        }
-
         var hasContentLength = expectedSize.HasValue;
         var written = 0L;
 
         try
         {
-            while (!cancellationToken.IsCancellationRequested)
+            var filename = append
+                ? FullFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath)
+                : FullChunkFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath);
+
+            var writeMode = append ? FileMode.Append : FileMode.Create;
+            using var fs = new FileStream(filename, writeMode);
+
+            while (true)
             {
                 // System.IO.IOException client reset request stream
                 var result = await reader.ReadAsync(cancellationToken);
                 var buffer = result.Buffer;
-                var filename = append ? FullFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath) : FullChunkFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath);
-                var writeMode = append ? FileMode.Append : FileMode.Create;
-                using var fs = new FileStream(filename, writeMode);
                 var end = (int)buffer.Length;
                 await fs.WriteAsync(buffer.ToArray().AsMemory(0, end), cancellationToken);
 
@@ -64,13 +61,13 @@ public class FileUploadStorageHandler : IUploadStorageHandler
                 }
             }
         }
-        catch (Exception)
+        catch (IOException)
         {
-            throw;
+
         }
         finally
         {
-            var total = fileInfo.ByteOffset + written;
+            var total = uploadInfo.ByteOffset + written;
             await uploadMetaHandler.SetTotalUploadedBytesAsync(fileId, total);
         }
 
@@ -151,18 +148,20 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     }
 
     /// <inheritdoc />
-    public ValueTask<long?> GetUploadSizeAsync(string fileId, UploadFileInfo uploadInfo, CancellationToken cancellationToken)
+    #pragma warning disable CS1998 // Async method lacks await
+    public async ValueTask<long?> GetUploadSizeAsync(string fileId, UploadFileInfo uploadInfo, CancellationToken cancellationToken)
     {
         var filename = FullFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath);
         var exists = File.Exists(filename);
         if (!exists)
         {
-            return new ValueTask<long?>();
+            return null;
         }
 
         var size = new FileInfo(filename).Length;
-        return new ValueTask<long?>(size);
+        return size;
     }
+    #pragma warning restore CS1998
 
     private static string FullFilenamePath(string filename, string filePath)
     {

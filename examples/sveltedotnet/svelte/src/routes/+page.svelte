@@ -28,14 +28,50 @@
     uppy
       .use(Dashboard,{inline:true, target:"#dashboard"})
       .use(Tus, {
-        endpoint: "https://localhost:7134/api/upload",
+        endpoint,
         uploadDataDuringCreation: false,
         allowedMetaFields: ["name", "type"]
       });
+
+    updateLocalStorage();
   });
+
+  let defaultItems: any[] = [];
+  $: items = defaultItems;
+
+  const updateLocalStorage = () => {
+    items = [];
+    for (let [key, value] of Object.entries(localStorage)) {
+      let obj = JSON.parse(value);
+      items.push(obj);
+    }
+  }
+
+  $: endpoint = "https://localhost:7134/api/upload";
 </script>
 
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+<h1>Solidtus using @uppy/tus</h1>
+
+{#each items as item}
+<div>
+  <p>Size: {item.size}</p>
+  <p>Metadata: {JSON.stringify(item.metadata)}</p>
+  <p>Creation Time: {item.creationTime}</p>
+  <p>Upload Url: {item.uploadUrl}</p>
+</div>
+{/each}
+
+<div>
+  <input type="text" bind:value={endpoint}>
+</div>
+
+
+<button on:click={updateLocalStorage}>
+  Update local storage
+</button>
+
+<button on:click={() => { localStorage.clear(); items = []; }}>
+  Clear the LocalStorage
+</button>
 
 <div id="dashboard"></div>
