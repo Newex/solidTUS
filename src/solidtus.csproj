@@ -13,6 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="SolidTus.Tests" />
   </ItemGroup>
 
   <ItemGroup>

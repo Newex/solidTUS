@@ -4,6 +4,7 @@
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <RootNamespace>SolidTus.Tests</RootNamespace>
+    <AssemblyName>SolidTus.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
 
     <!-- Warnings and errors -->
