@@ -1,9 +1,6 @@
 using System;
 using System.Threading;
-
 using FluentAssertions;
-
-
 using Microsoft.Extensions.Options;
 using SolidTus.Tests.Mocks;
 using SolidTUS.Constants;
