@@ -28,7 +28,7 @@
     uppy
       .use(Dashboard,{inline:true, target:"#dashboard"})
       .use(Tus, {
-        endpoint: "https://localhost:7134/api/upload",
+        endpoint,
         uploadDataDuringCreation: false,
         allowedMetaFields: ["name", "type"]
       });
@@ -46,6 +46,8 @@
       items.push(obj);
     }
   }
+
+  $: endpoint = "https://localhost:7134/api/upload";
 </script>
 
 <h1>Solidtus using @uppy/tus</h1>
@@ -58,6 +60,10 @@
   <p>Upload Url: {item.uploadUrl}</p>
 </div>
 {/each}
+
+<div>
+  <input type="text" bind:value={endpoint}>
+</div>
 
 
 <button on:click={updateLocalStorage}>
