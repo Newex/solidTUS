@@ -21,6 +21,8 @@ public class ExpirationTests
         var http = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
+
+        // 1st of June 2020 is a Monday
         var now = new DateTimeOffset(2020, 06, 01, 12, 30, 0, TimeSpan.FromHours(0));
         var request = RequestContext.Create(http, CancellationToken.None).Map(c =>
         {
