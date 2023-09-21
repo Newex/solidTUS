@@ -101,7 +101,7 @@ public class ExpirationRequestHandler
     private static string ToRFC7231(DateTimeOffset time)
     {
         var utc = time.ToUniversalTime();
-        var rfc = utc.ToString("ddd, dd MM yyyy HH:mm:ss GMT", CultureInfo.CreateSpecificCulture("en"));
+        var rfc = utc.ToString(@"ddd, dd MMM yyyy HH:mm:ss G\MT", CultureInfo.CreateSpecificCulture("en"));
         return rfc;
     }
 }
