@@ -5,6 +5,10 @@
       "name": "root"
     },
     {
+      "path": "./wiki",
+      "name": "wiki"
+    },
+    {
       "path": "./examples",
       "name": "examples"
     },
