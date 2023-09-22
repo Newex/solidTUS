@@ -85,4 +85,40 @@ public class ExpirationTests
         // Assert
         result.Should().BeNullOrEmpty();
     }
+
+    [Fact]
+    public void File_expiration_strategy_should_take_precedence_over_global_values()
+    {
+        // Arrange
+        var http = MockHttps.HttpRequest("PATCH",
+            (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
+        );
+
+        // 1st of June 2020 is a Monday
+        var now = new DateTimeOffset(2020, 06, 01, 12, 00, 00, TimeSpan.FromHours(0));
+        var request = RequestContext.Create(http, CancellationToken.None).Map(c => c with
+        {
+            UploadFileInfo = new()
+            {
+                CreatedDate = now,
+                ExpirationStrategy = ExpirationStrategy.SlidingExpiration,
+                Interval = TimeSpan.FromMinutes(5)
+            }
+
+        });
+        var clock = MockOthers.Clock(now);
+        var globalOptions = Options.Create(new TusOptions
+        {
+            AbsoluteInterval = TimeSpan.FromMinutes(2),
+            ExpirationStrategy = ExpirationStrategy.Never
+        });
+        var handler = new ExpirationRequestHandler(clock, globalOptions);
+
+        // Act
+        var response = request.Map(handler.SetExpiration).GetTusHttpResponse();
+        var result = response.Headers[TusHeaderNames.Expiration];
+
+        // Assert
+        result.Should().BeEquivalentTo("Mon, 01 Jun 2020 12:05:00 GMT");
+    }
 }
