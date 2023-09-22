@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -18,8 +20,25 @@ namespace SolidTUS.Attributes;
 /// <summary>
 /// Identifies an action that supports TUS resource creation
 /// </summary>
-public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProvider
+public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProvider, IRouteTemplateProvider
 {
+    /// <summary>
+    /// Instantiate a new <see cref="TusCreationAttribute"/> creation endpoint handler.
+    /// </summary>
+    public TusCreationAttribute()
+    {
+    }
+
+    /// <summary>
+    /// Instantiate a new <see cref="TusCreationAttribute"/> creation endpoint handler.
+    /// </summary>
+    /// <param name="template">The route template</param>
+    public TusCreationAttribute([StringSyntax("Route")] string template)
+    {
+        ArgumentNullException.ThrowIfNull(template);
+        Template = template;
+    }
+
     private TusCreationContext? tusContext;
 
     /// <summary>
@@ -34,6 +53,15 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
     {
         "POST", "OPTIONS"
     };
+
+    /// <inheritdoc />
+    public string? Template { get; init; }
+
+    /// <inheritdoc />
+    int? IRouteTemplateProvider.Order => Order;
+
+    /// <inheritdoc />
+    public string? Name { get; set; }
 
     /// <inheritdoc />
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -18,8 +19,25 @@ namespace SolidTUS.Attributes;
 /// <summary>
 /// Identifies an action that supports TUS uploads. Must have a file ID parameter and TusContext parameter.
 /// </summary>
-public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvider
+public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvider, IRouteTemplateProvider
 {
+    /// <summary>
+    /// Instantiate a new <see cref="TusUploadAttribute"/> upload endpoint handler
+    /// </summary>
+    public TusUploadAttribute()
+    {
+    }
+
+    /// <summary>
+    /// Instantiate a new <see cref="TusUploadAttribute"/> upload endpoint handler
+    /// </summary>
+    /// <param name="template">The route template</param>
+    public TusUploadAttribute([StringSyntax("Route")] string template)
+    {
+        ArgumentNullException.ThrowIfNull(template);
+        Template = template;
+    }
+
     private TusUploadContext? tusContext;
 
     /// <summary>
@@ -39,6 +57,14 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
     {
         "HEAD", "PATCH", "POST"
     };
+
+    /// <inheritdoc />
+    public string? Template { get; init; }
+
+    /// <inheritdoc />
+    public string? Name { get; set; }
+
+    int? IRouteTemplateProvider.Order => Order;
 
     /// <inheritdoc />
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
