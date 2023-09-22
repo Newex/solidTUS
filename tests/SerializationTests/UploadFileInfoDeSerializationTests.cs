@@ -16,4 +16,12 @@ public class UploadFileInfoDeSerializationTests
         uploadFileInfo.Should()
                       .Match<UploadFileInfo>(f => f.ExpirationStrategy == ExpirationStrategy.SlidingExpiration);
     }
+
+    [Fact]
+    public void UploadFileInfo_deserialization_should_include_CreatedDate_property()
+    {
+        var uploadFileInfo = JsonSerializer.Deserialize<UploadFileInfo>(Json);
+        var createdDate = uploadFileInfo?.CreatedDate;
+        createdDate.Should().NotBeNull();
+    }
 }
