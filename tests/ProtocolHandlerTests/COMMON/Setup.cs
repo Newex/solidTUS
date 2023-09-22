@@ -1,4 +1,7 @@
 using System;
+
+using SolidTus.Tests.Mocks;
+
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.Tests.Mocks;
@@ -11,9 +14,11 @@ public static class Setup
     {
         var uploadStorageHandler = MockHandlers.UploadStorageHandler();
         var uploadMetaHandler = MockHandlers.UploadMetaHandler(fileInfo);
+        var clock = MockOthers.Clock();
         return new CommonRequestHandler(
             uploadStorageHandler,
-            uploadMetaHandler
+            uploadMetaHandler,
+            clock
         );
     }
 }

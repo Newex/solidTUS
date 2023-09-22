@@ -1,22 +1,17 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-using Microsoft.AspNetCore.Authentication;
-
+using Microsoft.Extensions.Internal;
 using Moq;
 
 namespace SolidTus.Tests.Mocks;
 
 public static class MockOthers
 {
-    public static ISystemClock Clock(DateTimeOffset now)
+    public static ISystemClock Clock(DateTimeOffset? now = null)
     {
         var mock = new Mock<ISystemClock>();
 
         mock.Setup(c => c.UtcNow)
-        .Returns(now);
+        .Returns(now ?? DateTimeOffset.UtcNow);
 
         return mock.Object;
     }

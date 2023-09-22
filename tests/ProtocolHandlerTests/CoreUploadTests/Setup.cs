@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO.Pipelines;
 using System.Threading;
+using SolidTus.Tests.Mocks;
 using SolidTUS.Contexts;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
@@ -16,17 +17,21 @@ namespace SolidTUS.Tests.ProtocolHandlerTests.CoreUploadTests;
 
 public static class Setup
 {
-    public static UploadFlow UploadFlow(IUploadMetaHandler? uploadMetaHandler = null, UploadFileInfo? file = null)
+    public static UploadFlow UploadFlow(IUploadMetaHandler? uploadMetaHandler = null, UploadFileInfo? file = null, TusOptions? options = null)
     {
         var storageHandler = MockHandlers.UploadStorageHandler(currentSize: file?.ByteOffset);
         var upload = uploadMetaHandler ?? MockHandlers.UploadMetaHandler(file);
-        var common = new CommonRequestHandler(storageHandler, upload);
+        var clock = MockOthers.Clock();
+        var common = new CommonRequestHandler(storageHandler, upload, clock);
         var patch = new PatchRequestHandler(upload);
         var checksum = new ChecksumRequestHandler(new List<IChecksumValidator>());
+        var ioptions = Microsoft.Extensions.Options.Options.Create(options ?? new());
+        var expiration = new ExpirationRequestHandler(clock, ioptions);
         return new UploadFlow(
             common,
             patch,
             checksum,
+            expiration,
             storageHandler,
             upload
         );
