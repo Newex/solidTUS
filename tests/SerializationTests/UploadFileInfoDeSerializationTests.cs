@@ -1,8 +1,7 @@
 using System.Text.Json;
-using FluentAssertions;
 using SolidTUS.Models;
 
-namespace SolidTus.Tests.SerializationTests;
+namespace SolidTUS.Tests.SerializationTests;
 
 public class UploadFileInfoDeSerializationTests
 {

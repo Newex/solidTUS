@@ -1,5 +1,4 @@
 using System.Threading;
-using SolidTus.Tests.ProtocolHandlerTests.COMMON;
 using SolidTUS.Constants;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;

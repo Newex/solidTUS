@@ -1,8 +1,7 @@
 using System;
 using System.Threading;
 using FluentAssertions;
-using Microsoft.Extensions.Options;
-using SolidTus.Tests.Mocks;
+using MSOptions = Microsoft.Extensions.Options.Options;
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
 using SolidTUS.Models;
@@ -10,7 +9,7 @@ using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 using SolidTUS.Tests.Mocks;
 
-namespace SolidTus.Tests.ProtocolHandlerTests.ExpirationTests;
+namespace SolidTUS.Tests.ProtocolHandlerTests.ExpirationTests;
 
 [UnitTest]
 public class ExpirationTests
@@ -36,7 +35,7 @@ public class ExpirationTests
 
         });
         var clock = MockOthers.Clock(now);
-        var options = Options.Create(new TusOptions
+        var options = MSOptions.Create(new TusOptions
         {
             AbsoluteInterval = TimeSpan.FromMinutes(2),
             ExpirationStrategy = ExpirationStrategy.AbsoluteExpiration
@@ -71,7 +70,7 @@ public class ExpirationTests
 
         });
         var clock = MockOthers.Clock(now);
-        var options = Options.Create(new TusOptions
+        var options = MSOptions.Create(new TusOptions
         {
             AbsoluteInterval = TimeSpan.FromMinutes(2),
             ExpirationStrategy = ExpirationStrategy.Never
@@ -107,7 +106,7 @@ public class ExpirationTests
 
         });
         var clock = MockOthers.Clock(now);
-        var globalOptions = Options.Create(new TusOptions
+        var globalOptions = MSOptions.Create(new TusOptions
         {
             AbsoluteInterval = TimeSpan.FromMinutes(2),
             ExpirationStrategy = ExpirationStrategy.Never

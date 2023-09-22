@@ -4,7 +4,7 @@ using SolidTUS.Constants;
 using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.Validators;
-using P = Microsoft.Extensions.Options.Options;
+using MSOptions = Microsoft.Extensions.Options.Options;
 
 namespace SolidTUS.Tests.ProtocolHandlerTests.OPTIONS;
 
@@ -15,7 +15,7 @@ public class ResponseTests
     public void Response_includes_Tus_Resumable_header()
     {
         // Arrange
-        var options = P.Create(new TusOptions());
+        var options = MSOptions.Create(new TusOptions());
         var validators = new List<IChecksumValidator>();
         var handler = new OptionsRequestHandler(options, validators);
 
@@ -31,7 +31,7 @@ public class ResponseTests
     public void Response_does_not_contain_Tus_Max_Size_if_not_set()
     {
         // Arrange
-        var options = P.Create(new TusOptions
+        var options = MSOptions.Create(new TusOptions
         {
             MaxSize = null
         });
@@ -50,7 +50,7 @@ public class ResponseTests
     public void Response_does_contain_Tus_Max_Size_if_set()
     {
         // Arrange
-        var options = P.Create(new TusOptions
+        var options = MSOptions.Create(new TusOptions
         {
             MaxSize = 1000L
         });
@@ -69,7 +69,7 @@ public class ResponseTests
     public void Response_contains_support_for_protocol_extension_creation()
     {
         // Arrange
-        var options = P.Create(new TusOptions());
+        var options = MSOptions.Create(new TusOptions());
         var validators = new List<IChecksumValidator>();
         var handler = new OptionsRequestHandler(options, validators);
 

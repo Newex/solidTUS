@@ -3,7 +3,7 @@ using SolidTUS.Constants;
 using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.Tests.Tools;
-using P = Microsoft.Extensions.Options.Options;
+using MSOptions = Microsoft.Extensions.Options.Options;
 
 namespace SolidTUS.Tests.ProtocolHandlerTests.POST;
 
@@ -77,7 +77,7 @@ public class CreateCheckRequestTests
     public void When_upload_length_exceeds_max_size_return_413_status()
     {
         // Arrange
-        var options = P.Create(new TusOptions
+        var options = MSOptions.Create(new TusOptions
         {
             MaxSize = 200L
         });
@@ -98,7 +98,7 @@ public class CreateCheckRequestTests
     public void When_max_size_is_not_defined_then_allow_maximum_long_upload_and_return_201_status()
     {
         // Arrange
-        var options = P.Create(new TusOptions());
+        var options = MSOptions.Create(new TusOptions());
         var request = Setup.CreateRequest(resumable: true,
             (TusHeaderNames.UploadLength, long.MaxValue.ToString())
         );
@@ -133,7 +133,7 @@ public class CreateCheckRequestTests
     public void Invalid_metadata_returns_400_status()
     {
         // Arrange
-        var options = P.Create(new TusOptions
+        var options = MSOptions.Create(new TusOptions
         {
             MetadataValidator = (_) => false
         });
@@ -154,7 +154,7 @@ public class CreateCheckRequestTests
     {
         // Arrange
         var validationRun = false;
-        var options = P.Create(new TusOptions
+        var options = MSOptions.Create(new TusOptions
         {
             MetadataValidator = (metadata) =>
             {

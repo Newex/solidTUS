@@ -1,12 +1,8 @@
-using System;
-
-using SolidTus.Tests.Mocks;
-
+using SolidTUS.Tests.Mocks;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;
-using SolidTUS.Tests.Mocks;
 
-namespace SolidTus.Tests.ProtocolHandlerTests.COMMON;
+namespace SolidTUS.Tests.ProtocolHandlerTests.COMMON;
 
 public static class Setup
 {

@@ -2,7 +2,7 @@ using System;
 using Microsoft.Extensions.Internal;
 using Moq;
 
-namespace SolidTus.Tests.Mocks;
+namespace SolidTUS.Tests.Mocks;
 
 public static class MockOthers
 {
