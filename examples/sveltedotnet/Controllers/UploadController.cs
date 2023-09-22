@@ -9,8 +9,7 @@ namespace ViteDotnet.Controllers;
 [ApiController]
 public class UploadController : ControllerBase
 {
-    [Route("{fileId}")]
-    [TusUpload]
+    [TusUpload("{fileId}")]
     [RequestSizeLimit(5_000_000_000)]
     public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadContext context)
     {
@@ -34,8 +33,7 @@ public class UploadController : ControllerBase
         return NoContent();
     }
 
-    [HttpPost("/api/upload")]
-    [TusCreation]
+    [TusCreation("/api/upload")]
     public async Task<ActionResult> CreateFile([FromServices] TusCreationContext context)
     {
         // Read Metadata
