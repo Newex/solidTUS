@@ -1,13 +1,11 @@
 using System;
-
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Internal;
 using SolidTUS.Contexts;
 using SolidTUS.Handlers;
-using SolidTUS.Models;
 using SolidTUS.Options;
 using SolidTUS.ProtocolFlows;
 using SolidTUS.ProtocolHandlers;
@@ -95,7 +93,7 @@ public sealed class TusBuilder
     {
         var builder = new TusBuilder(services);
 
-        builder.services.TryAddSingleton<ISystemClock>();
+        builder.services.TryAddSingleton<ISystemClock, SystemClock>();
 
         builder.services.TryAddScoped<CommonRequestHandler>();
         builder.services.TryAddScoped<PatchRequestHandler>();

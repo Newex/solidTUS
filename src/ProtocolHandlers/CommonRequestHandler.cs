@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Microsoft.Extensions.Internal;
 using SolidTUS.Constants;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
@@ -14,19 +15,23 @@ public class CommonRequestHandler
 {
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
+    private readonly ISystemClock clock;
 
     /// <summary>
     /// Instantiate a new object of <see cref="CommonRequestHandler"/>
     /// </summary>
     /// <param name="uploadStorageHandler"></param>
     /// <param name="uploadMetaHandler">The upload meta handler</param>
+    /// <param name="clock">The clock provider</param>
     public CommonRequestHandler(
         IUploadStorageHandler uploadStorageHandler,
-        IUploadMetaHandler uploadMetaHandler
+        IUploadMetaHandler uploadMetaHandler,
+        ISystemClock clock
     )
     {
         this.uploadStorageHandler = uploadStorageHandler;
         this.uploadMetaHandler = uploadMetaHandler;
+        this.clock = clock;
     }
 
     /// <summary>
@@ -80,5 +85,23 @@ public class CommonRequestHandler
         }
 
         return context.Wrap();
+    }
+
+    /// <summary>
+    /// Set the created date for the upload
+    /// </summary>
+    /// <param name="context">The request context</param>
+    /// <returns>A request context</returns>
+    public RequestContext SetCreatedDateForUpload(RequestContext context)
+    {
+        var info = context.UploadFileInfo with
+        {
+            CreatedDate = clock.UtcNow
+        };
+
+        return context with
+        {
+            UploadFileInfo = info
+        };
     }
 }

@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Globalization;
-using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Options;
 using SolidTUS.Constants;
 using SolidTUS.Models;

@@ -88,6 +88,20 @@ public class TusCreationContext
     }
 
     /// <summary>
+    /// Set the individual upload expiration strategy
+    /// </summary>
+    /// <remarks>
+    /// Must be called prior to starting the resource creation.
+    /// </remarks>
+    /// <param name="expiration">The expiration strategy</param>
+    /// <param name="interval">The optional time span interval</param>
+    public void SetExpirationStrategy(ExpirationStrategy expiration, TimeSpan? interval = null)
+    {
+        UploadFileInfo.ExpirationStrategy = expiration;
+        UploadFileInfo.Interval = interval;
+    }
+
+    /// <summary>
     /// Start resource creation
     /// </summary>
     /// <remarks>

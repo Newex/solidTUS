@@ -20,6 +20,7 @@ public class UploadFlow
     private readonly CommonRequestHandler common;
     private readonly PatchRequestHandler patch;
     private readonly ChecksumRequestHandler checksumHandler;
+    private readonly ExpirationRequestHandler expirationRequestHandler;
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
 
@@ -28,13 +29,15 @@ public class UploadFlow
     /// </summary>
     /// <param name="commonRequestHandler">The common request handler</param>
     /// <param name="patchRequestHandler">The patch request handler</param>
-    /// <param name="checksumRequestHandler"></param>
+    /// <param name="checksumRequestHandler">The checksum request handler</param>
+    /// <param name="expirationRequestHandler">The expiration request handler</param>
     /// <param name="uploadStorageHandler">The upload storage handler</param>
     /// <param name="uploadMetaHandler">The upload meta handler</param>
     public UploadFlow(
         CommonRequestHandler commonRequestHandler,
         PatchRequestHandler patchRequestHandler,
         ChecksumRequestHandler checksumRequestHandler,
+        ExpirationRequestHandler expirationRequestHandler,
         IUploadStorageHandler uploadStorageHandler,
         IUploadMetaHandler uploadMetaHandler
     )
@@ -42,6 +45,7 @@ public class UploadFlow
         common = commonRequestHandler;
         patch = patchRequestHandler;
         checksumHandler = checksumRequestHandler;
+        this.expirationRequestHandler = expirationRequestHandler;
         this.uploadStorageHandler = uploadStorageHandler;
         this.uploadMetaHandler = uploadMetaHandler;
     }
@@ -81,9 +85,12 @@ public class UploadFlow
         var byteOffset = uploadInfoExists.Bind(PatchRequestHandler.CheckConsistentByteOffset);
         var uploadLength = await byteOffset.BindAsync(async c => await patch.CheckUploadLengthAsync(c));
         var uploadSize = uploadLength.Bind(PatchRequestHandler.CheckUploadExceedsFileSize);
+        var uploadDate = uploadSize.Map(common.SetCreatedDateForUpload);
         // <-- end
 
-        return uploadSize;
+        var expiration = uploadDate.Map(expirationRequestHandler.SetExpiration);
+
+        return expiration;
     }
 
     /// <summary>

@@ -14,6 +14,7 @@ namespace SolidTUS.Contexts;
 /// </summary>
 public class TusUploadContext
 {
+    private bool shouldUpdateMetadata = false;
     private readonly long? expectedUploadSize;
     private readonly IUploadMetaHandler uploadMetaHandler;
     private readonly IUploadStorageHandler uploadStorageHandler;
@@ -69,10 +70,37 @@ public class TusUploadContext
     /// <summary>
     /// Callback for when the file has finished uploading
     /// </summary>
-    /// <param name="callback"></param>
+    /// <remarks>
+    /// Must be called prior to starting the upload.
+    /// </remarks>
+    /// <param name="callback">The callback function</param>
     public void OnUploadFinished(Func<UploadFileInfo, Task> callback)
     {
         onUploadFinishedAsync = callback;
+    }
+
+    /// <summary>
+    /// Set the individual upload expiration strategy.
+    /// </summary>
+    /// <remarks>
+    /// Must be called prior to starting the upload.
+    /// </remarks>
+    /// <param name="expiration">The expiration strategy</param>
+    /// <param name="interval">The optional time span interval</param>
+    public void SetExpirationStrategy(ExpirationStrategy expiration, TimeSpan? interval = null)
+    {
+        if (UploadFileInfo.ExpirationStrategy.HasValue && UploadFileInfo.Interval.HasValue)
+        {
+            shouldUpdateMetadata = expiration != UploadFileInfo.ExpirationStrategy.Value;
+            shouldUpdateMetadata = shouldUpdateMetadata || (UploadFileInfo.Interval.Value != interval);
+        }
+        else
+        {
+            shouldUpdateMetadata = true;
+        }
+
+        UploadFileInfo.ExpirationStrategy = expiration;
+        UploadFileInfo.Interval = interval;
     }
 
     /// <summary>
@@ -96,6 +124,11 @@ public class TusUploadContext
         }
 
         UploadHasBeenCalled = true;
+        if (shouldUpdateMetadata)
+        {
+            // Rewrite the solid metadata file with the expiration specifics
+            await uploadMetaHandler.CreateResourceAsync(fileId, UploadFileInfo, cancellationToken);
+        }
 
         // Can append if we dont need to worry about checksum
         var savedBytes = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, UploadFileInfo, expectedUploadSize, checksumContext is null, cancellationToken);

@@ -23,6 +23,7 @@ public record UploadFileInfo
     /// <remarks>
     /// If unknown file size this will be null
     /// </remarks>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public long? FileSize { get; init; }
 
     /// <summary>
@@ -34,6 +35,7 @@ public record UploadFileInfo
     /// <summary>
     /// Get the original raw metadata
     /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? RawMetadata { get; init; }
 
     /// <summary>
@@ -61,11 +63,13 @@ public record UploadFileInfo
     /// <remarks>
     /// If null this means that the global <see cref="ExpirationStrategy"/> is used.
     /// </remarks>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ExpirationStrategy? ExpirationStrategy { get; internal set; }
 
     /// <summary>
     /// Get the specific date-time for the upload expiration.
     /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public DateTimeOffset? ExpirationDate { get; internal set; }
 
     /// <summary>
@@ -74,10 +78,12 @@ public record UploadFileInfo
     /// <remarks>
     /// If null, the global settings is used, if applicable.
     /// </remarks>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public TimeSpan? Interval { get; internal set; }
 
     /// <summary>
     /// The created date of the upload and metadata
     /// </summary>
+    [JsonInclude]
     public DateTimeOffset CreatedDate { get; internal set; }
 }
