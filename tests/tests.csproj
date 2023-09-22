@@ -3,8 +3,8 @@
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <RootNamespace>SolidTus.Tests</RootNamespace>
-    <AssemblyName>SolidTus.Tests</AssemblyName>
+    <RootNamespace>SolidTUS.Tests</RootNamespace>
+    <AssemblyName>SolidTUS.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
 
     <!-- Warnings and errors -->
