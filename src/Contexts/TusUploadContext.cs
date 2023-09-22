@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,12 +13,10 @@ namespace SolidTUS.Contexts;
 /// </summary>
 public class TusUploadContext
 {
-    private bool shouldUpdateMetadata = false;
-    private readonly long? expectedUploadSize;
     private readonly IUploadMetaHandler uploadMetaHandler;
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly PipeReader reader;
-    private readonly Action<long> onDone;
+    private readonly Action<UploadFileInfo> onDone;
     private readonly Action<HttpError> onError;
     private readonly CancellationToken cancellationToken;
     private Func<UploadFileInfo, Task>? onUploadFinishedAsync;
@@ -29,7 +26,6 @@ public class TusUploadContext
     /// Instantiates a new object of <see cref="TusUploadContext"/>
     /// </summary>
     /// <param name="checksumContext">The checksum context</param>
-    /// <param name="expectedUploadSize">The expected current upload size</param>
     /// <param name="uploadMetaHandler">The upload meta handler</param>
     /// <param name="uploadStorageHandler">The upload storage handler</param>
     /// <param name="reader">The Pipereader</param>
@@ -39,17 +35,15 @@ public class TusUploadContext
     /// <param name="cancellationToken">The cancellation token</param>
     public TusUploadContext(
         ChecksumContext? checksumContext,
-        long? expectedUploadSize,
         IUploadMetaHandler uploadMetaHandler,
         IUploadStorageHandler uploadStorageHandler,
         PipeReader reader,
-        Action<long> onDone,
+        Action<UploadFileInfo> onDone,
         Action<HttpError> onError,
         UploadFileInfo uploadFileInfo,
         CancellationToken cancellationToken
     )
     {
-        this.expectedUploadSize = expectedUploadSize;
         this.uploadMetaHandler = uploadMetaHandler;
         this.uploadStorageHandler = uploadStorageHandler;
         this.reader = reader;
@@ -89,17 +83,6 @@ public class TusUploadContext
     /// <param name="interval">The optional time span interval</param>
     public void SetExpirationStrategy(ExpirationStrategy expiration, TimeSpan? interval = null)
     {
-        if (UploadFileInfo.ExpirationStrategy.HasValue && UploadFileInfo.Interval.HasValue)
-        {
-            // Only update if different from existing values
-            shouldUpdateMetadata = expiration != UploadFileInfo.ExpirationStrategy.Value;
-            shouldUpdateMetadata = shouldUpdateMetadata || (UploadFileInfo.Interval.Value != interval);
-        }
-        else
-        {
-            shouldUpdateMetadata = true;
-        }
-
         UploadFileInfo.ExpirationStrategy = expiration;
         UploadFileInfo.Interval = interval;
     }
@@ -125,84 +108,20 @@ public class TusUploadContext
         }
 
         UploadHasBeenCalled = true;
-        if (shouldUpdateMetadata)
-        {
-            // Rewrite the solid metadata file with the expiration specifics
-            await uploadMetaHandler.CreateResourceAsync(fileId, UploadFileInfo, cancellationToken);
-        }
 
         // Can append if we dont need to worry about checksum
-        var savedBytes = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, UploadFileInfo, expectedUploadSize, checksumContext is null, cancellationToken);
-        var totalSavedBytes = UploadFileInfo.ByteOffset + savedBytes;
+        var savedBytes = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, UploadFileInfo, checksumContext, cancellationToken);
+        onDone(UploadFileInfo);
 
-        // Determine if the checksum is valid
-        var isValidChecksum = true;
-        if (checksumContext is not null)
-        {
-            var discarded = false;
-            try
-            {
-                using var stream = await uploadStorageHandler.GetPartialUploadedStreamAsync(fileId, savedBytes, UploadFileInfo, cancellationToken);
-                if (stream is null)
-                {
-                    const string Message = "Could not get the uploaded stream to validate checksum";
-                    discarded = await DiscardUploadedDataAsync(fileId, UploadFileInfo.ByteOffset, UploadFileInfo, Message, cancellationToken);
-                    return;
-                }
-
-                var checksum = checksumContext.Checksum;
-                isValidChecksum = await checksumContext.Validator.ValidateChecksumAsync(stream, checksum);
-
-                if (isValidChecksum)
-                {
-                    var append = await uploadStorageHandler.OnPartialUploadSucceededAsync(fileId, UploadFileInfo, cancellationToken);
-                    if (!append)
-                    {
-                        const string Message = "Could not append the uploaded file into the original file";
-                        discarded = await DiscardUploadedDataAsync(fileId, UploadFileInfo.ByteOffset, UploadFileInfo, Message, cancellationToken);
-                        return;
-                    }
-                }
-                else
-                {
-                    // Hopefully the byte offset has been reset?!
-                    const string Message = "Could not reset byte offset after checksum mismatch";
-                    discarded = await uploadStorageHandler.OnDiscardPartialUploadAsync(fileId, UploadFileInfo.ByteOffset, UploadFileInfo, cancellationToken);
-                    if (!discarded)
-                    {
-                        onError(HttpError.InternalServerError(Message));
-                        return;
-                    }
-
-                    var error = HttpError.ChecksumMismatch("The given checksum does not match to the uploaded chunk");
-                    onError(error);
-                    return;
-                }
-            }
-            catch (Exception)
-            {
-                //
-            }
-            finally
-            {
-                if (!discarded)
-                {
-                    _ = await uploadStorageHandler.OnDiscardPartialUploadAsync(fileId, UploadFileInfo.ByteOffset, UploadFileInfo, cancellationToken);
-                }
-            }
-        }
-
-        onDone(totalSavedBytes);
-
-        var isFinished = isValidChecksum && UploadFileInfo.FileSize == totalSavedBytes;
-        if (isFinished && onUploadFinishedAsync is not null)
+        if (UploadFileInfo.Done && onUploadFinishedAsync is not null)
         {
             await onUploadFinishedAsync(UploadFileInfo);
         }
 
-        if (isFinished && deleteInfoOnDone)
+        if (UploadFileInfo.Done && deleteInfoOnDone)
         {
             await uploadMetaHandler.DeleteUploadFileInfoAsync(fileId, cancellationToken);
+            return;
         }
     }
 
@@ -226,20 +145,5 @@ public class TusUploadContext
         UploadHasBeenCalled = true;
         var error = new HttpError(status, new HeaderDictionary(), message);
         onError(error);
-    }
-
-    private async Task<bool> DiscardUploadedDataAsync(string fileId, long offset, UploadFileInfo uploadInfo, string? message, CancellationToken cancellationToken)
-    {
-        var discarded = await uploadStorageHandler.OnDiscardPartialUploadAsync(fileId, offset, uploadInfo, cancellationToken);
-        if (!discarded)
-        {
-            // Completely inconsistent state! What to do? Could not delete partial upload
-            onError(HttpError.InternalServerError());
-            return false;
-        }
-
-        var error = HttpError.InternalServerError(message);
-        onError(error);
-        return true;
     }
 }

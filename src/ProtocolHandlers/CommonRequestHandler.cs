@@ -44,23 +44,16 @@ public class CommonRequestHandler
     /// <returns>Either an error or a request context</returns>
     public async ValueTask<Result<RequestContext>> CheckUploadFileInfoExistsAsync(RequestContext context)
     {
-        var fileInfo = await uploadMetaHandler.GetUploadFileInfoAsync(context.FileID, context.CancellationToken);
+        var fileInfo = await uploadMetaHandler.GetResourceAsync(context.FileID, context.CancellationToken);
         if (fileInfo is null)
         {
             return HttpError.NotFound("File resource does not exists").Wrap();
         }
 
-        var size = await uploadStorageHandler.GetUploadSizeAsync(context.FileID, fileInfo, context.CancellationToken);
-        var info = fileInfo with
-        {
-            ByteOffset = size ?? 0L
-        };
-        var result = context with
-        {
-            UploadFileInfo = info
-        };
-
-        return result.Wrap();
+        var size = uploadStorageHandler.GetUploadSize(context.FileID, fileInfo);
+        fileInfo.ByteOffset = size ?? 0L;
+        context.UploadFileInfo = fileInfo;
+        return context.Wrap();
     }
 
     /// <summary>

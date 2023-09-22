@@ -83,7 +83,7 @@ public class UploadFlow
         var uploadOffset = contentType.Bind(PatchRequestHandler.CheckUploadOffset);
         var uploadInfoExists = await uploadOffset.BindAsync(async c => await common.CheckUploadFileInfoExistsAsync(c));
         var byteOffset = uploadInfoExists.Bind(PatchRequestHandler.CheckConsistentByteOffset);
-        var uploadLength = await byteOffset.BindAsync(async c => await patch.CheckUploadLengthAsync(c));
+        var uploadLength = byteOffset.Bind(patch.CheckUploadLength);
         var uploadSize = uploadLength.Bind(PatchRequestHandler.CheckUploadExceedsFileSize);
         var uploadDate = uploadSize.Map(common.SetCreatedDateForUpload);
         // <-- end
@@ -120,7 +120,7 @@ public class UploadFlow
     /// <param name="onError">The callback function when an error occurs</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>An upload context or null</returns>
-    public TusUploadContext? CreateUploadContext(Result<RequestContext> context, PipeReader reader, Action<long> onDone, Action<HttpError> onError, CancellationToken cancellationToken)
+    public TusUploadContext? CreateUploadContext(Result<RequestContext> context, PipeReader reader, Action<UploadFileInfo> onDone, Action<HttpError> onError, CancellationToken cancellationToken)
     {
         var requestContext = context.Match(c => c, _ => null!);
         if (requestContext is null)
@@ -128,11 +128,9 @@ public class UploadFlow
             return null;
         }
 
-        var contentLength = requestContext.RequestHeaders.ContentLength;
         var uploadFileInfo = requestContext.UploadFileInfo;
         return new TusUploadContext(
             requestContext.ChecksumContext,
-            contentLength,
             uploadMetaHandler,
             uploadStorageHandler,
             reader,

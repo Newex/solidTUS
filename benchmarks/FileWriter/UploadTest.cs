@@ -118,7 +118,7 @@ public class UploadTest
         };
         uploadMetaHandler = new FileUploadMetaHandler(Microsoft.Extensions.Options.Options.Create(options));
         uploadStorageHandler = new FileUploadStorageHandler(uploadMetaHandler);
-        var info = uploadMetaHandler.GetUploadFileInfoAsync(OutputFilename, CancellationToken.None).Result;
+        var info = uploadMetaHandler.GetResourceAsync(OutputFilename, CancellationToken.None).Result;
         if (info is not null)
         {
             uploadInfo = info;
@@ -158,7 +158,7 @@ public class UploadTest
             using var fs = File.OpenRead(samplePath);
             var readFile = FillPipeAsync(fs, pipe.Writer);
 
-            var uploadFile = await uploadStorageHandler.OnPartialUploadAsync(OutputFilename, pipe.Reader, uploadInfo, fs.Length, false, CancellationToken.None);
+            var uploadFile = await uploadStorageHandler.OnPartialUploadAsync(OutputFilename, pipe.Reader, uploadInfo, null, CancellationToken.None);
         }
     }
 

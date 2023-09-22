@@ -44,63 +44,24 @@ public class FileUploadMetaHandler : IUploadMetaHandler
     }
 
     /// <inheritdoc />
-    public Task<UploadFileInfo?> GetUploadFileInfoAsync(string fileId, CancellationToken cancellationToken)
+    public Task<UploadFileInfo?> GetResourceAsync(string fileId, CancellationToken cancellationToken)
     {
         var fileInfo = ReadUploadFileInfo(fileId);
         return Task.FromResult(fileInfo);
     }
 
     /// <inheritdoc />
-    public Task<bool> SetFileSizeAsync(string fileId, long totalFileSize, CancellationToken cancellationToken)
+    public Task<bool> UpdateResourceAsync(string fileId, UploadFileInfo fileInfo, CancellationToken cancellationToken)
     {
-        var fileInfo = ReadUploadFileInfo(fileId);
-        if (fileInfo is not null)
-        {
-            var updates = fileInfo with
-            {
-                FileSize = totalFileSize
-            };
-
-            WriteUploadFileInfo(fileId, updates);
-
-            return Task.FromResult(true);
-        }
-
-        return Task.FromResult(false);
-    }
-
-    /// <inheritdoc />
-    public Task<bool> SetTotalUploadedBytesAsync(string fileId, long totalBytes)
-    {
-        var fileInfo = ReadUploadFileInfo(fileId);
-        if (fileInfo is null)
+        var filepath = MetadataFullFilenamePath(fileId);
+        var exists = File.Exists(filepath);
+        if (!exists)
         {
             return Task.FromResult(false);
         }
 
-        var update = fileInfo with
-        {
-            ByteOffset = totalBytes
-        };
-        WriteUploadFileInfo(fileId, update);
-        return Task.FromResult(true);
-    }
-
-    /// <inheritdoc />
-    public Task<bool> SetFilePathForUploadAsync(string fileId, string filePath)
-    {
-        var fileInfo = ReadUploadFileInfo(fileId);
-        if (fileInfo is null)
-        {
-            return Task.FromResult(false);
-        }
-
-        var update = fileInfo with
-        {
-            FileDirectoryPath = filePath
-        };
-        WriteUploadFileInfo(fileId, update);
-        return Task.FromResult(true);
+        var written = WriteUploadFileInfo(fileId, fileInfo);
+        return Task.FromResult(written);
     }
 
     /// <inheritdoc />
@@ -119,11 +80,19 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         return Task.FromResult(deleted);
     }
 
-    private void WriteUploadFileInfo(string fileId, UploadFileInfo fileInfo)
+    private bool WriteUploadFileInfo(string fileId, UploadFileInfo fileInfo)
     {
-        var filename = MetadataFullFilenamePath(fileId);
-        var content = JsonSerializer.Serialize(fileInfo);
-        File.WriteAllText(filename, content);
+        try
+        {
+            var filename = MetadataFullFilenamePath(fileId);
+            var content = JsonSerializer.Serialize(fileInfo);
+            File.WriteAllText(filename, content);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     private UploadFileInfo? ReadUploadFileInfo(string fileId)

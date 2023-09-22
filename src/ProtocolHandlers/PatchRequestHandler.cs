@@ -1,7 +1,5 @@
-using System.Threading.Tasks;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
-using SolidTUS.Handlers;
 using SolidTUS.Models;
 using static SolidTUS.Extensions.FunctionalExtensions;
 
@@ -12,17 +10,11 @@ namespace SolidTUS.ProtocolHandlers;
 /// </summary>
 public class PatchRequestHandler
 {
-    private readonly IUploadMetaHandler uploadMetaHandler;
-
     /// <summary>
     /// Instantiate a new object of <see cref="PatchRequestHandler"/>
     /// </summary>
-    /// <param name="uploadMetaHandler">The upload meta handler</param>
-    public PatchRequestHandler(
-        IUploadMetaHandler uploadMetaHandler
-    )
+    public PatchRequestHandler()
     {
-        this.uploadMetaHandler = uploadMetaHandler;
     }
 
     /// <summary>
@@ -30,7 +22,7 @@ public class PatchRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public async ValueTask<Result<RequestContext>> CheckUploadLengthAsync(RequestContext context)
+    public Result<RequestContext> CheckUploadLength(RequestContext context)
     {
         var hasSize = context.UploadFileInfo.FileSize.HasValue;
         if (hasSize)
@@ -43,11 +35,6 @@ public class PatchRequestHandler
         if (!hasGivenFileSize)
         {
             return HttpError.BadRequest("Missing Upload-Length header").Wrap();
-        }
-        var isSet = await uploadMetaHandler.SetFileSizeAsync(context.FileID, size, context.CancellationToken);
-        if (!isSet)
-        {
-            return HttpError.InternalServerError().Wrap();
         }
 
         // The given file size must be non zero

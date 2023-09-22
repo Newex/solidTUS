@@ -9,6 +9,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tests", "tests\tests.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "benchmarks", "benchmarks\benchmarks.csproj", "{24E2658F-A7B3-4040-9794-DD976849DD8A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{8D844189-674F-44A9-B918-D2DDB8B86EB8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotnetcore", "examples\dotnetcore\dotnetcore.csproj", "{429E2F33-C1A3-4449-A5C0-B9BC22FDC311}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sveltedotnet", "examples\sveltedotnet\sveltedotnet.csproj", "{78A59B83-23A4-45C7-BCEE-B3EBE4167555}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +36,17 @@ Global
 		{24E2658F-A7B3-4040-9794-DD976849DD8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{24E2658F-A7B3-4040-9794-DD976849DD8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{24E2658F-A7B3-4040-9794-DD976849DD8A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{429E2F33-C1A3-4449-A5C0-B9BC22FDC311}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{429E2F33-C1A3-4449-A5C0-B9BC22FDC311}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{429E2F33-C1A3-4449-A5C0-B9BC22FDC311}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{429E2F33-C1A3-4449-A5C0-B9BC22FDC311}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78A59B83-23A4-45C7-BCEE-B3EBE4167555}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78A59B83-23A4-45C7-BCEE-B3EBE4167555}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78A59B83-23A4-45C7-BCEE-B3EBE4167555}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78A59B83-23A4-45C7-BCEE-B3EBE4167555}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{429E2F33-C1A3-4449-A5C0-B9BC22FDC311} = {8D844189-674F-44A9-B918-D2DDB8B86EB8}
+		{78A59B83-23A4-45C7-BCEE-B3EBE4167555} = {8D844189-674F-44A9-B918-D2DDB8B86EB8}
 	EndGlobalSection
 EndGlobal

@@ -12,23 +12,6 @@ namespace SolidTUS.Handlers;
 public interface IUploadMetaHandler
 {
     /// <summary>
-    /// Get the upload file info
-    /// </summary>
-    /// <param name="fileId">The file Id</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    /// <returns>An upload file info or null</returns>
-    Task<UploadFileInfo?> GetUploadFileInfoAsync(string fileId, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Set the file size in <see cref="UploadFileInfo.FileSize"/>
-    /// </summary>
-    /// <param name="fileId">The file Id</param>
-    /// <param name="totalFileSize">The total file size</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    /// <returns>True if set otherwise false</returns>
-    Task<bool> SetFileSizeAsync(string fileId, long totalFileSize, CancellationToken cancellationToken);
-
-    /// <summary>
     /// Create file info resource
     /// </summary>
     /// <param name="fileId">The file Id</param>
@@ -38,20 +21,22 @@ public interface IUploadMetaHandler
     Task<bool> CreateResourceAsync(string fileId, UploadFileInfo fileInfo, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Set the total uploaded size for the file
+    /// Get the upload file info
     /// </summary>
     /// <param name="fileId">The file Id</param>
-    /// <param name="totalBytes">The total bytes</param>
-    /// <returns>True if set otherwise false</returns>
-    Task<bool> SetTotalUploadedBytesAsync(string fileId, long totalBytes);
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <returns>An upload file info or null</returns>
+    Task<UploadFileInfo?> GetResourceAsync(string fileId, CancellationToken cancellationToken);
+
 
     /// <summary>
-    /// Set the file path for the file Id
+    /// Update file info
     /// </summary>
-    /// <param name="fileId">The file Id</param>
-    /// <param name="filePath">The file path</param>
-    /// <returns>True if set otherwise false</returns>
-    Task<bool> SetFilePathForUploadAsync(string fileId, string filePath);
+    /// <param name="fileId">The file id</param>
+    /// <param name="fileInfo">The updated file info</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <returns>Returns true if updated otherwise false</returns>
+    Task<bool> UpdateResourceAsync(string fileId, UploadFileInfo fileInfo, CancellationToken cancellationToken);
 
     /// <summary>
     /// Delete a file upload info

@@ -23,7 +23,7 @@ public static class Setup
         var upload = uploadMetaHandler ?? MockHandlers.UploadMetaHandler(file);
         var clock = MockOthers.Clock();
         var common = new CommonRequestHandler(storageHandler, upload, clock);
-        var patch = new PatchRequestHandler(upload);
+        var patch = new PatchRequestHandler();
         var checksum = new ChecksumRequestHandler(new List<IChecksumValidator>());
         var ioptions = Microsoft.Extensions.Options.Options.Create(options ?? new());
         var expiration = new ExpirationRequestHandler(clock, ioptions);

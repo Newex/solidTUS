@@ -123,9 +123,9 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
                 return;
             }
 
-            void FinishedUpload(long s)
+            void FinishedUpload(UploadFileInfo uploadFileInfo)
             {
-                response.Headers.Add(TusHeaderNames.UploadOffset, s.ToString());
+                response.Headers.Add(TusHeaderNames.UploadOffset, uploadFileInfo.ByteOffset.ToString());
             }
 
             void OnError(HttpError error)

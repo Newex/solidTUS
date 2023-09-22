@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using System.IO.Pipelines;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
@@ -15,20 +15,20 @@ public class SHA1ChecksumValidator : IChecksumValidator
     public string AlgorithmName => "sha1";
 
     /// <inheritdoc />
-    public Task<bool> ValidateChecksumAsync(Stream file, byte[] checksum)
+    public async Task<bool> ValidateChecksumAsync(PipeReader file, byte[] checksum)
     {
         var hasher = SHA1.Create();
-        var cipher = hasher.ComputeHash(file);
+        var cipher = await hasher.ComputeHashAsync(file.AsStream());
         if (cipher is null)
         {
-            return Task.FromResult(false);
+            return false;
         }
 
         if (cipher.Length != checksum.Length)
         {
-            return Task.FromResult(false);
+            return false;
         }
 
-        return Task.FromResult(cipher.SequenceEqual(checksum));
+        return cipher.SequenceEqual(checksum);
     }
 }

@@ -15,7 +15,7 @@ public record UploadFileInfo
     /// <summary>
     /// Get the bytes that have been uploaded so-far
     /// </summary>
-    public long ByteOffset { get; init; }
+    public long ByteOffset { get; internal set; }
 
     /// <summary>
     /// Get the total upload file size
@@ -86,4 +86,18 @@ public record UploadFileInfo
     /// </summary>
     [JsonInclude]
     public DateTimeOffset CreatedDate { get; internal set; }
+
+    /// <summary>
+    /// If the upload has finished
+    /// </summary>
+    public bool Done => FileSize.HasValue && FileSize.Value == ByteOffset;
+
+    /// <summary>
+    /// Add amount of bytes to the offset
+    /// </summary>
+    /// <param name="bytes">The amount of bytes added</param>
+    public void AddBytes(long bytes)
+    {
+        ByteOffset += bytes;
+    }
 }
