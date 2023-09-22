@@ -112,10 +112,10 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
             var coreProtocolUpload = await requestContext.BindAsync(async c => await uploadFlow.StartUploadingAsync(c, fileId));
             var checksumExtension = coreProtocolUpload.Bind(uploadFlow.ChecksumFlow);
             var uploadResponse = checksumExtension.GetTusHttpResponse();
+            response.AddTusHeaders(uploadResponse);
             if (!uploadResponse.IsSuccess)
             {
                 // Short circuit on error
-                response.AddTusHeaders(uploadResponse);
                 context.Result = new ObjectResult(uploadResponse.Message)
                 {
                     StatusCode = uploadResponse.StatusCode
@@ -123,7 +123,11 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
                 return;
             }
 
-            void FinishedUpload(long s) => response.Headers.Add(TusHeaderNames.UploadOffset, s.ToString());
+            void FinishedUpload(long s)
+            {
+                response.Headers.Add(TusHeaderNames.UploadOffset, s.ToString());
+            }
+
             void OnError(HttpError error)
             {
                 context.Result = new ObjectResult(error.Message)
