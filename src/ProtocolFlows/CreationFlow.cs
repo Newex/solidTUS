@@ -69,7 +69,7 @@ public class CreationFlow
         });
         var setMetadata = validate.Map(t => PostRequestHandler.SetNewMetadata(t.Context, t.Metadata));
         var setFileSize = setMetadata.Map(PostRequestHandler.SetFileSize);
-        var setCreatedDate = setFileSize.Map(common.SetCreatedDateOrUpdateLastUpdatedDateForUpload);
+        var setCreatedDate = setFileSize.Map(common.SetCreatedDate);
         var setExpiration = setCreatedDate.Map(expiration.SetExpiration);
 
         var hasContentLength = long.TryParse(context.RequestHeaders[HeaderNames.ContentLength], out var contentLength);

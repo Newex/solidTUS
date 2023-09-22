@@ -77,7 +77,6 @@ public class UploadFlow
     /// <returns>Either an error or a request context</returns>
     public async ValueTask<Result<RequestContext>> StartUploadingAsync(RequestContext context, string fileId)
     {
-        // Core protocol, start -->
         context.FileID = fileId;
         var contentType = PatchRequestHandler.CheckContentType(context);
         var uploadOffset = contentType.Bind(PatchRequestHandler.CheckUploadOffset);
@@ -85,12 +84,11 @@ public class UploadFlow
         var byteOffset = uploadInfoExists.Bind(PatchRequestHandler.CheckConsistentByteOffset);
         var uploadLength = byteOffset.Bind(patch.CheckUploadLength);
         var uploadSize = uploadLength.Bind(PatchRequestHandler.CheckUploadExceedsFileSize);
-        var uploadDate = uploadSize.Map(common.SetCreatedDateOrUpdateLastUpdatedDateForUpload);
-        // <-- end
+        var uploadExpired = uploadSize.Bind(expirationRequestHandler.CheckExpiration);
+        var uploadUpdatedDate = uploadExpired.Map(common.SetUpdatedDate);
 
-        var expiration = uploadDate.Map(expirationRequestHandler.SetExpiration);
-
-        return expiration;
+        var setExpiration = uploadUpdatedDate.Map(expirationRequestHandler.SetExpiration);
+        return setExpiration;
     }
 
     /// <summary>

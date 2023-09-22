@@ -81,21 +81,27 @@ public class CommonRequestHandler
     }
 
     /// <summary>
-    /// Set the created date for the upload or update the last updated date
+    /// Set the created date for the upload
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A request context</returns>
-    public RequestContext SetCreatedDateOrUpdateLastUpdatedDateForUpload(RequestContext context)
+    public RequestContext SetCreatedDate(RequestContext context)
     {
         if (!context.UploadFileInfo.CreatedDate.HasValue)
         {
             context.UploadFileInfo.CreatedDate = clock.UtcNow;
         }
-        else
-        {
-            context.UploadFileInfo.LastUpdatedDate = clock.UtcNow;
-        }
+        return context;
+    }
 
+    /// <summary>
+    /// Set the last time this upload was updated
+    /// </summary>
+    /// <param name="context">The request context</param>
+    /// <returns>A request context</returns>
+    public RequestContext SetUpdatedDate(RequestContext context)
+    {
+        context.UploadFileInfo.LastUpdatedDate = clock.UtcNow;
         return context;
     }
 }

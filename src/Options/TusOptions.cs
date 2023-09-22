@@ -54,6 +54,14 @@ public record TusOptions
     public TimeSpan AbsoluteInterval { get; set; } = TimeSpan.FromHours(1);
 
     /// <summary>
+    /// Allow an incomplete expired upload to continue if still exists.
+    /// </summary>
+    /// <remarks>
+    /// Default is false.
+    /// </remarks>
+    public bool AllowExpiredUploadsToContinue { get; set; }
+
+    /// <summary>
     /// Get the configuration section name
     /// </summary>
     internal const string TusConfigurationSection = "SolidTUS";

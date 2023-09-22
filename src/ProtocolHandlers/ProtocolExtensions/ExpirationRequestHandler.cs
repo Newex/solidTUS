@@ -4,6 +4,7 @@ using System.Globalization;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Options;
 using SolidTUS.Constants;
+using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.Options;
 
@@ -18,6 +19,7 @@ public class ExpirationRequestHandler
     private readonly TimeSpan slidingInterval;
     private readonly TimeSpan absoluteInterval;
     private readonly ISystemClock clock;
+    private readonly bool allowExpiredUploads;
 
     /// <summary>
     /// 
@@ -32,8 +34,49 @@ public class ExpirationRequestHandler
         expirationStrategy = options.Value.ExpirationStrategy;
         slidingInterval = options.Value.SlidingInterval;
         absoluteInterval = options.Value.AbsoluteInterval;
+        allowExpiredUploads = options.Value.AllowExpiredUploadsToContinue;
         this.clock = clock;
+    }
 
+    /// <summary>
+    /// Check the upload info expiration
+    /// </summary>
+    /// <param name="context">The request context</param>
+    /// <returns>A request context or an error</returns>
+    /// <exception cref="UnreachableException">Thrown if missing strategy enumeration</exception>
+    public Result<RequestContext> CheckExpiration(RequestContext context)
+    {
+        var info = context.UploadFileInfo;
+        var strategy = info.ExpirationStrategy ?? expirationStrategy;
+        var lastTime = info.LastUpdatedDate ?? info.CreatedDate;
+        if (lastTime is null)
+        {
+            // Could not find updated date or created date
+            return HttpError.InternalServerError().Wrap();
+        }
+
+        DateTimeOffset? deadline = strategy switch
+        {
+            ExpirationStrategy.Never => null,
+            ExpirationStrategy.SlidingExpiration => Sliding(lastTime.Value, info),
+            ExpirationStrategy.AbsoluteExpiration => Absolute(info),
+            ExpirationStrategy.SlideAfterAbsoluteExpiration => SlideAfterAbsolute(lastTime.Value, info),
+            _ => throw new UnreachableException()
+        };
+
+        if (deadline is null)
+        {
+            return context.Wrap();
+        }
+
+        var now = clock.UtcNow;
+        var expired = now > deadline.Value;
+        if (expired && !allowExpiredUploads)
+        {
+            return HttpError.Gone("Upload expired").Wrap();
+        }
+
+        return context.Wrap();
     }
 
     /// <summary>
@@ -72,10 +115,10 @@ public class ExpirationRequestHandler
         return context;
     }
 
-    private DateTimeOffset Sliding(DateTimeOffset current, UploadFileInfo info)
+    private DateTimeOffset Sliding(DateTimeOffset from, UploadFileInfo info)
     {
         var interval = info.Interval ?? slidingInterval;
-        return current.Add(interval);
+        return from.Add(interval);
     }
 
     private DateTimeOffset Absolute(UploadFileInfo info)
@@ -85,15 +128,15 @@ public class ExpirationRequestHandler
         return deadline.GetValueOrDefault();
     }
 
-    private DateTimeOffset SlideAfterAbsolute(DateTimeOffset current, UploadFileInfo info)
+    private DateTimeOffset SlideAfterAbsolute(DateTimeOffset from, UploadFileInfo info)
     {
         var absoluteDeadline = info.CreatedDate?.Add(absoluteInterval);
-        var isPastDeadline = current > absoluteDeadline;
+        var isPastDeadline = from > absoluteDeadline;
 
         if (isPastDeadline)
         {
             // We slide
-            return Sliding(current, info);
+            return Sliding(from, info);
         }
 
         return Absolute(info);
