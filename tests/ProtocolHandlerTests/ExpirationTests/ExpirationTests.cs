@@ -156,4 +156,41 @@ public class ExpirationTests
         // Assert
         status.Should().Be(410);
     }
+
+    [Fact]
+    public void Expired_upload_can_be_allowed()
+    {
+        // Arrange
+        var http = MockHttps.HttpRequest("PATCH",
+            (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
+        );
+
+        // 1st of June 2020 is a Monday
+        var lastWeek = new DateTimeOffset(2020, 06, 01, 12, 00, 00, TimeSpan.FromHours(0));
+        var today = lastWeek.AddDays(7);
+
+        var request = RequestContext.Create(http, CancellationToken.None).Map(c => c with
+        {
+            UploadFileInfo = new()
+            {
+                CreatedDate = lastWeek
+            }
+
+        });
+        var clock = MockOthers.Clock(today);
+        var globalOptions = MSOptions.Create(new TusOptions
+        {
+            AbsoluteInterval = TimeSpan.FromDays(5),
+            ExpirationStrategy = ExpirationStrategy.AbsoluteExpiration,
+            AllowExpiredUploadsToContinue = true
+        });
+        var handler = new ExpirationRequestHandler(clock, globalOptions);
+
+        // Act
+        var response = request.Bind(handler.CheckExpiration).GetTusHttpResponse();
+        var result = response.IsSuccess;
+
+        // Assert
+        result.Should().BeTrue();
+    }
 }
