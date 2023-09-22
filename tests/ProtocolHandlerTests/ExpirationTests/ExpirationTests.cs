@@ -120,4 +120,40 @@ public class ExpirationTests
         // Assert
         result.Should().BeEquivalentTo("Mon, 01 Jun 2020 12:05:00 GMT");
     }
+
+    [Fact]
+    public void Expired_upload_should_return_410_Gone()
+    {
+        // Arrange
+        var http = MockHttps.HttpRequest("PATCH",
+            (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
+        );
+
+        // 1st of June 2020 is a Monday
+        var lastWeek = new DateTimeOffset(2020, 06, 01, 12, 00, 00, TimeSpan.FromHours(0));
+        var today = lastWeek.AddDays(7);
+
+        var request = RequestContext.Create(http, CancellationToken.None).Map(c => c with
+        {
+            UploadFileInfo = new()
+            {
+                CreatedDate = lastWeek
+            }
+
+        });
+        var clock = MockOthers.Clock(today);
+        var globalOptions = MSOptions.Create(new TusOptions
+        {
+            AbsoluteInterval = TimeSpan.FromDays(5),
+            ExpirationStrategy = ExpirationStrategy.AbsoluteExpiration
+        });
+        var handler = new ExpirationRequestHandler(clock, globalOptions);
+
+        // Act
+        var response = request.Bind(handler.CheckExpiration).GetTusHttpResponse();
+        var status = response.StatusCode;
+
+        // Assert
+        status.Should().Be(410);
+    }
 }
