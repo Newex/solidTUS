@@ -85,7 +85,7 @@ public class UploadFlow
         var byteOffset = uploadInfoExists.Bind(PatchRequestHandler.CheckConsistentByteOffset);
         var uploadLength = byteOffset.Bind(patch.CheckUploadLength);
         var uploadSize = uploadLength.Bind(PatchRequestHandler.CheckUploadExceedsFileSize);
-        var uploadDate = uploadSize.Map(common.SetCreatedDateForUpload);
+        var uploadDate = uploadSize.Map(common.SetCreatedDateOrUpdateLastUpdatedDateForUpload);
         // <-- end
 
         var expiration = uploadDate.Map(expirationRequestHandler.SetExpiration);

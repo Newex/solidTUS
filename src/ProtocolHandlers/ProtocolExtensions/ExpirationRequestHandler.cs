@@ -52,7 +52,8 @@ public class ExpirationRequestHandler
             return context;
         }
 
-        // Assume we have accepted the incoming upload = within the expiration time
+        // Assume we have accepted the incoming upload = within the expiration time.
+        // Assume CreatedDate is set.
         var now = clock.UtcNow;
         var strategy = context.UploadFileInfo.ExpirationStrategy ?? expirationStrategy;
         var end = strategy switch
@@ -80,13 +81,13 @@ public class ExpirationRequestHandler
     private DateTimeOffset Absolute(UploadFileInfo info)
     {
         var interval = info.Interval ?? absoluteInterval;
-        var deadline = info.CreatedDate.Add(interval);
-        return deadline;
+        var deadline = info.CreatedDate?.Add(interval);
+        return deadline.GetValueOrDefault();
     }
 
     private DateTimeOffset SlideAfterAbsolute(DateTimeOffset current, UploadFileInfo info)
     {
-        var absoluteDeadline = info.CreatedDate.Add(absoluteInterval);
+        var absoluteDeadline = info.CreatedDate?.Add(absoluteInterval);
         var isPastDeadline = current > absoluteDeadline;
 
         if (isPastDeadline)

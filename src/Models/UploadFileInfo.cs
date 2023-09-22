@@ -90,7 +90,15 @@ public record UploadFileInfo
     /// The created date of the upload and metadata
     /// </summary>
     [JsonInclude]
-    public DateTimeOffset CreatedDate { get; internal set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DateTimeOffset? CreatedDate { get; internal set; }
+
+    /// <summary>
+    /// Last time this upload was updated
+    /// </summary>
+    [JsonInclude]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DateTimeOffset? LastUpdatedDate { get; internal set; }
 
     /// <summary>
     /// If the upload has finished
