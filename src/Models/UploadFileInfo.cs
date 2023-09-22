@@ -64,6 +64,7 @@ public record UploadFileInfo
     /// If null this means that the global <see cref="ExpirationStrategy"/> is used.
     /// </remarks>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public ExpirationStrategy? ExpirationStrategy { get; internal set; }
 
     /// <summary>
