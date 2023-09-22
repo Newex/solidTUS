@@ -91,6 +91,7 @@ public class TusUploadContext
     {
         if (UploadFileInfo.ExpirationStrategy.HasValue && UploadFileInfo.Interval.HasValue)
         {
+            // Only update if different from existing values
             shouldUpdateMetadata = expiration != UploadFileInfo.ExpirationStrategy.Value;
             shouldUpdateMetadata = shouldUpdateMetadata || (UploadFileInfo.Interval.Value != interval);
         }
