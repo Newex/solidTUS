@@ -24,6 +24,8 @@ public class UploadController : ControllerBase
             await Task.CompletedTask;
         });
 
+        context.SetExpirationStrategy(SolidTUS.Models.ExpirationStrategy.SlidingExpiration, TimeSpan.FromSeconds(30));
+
         // Await after callback defined
         await context.StartAppendDataAsync(fileId);
         // await upload;
