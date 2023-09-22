@@ -1,3 +1,4 @@
+using System;
 using System.Text.Json;
 using SolidTUS.Models;
 
@@ -23,5 +24,13 @@ public class UploadFileInfoDeSerializationTests
         var uploadFileInfo = JsonSerializer.Deserialize<UploadFileInfo>(Json);
         var createdDate = uploadFileInfo?.CreatedDate;
         createdDate.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void UploadFileInfo_deserialization_should_include_Interval_property()
+    {
+        var uploadFileInfo = JsonSerializer.Deserialize<UploadFileInfo>(Json);
+        var interval = uploadFileInfo?.Interval;
+        interval.Should().NotBeNull().And.Be(TimeSpan.FromSeconds(30));
     }
 }
