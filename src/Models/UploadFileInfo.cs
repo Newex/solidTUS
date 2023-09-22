@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 
 using SolidTUS.Attributes;
+using SolidTUS.Parsers;
 
 namespace SolidTUS.Models;
 
@@ -63,6 +64,7 @@ public record UploadFileInfo
     /// <remarks>
     /// If null this means that the global <see cref="ExpirationStrategy"/> is used.
     /// </remarks>
+    [JsonInclude]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public ExpirationStrategy? ExpirationStrategy { get; internal set; }
@@ -70,6 +72,7 @@ public record UploadFileInfo
     /// <summary>
     /// Get the specific date-time for the upload expiration.
     /// </summary>
+    [JsonInclude]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public DateTimeOffset? ExpirationDate { get; internal set; }
 
@@ -79,6 +82,7 @@ public record UploadFileInfo
     /// <remarks>
     /// If null, the global settings is used, if applicable.
     /// </remarks>
+    [JsonInclude]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public TimeSpan? Interval { get; internal set; }
 
