@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
@@ -78,6 +79,21 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         File.Delete(path);
         var deleted = !File.Exists(path);
         return Task.FromResult(deleted);
+    }
+
+    /// <inheritdoc />
+    public async IAsyncEnumerable<UploadFileInfo> GetAllResourcesAsync()
+    {
+        var filenames = Directory.GetFiles(directoryPath, "*.metadata.json");
+        foreach (var filename in filenames)
+        {
+            var text = await File.ReadAllTextAsync(filename);
+            var info = JsonSerializer.Deserialize<UploadFileInfo>(text);
+            if (info is not null)
+            {
+                yield return info;
+            }
+        }
     }
 
     private bool WriteUploadFileInfo(string fileId, UploadFileInfo fileInfo)

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using SolidTUS.Models;
@@ -28,6 +29,11 @@ public interface IUploadMetaHandler
     /// <returns>An upload file info or null</returns>
     Task<UploadFileInfo?> GetResourceAsync(string fileId, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Retrieve all upload file infos
+    /// </summary>
+    /// <returns>An awaitable collection of upload infos</returns>
+    IAsyncEnumerable<UploadFileInfo> GetAllResourcesAsync();
 
     /// <summary>
     /// Update file info
