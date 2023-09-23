@@ -23,5 +23,5 @@ public static class TusHeaderValues
     /// <summary>
     /// Get the actual supported protocol extensions
     /// </summary>
-    public const string TusSupportedExtensions = "creation,creation-with-upload,checksum";
+    public const string TusSupportedExtensions = "creation,creation-with-upload,checksum,expiration";
 }
