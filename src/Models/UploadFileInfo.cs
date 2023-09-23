@@ -30,6 +30,7 @@ public record UploadFileInfo
     /// If unknown file size this will be null
     /// </remarks>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonInclude]
     public long? FileSize { get; init; }
 
     /// <summary>
@@ -42,6 +43,7 @@ public record UploadFileInfo
     /// Get the original raw metadata
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonInclude]
     public string? RawMetadata { get; init; }
 
     /// <summary>

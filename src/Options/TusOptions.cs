@@ -62,6 +62,14 @@ public record TusOptions
     public bool AllowExpiredUploadsToContinue { get; set; }
 
     /// <summary>
+    /// Set the interval that the expiration job runner should start scanning for expired uploads.
+    /// </summary>
+    /// <remarks>
+    /// Default interval is 1 day.
+    /// </remarks>
+    public TimeSpan ExpirationJobRunnerInterval { get; set; } = TimeSpan.FromDays(1);
+
+    /// <summary>
     /// Get the configuration section name
     /// </summary>
     internal const string TusConfigurationSection = "SolidTUS";

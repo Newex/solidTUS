@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Internal;
 using SolidTUS.Contexts;
 using SolidTUS.Handlers;
+using SolidTUS.Jobs;
 using SolidTUS.Options;
 using SolidTUS.ProtocolFlows;
 using SolidTUS.ProtocolHandlers;
@@ -100,6 +101,19 @@ public sealed class TusBuilder
     public TusBuilder FileStorageConfiguration(Action<FileStorageOptions> options)
     {
         services.Configure(options);
+        return this;
+    }
+
+    /// <summary>
+    /// Add background service job runner that scans periodically for expired uploads.
+    /// </summary>
+    /// <remarks>
+    /// Every <see cref="TusOptions.ExpirationJobRunnerInterval"/> the <see cref="IExpiredUploadHandler.StartScanForExpiredUploadsAsync"/> will run
+    /// </remarks>
+    /// <returns>builder</returns>
+    public TusBuilder WithExpirationJobRunner()
+    {
+        services.AddHostedService<ExpirationJob>();
         return this;
     }
 

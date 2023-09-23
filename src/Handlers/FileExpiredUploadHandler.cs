@@ -1,34 +1,57 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
-
+using Microsoft.Extensions.Internal;
 using SolidTUS.Models;
 
 namespace SolidTUS.Handlers;
 
+/// <summary>
+/// File expiration upload handler
+/// </summary>
 public class FileExpiredUploadHandler : IExpiredUploadHandler
 {
+    private readonly ISystemClock clock;
+
     private readonly IUploadMetaHandler uploadMetaHandler;
 
+    /// <summary>
+    /// Instantiate a new object of <see cref="FileExpiredUploadHandler"/>
+    /// </summary>
+    /// <param name="clock">The system clock</param>
+    /// <param name="uploadMetaHandler">The upload meta handler</param>
     public FileExpiredUploadHandler(
+        ISystemClock clock,
         IUploadMetaHandler uploadMetaHandler
      )
     {
-        this.uploadMetaHandler = uploadMetaHandler;
+        this.clock = clock;
 
+        this.uploadMetaHandler = uploadMetaHandler;
     }
 
     /// <inheritdoc />
     public async Task ExpiredUploadAsync(UploadFileInfo uploadFileInfo)
     {
-        throw new NotImplementedException();
+        await uploadMetaHandler.DeleteUploadFileInfoAsync(uploadFileInfo.FileId, CancellationToken.None);
+        var file = Path.Combine(uploadFileInfo.FileDirectoryPath, uploadFileInfo.OnDiskFilename);
+        File.Delete(file);
     }
 
     /// <inheritdoc />
-    public Task StartScanForExpiredUploadsAsync()
+    public async Task StartScanForExpiredUploadsAsync()
     {
-        throw new NotImplementedException();
+        await foreach (var info in uploadMetaHandler.GetAllResourcesAsync())
+        {
+            if (info.ExpirationDate.HasValue)
+            {
+                var now = clock.UtcNow;
+                var expired = now > info.ExpirationDate.Value;
+                if (expired)
+                {
+                    await ExpiredUploadAsync(info);
+                }
+            }
+        }
     }
-
 }

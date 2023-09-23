@@ -115,6 +115,8 @@ public class ExpirationRequestHandler
             _ => throw new UnreachableException()
         };
 
+        context.UploadFileInfo.ExpirationDate = end;
+
         // Convert the end date to RFC 7231
         var time = ToRFC7231(end);
 
