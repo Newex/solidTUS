@@ -27,7 +27,7 @@ Extensions:
 
 **Notes:**  
 \* Checksum feature does not implement the trailing header feature, i.e. A checksum value must be provided upon sending the http request.  
-\** Termination must be implemented by yourself. See examples and [documentation](/wiki/TUS-Termination.md) on how to and why.
+\** Termination must be implemented by yourself. See examples and [documentation](https://github.com/Newex/solidTUS/wiki/TUS-Termination) on how to and why.
 
 Future goals is to implement all the extensions:
 
@@ -69,7 +69,7 @@ _And done..._
 To see all the configurations go to the [wiki](https://github.com/Newex/solidTUS/wiki).
 ## Configurations
 
-TUS configurations  
+SolidTUS can be configured through the `TusOptions` object, either on startup or using environment variables.
 
 ```csharp
 // Custom metadata provider or set maximum TUS protocol file size
@@ -95,15 +95,6 @@ builder.Services
   .AddStorageHandler<MyStorageHandler>(); // <-- must implement IUploadStorageHandler interface
 ```
 
-If you want to support more checksum validators. The default checksum validators are: SHA1 and MD5:
-
-```csharp
-// Add custom checksum validator
-builder.Services
-  .AddTUS()
-  .AddChecksumValidator<MyChecksumValidator>(); // <-- must implement IChecksumValidator interface
-```
-
 If you use the default FileUploadStorageHandler you can configure the directory where to store files:
 
 ```csharp
@@ -116,7 +107,7 @@ builder.Services
   });
 ```
 
-another option is to determine where each file should be uploaded on per upload basis. In the `Controller` you can specify the file path:
+another option is to determine where each file should be uploaded on per upload basis. In the `Action` you can specify the file path:
 
 
 ```csharp
