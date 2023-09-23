@@ -1,9 +1,7 @@
 using System;
-
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
 using SolidTUS.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +14,7 @@ builder.Services.AddTus().Configuration(options =>
     options.MetadataValidator = (metadata) =>
             metadata.ContainsKey("name") && metadata.ContainsKey("type");
     options.ExpirationJobRunnerInterval = TimeSpan.FromMinutes(5);
+    options.HasTermination = true;
 })
 .FileStorageConfiguration(options =>
 {
