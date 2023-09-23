@@ -21,15 +21,13 @@ Basic features:
 Extensions:
 - [x] [Creation](https://tus.io/protocols/resumable-upload#creation)
 - [x] [Creation-With-Upload](https://tus.io/protocols/resumable-upload#creation-with-upload)
-- [x] [Checksum](https://tus.io/protocols/resumable-upload#checksum)
 - [x] [Expiration](https://tus.io/protocols/resumable-upload#expiration)
+- [x] [Checksum](https://tus.io/protocols/resumable-upload#checksum) *
+- [x] [Termination](https://tus.io/protocols/resumable-upload#termination) **
 
-Note that the checksum feature does not implement the trailing header feature, i.e. A checksum value must be provided upon sending the http request.
-
-- [x] [Termination](https://tus.io/protocols/resumable-upload#termination)
-
-Only termination announcement in OPTION request is implemented.  
-The actual functionality must be implemented by yourself. See examples and documentation on how to and why.
+**Notes:**  
+\* Checksum feature does not implement the trailing header feature, i.e. A checksum value must be provided upon sending the http request.  
+\** Termination must be implemented by yourself. See examples and [documentation](/wiki/TUS-Termination.md) on how to and why.
 
 Future goals is to implement all the extensions:
 
@@ -41,8 +39,8 @@ Future goals is to implement all the extensions:
 # Quickstart
 
 Add the package to your project:  
-```
-$ `dotnet add package SolidTUS`
+```console
+$ dotnet add package SolidTUS
 ```
 
 Register the service in the startup process:
@@ -54,20 +52,7 @@ builder.Services.AddTUS();
 
 In your `Controller` add the `TusCreation`-attribute to the action method endpoint and the `TusCreationContext` as parameter.
 
-```csharp
-[TusCreation]
-public async Task<ActionResult> CreateUpload([FromServices] TusCreationContext context)
-{
-  // ... Construct a file ID and an URL route to the Upload endpoint
-  var fileID = "myFileID";
-  var url = "/url/path/to/upload/action/myFileID";
-  
-  // When ready to create resource metadata
-  await context.StartCreationAsync(fileID, url);
-  
-  return NoContent();
-}
-```
+![create_upload](/assets/tus-creation-attribute.png)
 
 This will not upload any file (unless the client explicitly uses the TUS-extension `Creation-With-Upload` feature).  
 This only sets the ground work for getting information such as file size, and where to upload the data.
@@ -76,22 +61,12 @@ Next the actual upload.
 
 Set the `TusUpload`-attribute and add the `TusUploadContext` as a parameter
 
-```csharp
-[TusUpload]
-[Route("url/path/to/upload/action/{fileId}")]
-public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadContext context)
-{
-  // ... stuff
-  await context.StartAppendDataAsync(fileId);
-  
-  // Important must return 204 on success (TUS-protocol)
-  return NoContent();
-}
-```
+![start_upload](/assets/tus-upload-attribute.png)
 
 _And done..._
 
 # Extra options
+To see all the configurations go to the [wiki](/wiki/Home.md).
 ## Configurations
 
 TUS configurations  
