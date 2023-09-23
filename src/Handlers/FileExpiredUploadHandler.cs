@@ -26,7 +26,6 @@ public class FileExpiredUploadHandler : IExpiredUploadHandler
      )
     {
         this.clock = clock;
-
         this.uploadMetaHandler = uploadMetaHandler;
     }
 
