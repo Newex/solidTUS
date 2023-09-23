@@ -17,6 +17,7 @@ builder.Services
     .AddTus(builder.Configuration)
     .Configuration(options =>
     {
+        options.HasTermination = true;
         options.MetadataValidator = (metadata) =>
             metadata.ContainsKey("filename") && metadata.ContainsKey("contentType");
     });
