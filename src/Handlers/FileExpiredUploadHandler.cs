@@ -11,7 +11,7 @@ public class FileExpiredUploadHandler : IExpiredUploadHandler
 {
     private readonly IUploadMetaHandler uploadMetaHandler;
 
-    private FileExpiredUploadHandler(
+    public FileExpiredUploadHandler(
         IUploadMetaHandler uploadMetaHandler
      )
     {
