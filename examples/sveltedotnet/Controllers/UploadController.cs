@@ -1,14 +1,28 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using SolidTUS.Attributes;
 using SolidTUS.Contexts;
+using SolidTUS.Handlers;
 
 namespace ViteDotnet.Controllers;
 
 [ApiController]
 public class UploadController : ControllerBase
 {
+    private readonly IUploadStorageHandler uploadStorageHandler;
+    private readonly IUploadMetaHandler uploadMetaHandler;
+
+    public UploadController(
+        IUploadStorageHandler uploadStorageHandler,
+        IUploadMetaHandler uploadMetaHandler
+    )
+    {
+        this.uploadStorageHandler = uploadStorageHandler;
+        this.uploadMetaHandler = uploadMetaHandler;
+    }
+
     [TusUpload("{fileId}")]
     [RequestSizeLimit(5_000_000_000)]
     public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadContext context)
@@ -60,4 +74,30 @@ public class UploadController : ControllerBase
         return Ok();
     }
 
+    // Must have same route as the Upload route
+    [HttpDelete("{fileId}")]
+    public async Task<ActionResult> DeleteUpload(string fileId, CancellationToken cancellationToken)
+    {
+        // No questions asked - just delete
+        var info = await uploadMetaHandler.GetResourceAsync(fileId, cancellationToken);
+
+        if (info is null)
+        {
+            // Should respond with 404
+            return NotFound();
+        }
+
+        if (info.Done)
+        {
+            // SPECS does not specify what to do when
+            // the upload IS finished!
+
+            // We say "no" by 403 forbidden
+            return Forbid();
+        }
+
+        // Delete info and file respond 204
+        await uploadStorageHandler.DeleteFileAsync(info);
+        return NoContent();
+    }
 }
