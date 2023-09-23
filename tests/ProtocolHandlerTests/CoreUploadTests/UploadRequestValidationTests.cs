@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.IO.Pipelines;
 using System.Text;
@@ -25,7 +26,9 @@ public class UploadRequestValidationTests
         var file = RandomEntities.UploadFileInfo() with
         {
             FileSize = 100,
-            ByteOffset = 70
+            ByteOffset = 70,
+            ExpirationStrategy = ExpirationStrategy.Never,
+            CreatedDate = new DateTimeOffset(2020, 06, 01, 12, 30, 00, TimeSpan.FromHours(0))
         };
         var http = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
@@ -33,7 +36,11 @@ public class UploadRequestValidationTests
             (HeaderNames.ContentLength, "30"),
             (TusHeaderNames.UploadOffset, file.ByteOffset.ToString())
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = RequestContext.Create(http, CancellationToken.None).Map(c =>
+        {
+            c.FileID = "file#1";
+            return c;
+        });
         var handler = Setup.UploadFlow(file: file);
 
         // Act
