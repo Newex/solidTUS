@@ -25,7 +25,8 @@ public static class Setup
         var patch = new PatchRequestHandler();
         var checksum = new ChecksumRequestHandler(new List<IChecksumValidator>());
         var ioptions = Microsoft.Extensions.Options.Options.Create(options ?? new());
-        var expiration = new ExpirationRequestHandler(clock, ioptions);
+        var expirationHandler = MockHandlers.ExpiredUploadHandler();
+        var expiration = new ExpirationRequestHandler(clock, expirationHandler, ioptions);
         return new UploadFlow(
             common,
             patch,

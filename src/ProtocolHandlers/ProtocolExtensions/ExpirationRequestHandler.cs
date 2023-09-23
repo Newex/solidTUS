@@ -1,10 +1,12 @@
 using System;
 using System.Diagnostics;
 using System.Globalization;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Options;
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
+using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.Options;
 
@@ -19,15 +21,19 @@ public class ExpirationRequestHandler
     private readonly TimeSpan slidingInterval;
     private readonly TimeSpan absoluteInterval;
     private readonly ISystemClock clock;
+    private readonly IExpiredUploadHandler expiredUploadHandler;
+
     private readonly bool allowExpiredUploads;
 
     /// <summary>
-    /// 
+    /// Instantiate a new <see cref="ExpirationRequestHandler"/>
     /// </summary>
-    /// <param name="clock"></param>
-    /// <param name="options"></param>
+    /// <param name="clock">The system clock provider</param>
+    /// <param name="expiredUploadHandler">The expired upload handler</param>
+    /// <param name="options">The TUS options</param>
     public ExpirationRequestHandler(
         ISystemClock clock,
+        IExpiredUploadHandler expiredUploadHandler,
         IOptions<TusOptions> options
     )
     {
@@ -36,6 +42,7 @@ public class ExpirationRequestHandler
         absoluteInterval = options.Value.AbsoluteInterval;
         allowExpiredUploads = options.Value.AllowExpiredUploadsToContinue;
         this.clock = clock;
+        this.expiredUploadHandler = expiredUploadHandler;
     }
 
     /// <summary>
@@ -44,7 +51,7 @@ public class ExpirationRequestHandler
     /// <param name="context">The request context</param>
     /// <returns>A request context or an error</returns>
     /// <exception cref="UnreachableException">Thrown if missing strategy enumeration</exception>
-    public Result<RequestContext> CheckExpiration(RequestContext context)
+    public async Task<Result<RequestContext>> CheckExpirationAsync(RequestContext context)
     {
         var info = context.UploadFileInfo;
         var strategy = info.ExpirationStrategy ?? expirationStrategy;
@@ -73,6 +80,7 @@ public class ExpirationRequestHandler
         var expired = now > deadline.Value;
         if (expired && !allowExpiredUploads)
         {
+            await expiredUploadHandler.ExpiredUploadAsync(info);
             return HttpError.Gone("Upload expired").Wrap();
         }
 

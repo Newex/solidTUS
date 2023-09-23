@@ -37,4 +37,13 @@ public static class MockHandlers
 
         return mock.Object;
     }
+
+    public static IExpiredUploadHandler ExpiredUploadHandler()
+    {
+        var mock = new Mock<IExpiredUploadHandler>();
+
+        mock.Setup(x => x.ExpiredUploadAsync(It.IsAny<UploadFileInfo>()));
+
+        return mock.Object;
+    }
 }

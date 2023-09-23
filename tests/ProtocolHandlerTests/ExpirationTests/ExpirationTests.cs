@@ -1,6 +1,5 @@
 using System;
 using System.Threading;
-using FluentAssertions;
 using MSOptions = Microsoft.Extensions.Options.Options;
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
@@ -8,6 +7,7 @@ using SolidTUS.Models;
 using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 using SolidTUS.Tests.Mocks;
+using System.Threading.Tasks;
 
 namespace SolidTUS.Tests.ProtocolHandlerTests.ExpirationTests;
 
@@ -35,12 +35,13 @@ public class ExpirationTests
 
         });
         var clock = MockOthers.Clock(now);
-        var options = MSOptions.Create(new TusOptions
+        var globalOptions = MSOptions.Create(new TusOptions
         {
             AbsoluteInterval = TimeSpan.FromMinutes(2),
             ExpirationStrategy = ExpirationStrategy.AbsoluteExpiration
         });
-        var handler = new ExpirationRequestHandler(clock, options);
+        var expiredHandler = MockHandlers.ExpiredUploadHandler();
+        var handler = new ExpirationRequestHandler(clock, expiredHandler, globalOptions);
 
         // Act
         var response = request.Map(handler.SetExpiration).GetTusHttpResponse();
@@ -70,12 +71,13 @@ public class ExpirationTests
 
         });
         var clock = MockOthers.Clock(now);
-        var options = MSOptions.Create(new TusOptions
+        var globalOptions = MSOptions.Create(new TusOptions
         {
             AbsoluteInterval = TimeSpan.FromMinutes(2),
             ExpirationStrategy = ExpirationStrategy.Never
         });
-        var handler = new ExpirationRequestHandler(clock, options);
+        var expiredHandler = MockHandlers.ExpiredUploadHandler();
+        var handler = new ExpirationRequestHandler(clock, expiredHandler, globalOptions);
 
         // Act
         var response = request.Map(handler.SetExpiration).GetTusHttpResponse();
@@ -111,7 +113,8 @@ public class ExpirationTests
             AbsoluteInterval = TimeSpan.FromMinutes(2),
             ExpirationStrategy = ExpirationStrategy.Never
         });
-        var handler = new ExpirationRequestHandler(clock, globalOptions);
+        var expiredHandler = MockHandlers.ExpiredUploadHandler();
+        var handler = new ExpirationRequestHandler(clock, expiredHandler, globalOptions);
 
         // Act
         var response = request.Map(handler.SetExpiration).GetTusHttpResponse();
@@ -122,7 +125,7 @@ public class ExpirationTests
     }
 
     [Fact]
-    public void Expired_upload_should_return_410_Gone()
+    public async Task Expired_upload_should_return_410_Gone()
     {
         // Arrange
         var http = MockHttps.HttpRequest("PATCH",
@@ -147,18 +150,19 @@ public class ExpirationTests
             AbsoluteInterval = TimeSpan.FromDays(5),
             ExpirationStrategy = ExpirationStrategy.AbsoluteExpiration
         });
-        var handler = new ExpirationRequestHandler(clock, globalOptions);
+        var expiredHandler = MockHandlers.ExpiredUploadHandler();
+        var handler = new ExpirationRequestHandler(clock, expiredHandler, globalOptions);
 
         // Act
-        var response = request.Bind(handler.CheckExpiration).GetTusHttpResponse();
-        var status = response.StatusCode;
+        var response = await request.BindAsync(handler.CheckExpirationAsync);
+        var status = response.GetTusHttpResponse().StatusCode;
 
         // Assert
         status.Should().Be(410);
     }
 
     [Fact]
-    public void Expired_upload_can_be_allowed()
+    public async Task Expired_upload_can_be_allowed()
     {
         // Arrange
         var http = MockHttps.HttpRequest("PATCH",
@@ -184,11 +188,13 @@ public class ExpirationTests
             ExpirationStrategy = ExpirationStrategy.AbsoluteExpiration,
             AllowExpiredUploadsToContinue = true
         });
-        var handler = new ExpirationRequestHandler(clock, globalOptions);
+        var options = MSOptions.Create(new TusOptions());
+        var expiredHandler = MockHandlers.ExpiredUploadHandler();
+        var handler = new ExpirationRequestHandler(clock, expiredHandler, options);
 
         // Act
-        var response = request.Bind(handler.CheckExpiration).GetTusHttpResponse();
-        var result = response.IsSuccess;
+        var response = await request.BindAsync(handler.CheckExpirationAsync);
+        var result = response.GetTusHttpResponse().IsSuccess;
 
         // Assert
         result.Should().BeTrue();
