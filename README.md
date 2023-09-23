@@ -22,12 +22,12 @@ Extensions:
 - [x] [Creation](https://tus.io/protocols/resumable-upload#creation)
 - [x] [Creation-With-Upload](https://tus.io/protocols/resumable-upload#creation-with-upload)
 - [x] [Checksum](https://tus.io/protocols/resumable-upload#checksum)
+- [x] [Expiration](https://tus.io/protocols/resumable-upload#expiration)
 
 Note that the checksum feature does not implement the trailing header feature, i.e. A checksum value must be provided upon sending the http request.
 
 Future goals is to implement all the extensions:
 
-- [ ] [Expiration](https://tus.io/protocols/resumable-upload#expiration)
 - [ ] [Termination](https://tus.io/protocols/resumable-upload#termination)
 - [ ] [Concatenation](https://tus.io/protocols/resumable-upload#concatenation)
 
@@ -270,6 +270,12 @@ Upload-Offset: 100
 
 # Test methodology
 Using unit tests and manually making TUS-request with the official javascript client in the examples folder.
+
+# TODO
+
+- [ ] Create wiki pages for all the configuration options
+- [ ] Create wiki pages for library design, and how to extend
+- [ ] Implement all TUS extension features
 
 # References
 * [TUS-protocol](https://tus.io/protocols/resumable-upload.html#core-protocol)
