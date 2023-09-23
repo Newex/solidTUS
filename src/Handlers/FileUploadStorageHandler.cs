@@ -100,7 +100,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
             if (validChecksum)
             {
                 uploadInfo.AddBytes(written);
-                await uploadMetaHandler.UpdateResourceAsync(fileId, uploadInfo, cancellationToken);
+                await uploadMetaHandler.UpdateResourceAsync(uploadInfo, cancellationToken);
             }
         }
 

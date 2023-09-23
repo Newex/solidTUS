@@ -15,11 +15,10 @@ public interface IUploadMetaHandler
     /// <summary>
     /// Create file info resource
     /// </summary>
-    /// <param name="fileId">The file Id</param>
     /// <param name="fileInfo">The file info</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>True if created otherwise false</returns>
-    Task<bool> CreateResourceAsync(string fileId, UploadFileInfo fileInfo, CancellationToken cancellationToken);
+    Task<bool> CreateResourceAsync(UploadFileInfo fileInfo, CancellationToken cancellationToken);
 
     /// <summary>
     /// Get the upload file info
@@ -38,11 +37,10 @@ public interface IUploadMetaHandler
     /// <summary>
     /// Update file info
     /// </summary>
-    /// <param name="fileId">The file id</param>
     /// <param name="fileInfo">The updated file info</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Returns true if updated otherwise false</returns>
-    Task<bool> UpdateResourceAsync(string fileId, UploadFileInfo fileInfo, CancellationToken cancellationToken);
+    Task<bool> UpdateResourceAsync(UploadFileInfo fileInfo, CancellationToken cancellationToken);
 
     /// <summary>
     /// Delete a file upload info

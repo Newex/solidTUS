@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
-
 using SolidTUS.Attributes;
-using SolidTUS.Parsers;
 
 namespace SolidTUS.Models;
 
@@ -13,6 +11,11 @@ namespace SolidTUS.Models;
 /// </summary>
 public record UploadFileInfo
 {
+    /// <summary>
+    /// Get the file id
+    /// </summary>
+    public string FileId { get; internal set; } = string.Empty;
+
     /// <summary>
     /// Get the bytes that have been uploaded so-far
     /// </summary>

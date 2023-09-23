@@ -29,10 +29,10 @@ public static class MockHandlers
         mock.Setup(s => s.GetResourceAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
         .ReturnsAsync(file);
 
-        mock.Setup(s => s.UpdateResourceAsync(It.IsAny<string>(), It.IsAny<UploadFileInfo>(), It.IsAny<CancellationToken>()))
+        mock.Setup(s => s.UpdateResourceAsync(It.IsAny<UploadFileInfo>(), It.IsAny<CancellationToken>()))
         .ReturnsAsync(updated);
 
-        mock.Setup(s => s.CreateResourceAsync(It.IsAny<string>(), It.IsAny<UploadFileInfo>(), It.IsAny<CancellationToken>()))
+        mock.Setup(s => s.CreateResourceAsync(It.IsAny<UploadFileInfo>(), It.IsAny<CancellationToken>()))
         .ReturnsAsync(createdInfo);
 
         return mock.Object;

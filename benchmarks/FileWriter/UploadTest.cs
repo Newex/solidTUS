@@ -137,7 +137,7 @@ public class UploadTest
         if (uploadMetaHandler is not null)
         {
             // Reset metadata file
-            var created = uploadMetaHandler.CreateResourceAsync(OutputFilename, uploadInfo, CancellationToken.None).Result;
+            var created = uploadMetaHandler.CreateResourceAsync(uploadInfo, CancellationToken.None).Result;
         }
     }
 

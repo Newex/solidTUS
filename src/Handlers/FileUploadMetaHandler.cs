@@ -29,11 +29,11 @@ public class FileUploadMetaHandler : IUploadMetaHandler
     }
 
     /// <inheritdoc />
-    public Task<bool> CreateResourceAsync(string fileId, UploadFileInfo fileInfo, CancellationToken cancellationToken)
+    public Task<bool> CreateResourceAsync(UploadFileInfo fileInfo, CancellationToken cancellationToken)
     {
         try
         {
-            WriteUploadFileInfo(fileId, fileInfo);
+            WriteUploadFileInfo(fileInfo);
         }
         catch (Exception)
         {
@@ -52,16 +52,16 @@ public class FileUploadMetaHandler : IUploadMetaHandler
     }
 
     /// <inheritdoc />
-    public Task<bool> UpdateResourceAsync(string fileId, UploadFileInfo fileInfo, CancellationToken cancellationToken)
+    public Task<bool> UpdateResourceAsync(UploadFileInfo fileInfo, CancellationToken cancellationToken)
     {
-        var filepath = MetadataFullFilenamePath(fileId);
+        var filepath = MetadataFullFilenamePath(fileInfo.FileId);
         var exists = File.Exists(filepath);
         if (!exists)
         {
             return Task.FromResult(false);
         }
 
-        var written = WriteUploadFileInfo(fileId, fileInfo);
+        var written = WriteUploadFileInfo(fileInfo);
         return Task.FromResult(written);
     }
 
@@ -96,11 +96,11 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         }
     }
 
-    private bool WriteUploadFileInfo(string fileId, UploadFileInfo fileInfo)
+    private bool WriteUploadFileInfo(UploadFileInfo fileInfo)
     {
         try
         {
-            var filename = MetadataFullFilenamePath(fileId);
+            var filename = MetadataFullFilenamePath(fileInfo.FileId);
             var content = JsonSerializer.Serialize(fileInfo);
             File.WriteAllText(filename, content);
             return true;

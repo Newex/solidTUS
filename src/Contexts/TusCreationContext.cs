@@ -120,7 +120,8 @@ public class TusCreationContext
     {
         UploadFileInfo.OnDiskFilename = filename ?? fileId;
         UploadFileInfo.FileDirectoryPath = directoryPath ?? defaultFileDirectory;
-        var created = await uploadMetaHandler.CreateResourceAsync(fileId, UploadFileInfo, cancellationToken);
+        UploadFileInfo.FileId = fileId;
+        var created = await uploadMetaHandler.CreateResourceAsync(UploadFileInfo, cancellationToken);
         if (created)
         {
             // Server side callback
