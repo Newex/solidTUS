@@ -21,6 +21,7 @@ public sealed class TusBuilder
 {
     private readonly ServiceDescriptor uploadMetaDescriptor = new(typeof(IUploadMetaHandler), typeof(FileUploadMetaHandler), ServiceLifetime.Scoped);
     private readonly ServiceDescriptor uploadStorageDescriptor = new(typeof(IUploadStorageHandler), typeof(FileUploadStorageHandler), ServiceLifetime.Scoped);
+    private readonly ServiceDescriptor expiredHandleDescriptor = new(typeof(IExpiredUploadHandler), typeof(FileExpiredUploadHandler), ServiceLifetime.Scoped);
 
     private readonly IServiceCollection services;
 
@@ -52,6 +53,19 @@ public sealed class TusBuilder
     {
         services.Remove(uploadMetaDescriptor);
         services.TryAddScoped<IUploadMetaHandler, T>();
+        return this;
+    }
+
+    /// <summary>
+    /// Add expired upload handler
+    /// </summary>
+    /// <typeparam name="T">The specific expired handler</typeparam>
+    /// <returns>builder</returns>
+    public TusBuilder AddExpirationHandler<T>()
+        where T : class, IExpiredUploadHandler
+    {
+        services.Remove(expiredHandleDescriptor);
+        services.TryAddScoped<IExpiredUploadHandler, T>();
         return this;
     }
 
@@ -106,6 +120,7 @@ public sealed class TusBuilder
         builder.services.TryAddScoped<ChecksumRequestHandler>();
         builder.services.Add(builder.uploadMetaDescriptor);
         builder.services.Add(builder.uploadStorageDescriptor);
+        builder.services.Add(builder.expiredHandleDescriptor);
         builder.services.Configure<TusOptions>(_ => { });
         builder.services.Configure<MvcOptions>(options =>
         {
