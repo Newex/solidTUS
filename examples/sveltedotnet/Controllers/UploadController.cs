@@ -84,6 +84,8 @@ public class UploadController : ControllerBase
         if (info is null)
         {
             // Should respond with 404
+            // or if we know this existed
+            // then 410 Gone
             return NotFound();
         }
 
