@@ -13,7 +13,7 @@ namespace SolidTUS.Handlers;
 public interface IExpiredUploadHandler
 {
     /// <summary>
-    /// Handle expired single expired upload
+    /// Handle single expired upload
     /// </summary>
     /// <param name="uploadFileInfo">The expired upload</param>
     /// <returns>An awaitable task</returns>
