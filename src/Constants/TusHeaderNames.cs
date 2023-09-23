@@ -63,4 +63,9 @@ public static class TusHeaderNames
     /// Get the http method override header value
     /// </summary>
     public const string HttpMethodOverride = "X-HTTP-Method-Override";
+
+    /// <summary>
+    /// Get the expiration header value
+    /// </summary>
+    public const string Expiration = "Upload-Expires";
 }

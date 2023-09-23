@@ -88,6 +88,20 @@ public class TusCreationContext
     }
 
     /// <summary>
+    /// Set the individual upload expiration strategy
+    /// </summary>
+    /// <remarks>
+    /// Must be called prior to starting the resource creation.
+    /// </remarks>
+    /// <param name="expiration">The expiration strategy</param>
+    /// <param name="interval">The optional time span interval</param>
+    public void SetExpirationStrategy(ExpirationStrategy expiration, TimeSpan? interval = null)
+    {
+        UploadFileInfo.ExpirationStrategy = expiration;
+        UploadFileInfo.Interval = interval;
+    }
+
+    /// <summary>
     /// Start resource creation
     /// </summary>
     /// <remarks>
@@ -106,7 +120,8 @@ public class TusCreationContext
     {
         UploadFileInfo.OnDiskFilename = filename ?? fileId;
         UploadFileInfo.FileDirectoryPath = directoryPath ?? defaultFileDirectory;
-        var created = await uploadMetaHandler.CreateResourceAsync(fileId, UploadFileInfo, cancellationToken);
+        UploadFileInfo.FileId = fileId;
+        var created = await uploadMetaHandler.CreateResourceAsync(UploadFileInfo, cancellationToken);
         if (created)
         {
             // Server side callback
@@ -122,7 +137,7 @@ public class TusCreationContext
         if (withUpload)
         {
             // Can append if we dont need to worry about checksum
-            var written = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, UploadFileInfo, UploadFileInfo.FileSize, true, cancellationToken);
+            var written = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, UploadFileInfo, null, cancellationToken);
 
             // First server callback -->
             onUpload(written);

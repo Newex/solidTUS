@@ -39,6 +39,13 @@ public record struct HttpError(int StatusCode, IHeaderDictionary Headers, string
     public static HttpError Conflict(string? message = null) => new(409, new HeaderDictionary(), message);
 
     /// <summary>
+    /// Status 410 Gone
+    /// </summary>
+    /// <param name="message">The optional message</param>
+    /// <returns>An http error</returns>
+    public static HttpError Gone(string? message = null) => new(410, new HeaderDictionary(), message);
+
+    /// <summary>
     /// Status 412 PreconditionFailed
     /// </summary>
     /// <param name="message">Optional message</param>

@@ -20,6 +20,7 @@ public class UploadFlow
     private readonly CommonRequestHandler common;
     private readonly PatchRequestHandler patch;
     private readonly ChecksumRequestHandler checksumHandler;
+    private readonly ExpirationRequestHandler expirationRequestHandler;
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
 
@@ -28,13 +29,15 @@ public class UploadFlow
     /// </summary>
     /// <param name="commonRequestHandler">The common request handler</param>
     /// <param name="patchRequestHandler">The patch request handler</param>
-    /// <param name="checksumRequestHandler"></param>
+    /// <param name="checksumRequestHandler">The checksum request handler</param>
+    /// <param name="expirationRequestHandler">The expiration request handler</param>
     /// <param name="uploadStorageHandler">The upload storage handler</param>
     /// <param name="uploadMetaHandler">The upload meta handler</param>
     public UploadFlow(
         CommonRequestHandler commonRequestHandler,
         PatchRequestHandler patchRequestHandler,
         ChecksumRequestHandler checksumRequestHandler,
+        ExpirationRequestHandler expirationRequestHandler,
         IUploadStorageHandler uploadStorageHandler,
         IUploadMetaHandler uploadMetaHandler
     )
@@ -42,6 +45,7 @@ public class UploadFlow
         common = commonRequestHandler;
         patch = patchRequestHandler;
         checksumHandler = checksumRequestHandler;
+        this.expirationRequestHandler = expirationRequestHandler;
         this.uploadStorageHandler = uploadStorageHandler;
         this.uploadMetaHandler = uploadMetaHandler;
     }
@@ -73,17 +77,18 @@ public class UploadFlow
     /// <returns>Either an error or a request context</returns>
     public async ValueTask<Result<RequestContext>> StartUploadingAsync(RequestContext context, string fileId)
     {
-        // Core protocol, start -->
         context.FileID = fileId;
         var contentType = PatchRequestHandler.CheckContentType(context);
         var uploadOffset = contentType.Bind(PatchRequestHandler.CheckUploadOffset);
         var uploadInfoExists = await uploadOffset.BindAsync(async c => await common.CheckUploadFileInfoExistsAsync(c));
         var byteOffset = uploadInfoExists.Bind(PatchRequestHandler.CheckConsistentByteOffset);
-        var uploadLength = await byteOffset.BindAsync(async c => await patch.CheckUploadLengthAsync(c));
+        var uploadLength = byteOffset.Bind(patch.CheckUploadLength);
         var uploadSize = uploadLength.Bind(PatchRequestHandler.CheckUploadExceedsFileSize);
-        // <-- end
+        var uploadExpired = await uploadSize.BindAsync(expirationRequestHandler.CheckExpirationAsync);
+        var uploadUpdatedDate = uploadExpired.Map(common.SetUpdatedDate);
 
-        return uploadSize;
+        var setExpiration = uploadUpdatedDate.Map(expirationRequestHandler.SetExpiration);
+        return setExpiration;
     }
 
     /// <summary>
@@ -113,7 +118,7 @@ public class UploadFlow
     /// <param name="onError">The callback function when an error occurs</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>An upload context or null</returns>
-    public TusUploadContext? CreateUploadContext(Result<RequestContext> context, PipeReader reader, Action<long> onDone, Action<HttpError> onError, CancellationToken cancellationToken)
+    public TusUploadContext? CreateUploadContext(Result<RequestContext> context, PipeReader reader, Action<UploadFileInfo> onDone, Action<HttpError> onError, CancellationToken cancellationToken)
     {
         var requestContext = context.Match(c => c, _ => null!);
         if (requestContext is null)
@@ -121,11 +126,9 @@ public class UploadFlow
             return null;
         }
 
-        var contentLength = requestContext.RequestHeaders.ContentLength;
         var uploadFileInfo = requestContext.UploadFileInfo;
         return new TusUploadContext(
             requestContext.ChecksumContext,
-            contentLength,
             uploadMetaHandler,
             uploadStorageHandler,
             reader,

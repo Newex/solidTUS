@@ -1,3 +1,5 @@
+using System;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -13,12 +15,14 @@ builder.Services.AddTus().Configuration(options =>
     options.MaxSize = 5_000_000_000;
     options.MetadataValidator = (metadata) =>
             metadata.ContainsKey("name") && metadata.ContainsKey("type");
+    options.ExpirationJobRunnerInterval = TimeSpan.FromMinutes(5);
 })
 .FileStorageConfiguration(options =>
 {
     options.DirectoryPath = "./FileUploads";
     options.MetaDirectoryPath = "./FileUploads";
-});
+})
+.WithExpirationJobRunner();
 
 var app = builder.Build();
 

@@ -1,5 +1,4 @@
-using System.IO;
-using System.Threading;
+using System.IO.Pipelines;
 using System.Threading.Tasks;
 
 namespace SolidTUS.Validators;
@@ -23,5 +22,5 @@ public interface IChecksumValidator
     /// <param name="file">The stream of the recently uploaded part that must be validated</param>
     /// <param name="checksum">The expected checksum value</param>
     /// <returns>True if valid checksum otherwise false</returns>
-    Task<bool> ValidateChecksumAsync(Stream file, byte[] checksum);
+    Task<bool> ValidateChecksumAsync(PipeReader file, byte[] checksum);
 }

@@ -1,4 +1,4 @@
-using System.IO;
+using System.IO.Pipelines;
 using Moq;
 using SolidTUS.Validators;
 
@@ -13,7 +13,7 @@ public static class MockValidators
         mock.Setup(v => v.AlgorithmName)
         .Returns(algorithmName);
 
-        mock.Setup(v => v.ValidateChecksumAsync(It.IsAny<Stream>(), It.IsAny<byte[]>()))
+        mock.Setup(v => v.ValidateChecksumAsync(It.IsAny<PipeReader>(), It.IsAny<byte[]>()))
         .ReturnsAsync(checksumIsValid);
 
         return mock.Object;

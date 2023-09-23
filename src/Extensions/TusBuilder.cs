@@ -3,9 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Internal;
 using SolidTUS.Contexts;
 using SolidTUS.Handlers;
-using SolidTUS.Models;
+using SolidTUS.Jobs;
 using SolidTUS.Options;
 using SolidTUS.ProtocolFlows;
 using SolidTUS.ProtocolHandlers;
@@ -21,6 +22,7 @@ public sealed class TusBuilder
 {
     private readonly ServiceDescriptor uploadMetaDescriptor = new(typeof(IUploadMetaHandler), typeof(FileUploadMetaHandler), ServiceLifetime.Scoped);
     private readonly ServiceDescriptor uploadStorageDescriptor = new(typeof(IUploadStorageHandler), typeof(FileUploadStorageHandler), ServiceLifetime.Scoped);
+    private readonly ServiceDescriptor expiredHandleDescriptor = new(typeof(IExpiredUploadHandler), typeof(FileExpiredUploadHandler), ServiceLifetime.Scoped);
 
     private readonly IServiceCollection services;
 
@@ -52,6 +54,19 @@ public sealed class TusBuilder
     {
         services.Remove(uploadMetaDescriptor);
         services.TryAddScoped<IUploadMetaHandler, T>();
+        return this;
+    }
+
+    /// <summary>
+    /// Add expired upload handler
+    /// </summary>
+    /// <typeparam name="T">The specific expired handler</typeparam>
+    /// <returns>builder</returns>
+    public TusBuilder AddExpirationHandler<T>()
+        where T : class, IExpiredUploadHandler
+    {
+        services.Remove(expiredHandleDescriptor);
+        services.TryAddScoped<IExpiredUploadHandler, T>();
         return this;
     }
 
@@ -89,20 +104,37 @@ public sealed class TusBuilder
         return this;
     }
 
+    /// <summary>
+    /// Add background service job runner that scans periodically for expired uploads.
+    /// </summary>
+    /// <remarks>
+    /// Every <see cref="TusOptions.ExpirationJobRunnerInterval"/> the <see cref="IExpiredUploadHandler.StartScanForExpiredUploadsAsync"/> will run
+    /// </remarks>
+    /// <returns>builder</returns>
+    public TusBuilder WithExpirationJobRunner()
+    {
+        services.AddHostedService<ExpirationJob>();
+        return this;
+    }
+
     internal static TusBuilder Create(IServiceCollection services)
     {
         var builder = new TusBuilder(services);
+
+        builder.services.TryAddSingleton<ISystemClock, SystemClock>();
 
         builder.services.TryAddScoped<CommonRequestHandler>();
         builder.services.TryAddScoped<PatchRequestHandler>();
         builder.services.TryAddScoped<PostRequestHandler>();
         builder.services.TryAddScoped<OptionsRequestHandler>();
+        builder.services.TryAddScoped<ExpirationRequestHandler>();
 
         builder.services.TryAddScoped<UploadFlow>();
         builder.services.TryAddScoped<CreationFlow>();
         builder.services.TryAddScoped<ChecksumRequestHandler>();
         builder.services.Add(builder.uploadMetaDescriptor);
         builder.services.Add(builder.uploadStorageDescriptor);
+        builder.services.Add(builder.expiredHandleDescriptor);
         builder.services.Configure<TusOptions>(_ => { });
         builder.services.Configure<MvcOptions>(options =>
         {

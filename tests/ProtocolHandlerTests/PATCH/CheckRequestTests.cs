@@ -259,47 +259,23 @@ public class CheckRequestTests
     }
 
     [Fact]
-    public async void Error_during_setting_file_size_returns_500_status_code()
+    public void No_errors_during_setting_file_size_returns_success()
     {
         // Arrange
         var file = RandomEntities.UploadFileInfo() with
         {
             FileSize = null
         };
-        var uploadMetaHandler = MockHandlers.UploadMetaHandler(file, setFileSize: false);
+        var uploadMetaHandler = MockHandlers.UploadMetaHandler(file, updated: true);
         var http = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadLength, 200L.ToString())
         );
         var request = RequestContext.Create(http, CancellationToken.None);
-        var handler = new PatchRequestHandler(uploadMetaHandler);
+        var handler = new PatchRequestHandler();
 
         // Act
-        var response = await request.BindAsync(async c => await handler.CheckUploadLengthAsync(c));
-        var result = response.StatusCode();
-
-        // Assert
-        Assert.Equal(expected: 500, result);
-    }
-
-    [Fact]
-    public async void No_errors_during_setting_file_size_returns_success()
-    {
-        // Arrange
-        var file = RandomEntities.UploadFileInfo() with
-        {
-            FileSize = null
-        };
-        var uploadMetaHandler = MockHandlers.UploadMetaHandler(file, setFileSize: true);
-        var http = MockHttps.HttpRequest("PATCH",
-            (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
-            (TusHeaderNames.UploadLength, 200L.ToString())
-        );
-        var request = RequestContext.Create(http, CancellationToken.None);
-        var handler = new PatchRequestHandler(uploadMetaHandler);
-
-        // Act
-        var response = await request.BindAsync(async c => await handler.CheckUploadLengthAsync(c));
+        var response = request.Bind(handler.CheckUploadLength);
         var result = response.IsSuccess();
 
         // Assert

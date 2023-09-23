@@ -52,7 +52,7 @@ public record RequestContext
     /// <summary>
     /// Get the upload file info
     /// </summary>
-    public UploadFileInfo UploadFileInfo { get; init; } = new();
+    public UploadFileInfo UploadFileInfo { get; internal set; } = new();
 
     /// <summary>
     /// The checksum context

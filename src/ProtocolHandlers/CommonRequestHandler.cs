@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Microsoft.Extensions.Internal;
 using SolidTUS.Constants;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
@@ -14,19 +15,23 @@ public class CommonRequestHandler
 {
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
+    private readonly ISystemClock clock;
 
     /// <summary>
     /// Instantiate a new object of <see cref="CommonRequestHandler"/>
     /// </summary>
     /// <param name="uploadStorageHandler"></param>
     /// <param name="uploadMetaHandler">The upload meta handler</param>
+    /// <param name="clock">The clock provider</param>
     public CommonRequestHandler(
         IUploadStorageHandler uploadStorageHandler,
-        IUploadMetaHandler uploadMetaHandler
+        IUploadMetaHandler uploadMetaHandler,
+        ISystemClock clock
     )
     {
         this.uploadStorageHandler = uploadStorageHandler;
         this.uploadMetaHandler = uploadMetaHandler;
+        this.clock = clock;
     }
 
     /// <summary>
@@ -39,23 +44,16 @@ public class CommonRequestHandler
     /// <returns>Either an error or a request context</returns>
     public async ValueTask<Result<RequestContext>> CheckUploadFileInfoExistsAsync(RequestContext context)
     {
-        var fileInfo = await uploadMetaHandler.GetUploadFileInfoAsync(context.FileID, context.CancellationToken);
+        var fileInfo = await uploadMetaHandler.GetResourceAsync(context.FileID, context.CancellationToken);
         if (fileInfo is null)
         {
             return HttpError.NotFound("File resource does not exists").Wrap();
         }
 
-        var size = await uploadStorageHandler.GetUploadSizeAsync(context.FileID, fileInfo, context.CancellationToken);
-        var info = fileInfo with
-        {
-            ByteOffset = size ?? 0L
-        };
-        var result = context with
-        {
-            UploadFileInfo = info
-        };
-
-        return result.Wrap();
+        var size = uploadStorageHandler.GetUploadSize(context.FileID, fileInfo);
+        fileInfo.ByteOffset = size ?? 0L;
+        context.UploadFileInfo = fileInfo;
+        return context.Wrap();
     }
 
     /// <summary>
@@ -80,5 +78,30 @@ public class CommonRequestHandler
         }
 
         return context.Wrap();
+    }
+
+    /// <summary>
+    /// Set the created date for the upload
+    /// </summary>
+    /// <param name="context">The request context</param>
+    /// <returns>A request context</returns>
+    public RequestContext SetCreatedDate(RequestContext context)
+    {
+        if (!context.UploadFileInfo.CreatedDate.HasValue)
+        {
+            context.UploadFileInfo.CreatedDate = clock.UtcNow;
+        }
+        return context;
+    }
+
+    /// <summary>
+    /// Set the last time this upload was updated
+    /// </summary>
+    /// <param name="context">The request context</param>
+    /// <returns>A request context</returns>
+    public RequestContext SetUpdatedDate(RequestContext context)
+    {
+        context.UploadFileInfo.LastUpdatedDate = clock.UtcNow;
+        return context;
     }
 }

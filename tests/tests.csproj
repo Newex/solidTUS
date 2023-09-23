@@ -3,7 +3,8 @@
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <RootNamespace>SolidTus.Tests</RootNamespace>
+    <RootNamespace>SolidTUS.Tests</RootNamespace>
+    <AssemblyName>SolidTUS.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
 
     <!-- Warnings and errors -->
@@ -12,6 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="Bogus" Version="34.0.2" />
+    <PackageReference Include="FluentAssertions" Version="6.12.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
     <PackageReference Include="Moq" Version="4.18.4" />
     <PackageReference Include="xunit" Version="2.4.2" />

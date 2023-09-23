@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using SolidTUS.Constants;
 using SolidTUS.Models;

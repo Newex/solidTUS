@@ -8,6 +8,7 @@ using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers;
+using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 
 namespace SolidTUS.ProtocolFlows;
 
@@ -17,7 +18,9 @@ namespace SolidTUS.ProtocolFlows;
 public class CreationFlow
 {
     private readonly IOptions<FileStorageOptions> options;
+    private readonly CommonRequestHandler common;
     private readonly PostRequestHandler post;
+    private readonly ExpirationRequestHandler expiration;
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
 
@@ -25,18 +28,24 @@ public class CreationFlow
     /// Instantiate a new object of <see cref="CreationFlow"/>
     /// </summary>
     /// <param name="options">The file storage options</param>
+    /// <param name="common">The common request handler</param>
     /// <param name="post">The post request handler</param>
+    /// <param name="expiration">The expiration request handler</param>
     /// <param name="uploadStorageHandler">The upload storage handler</param>
     /// <param name="uploadMetaHandler">The upload meta handler</param>
     public CreationFlow(
         IOptions<FileStorageOptions> options,
+        CommonRequestHandler common,
         PostRequestHandler post,
+        ExpirationRequestHandler expiration,
         IUploadStorageHandler uploadStorageHandler,
         IUploadMetaHandler uploadMetaHandler
     )
     {
         this.options = options;
+        this.common = common;
         this.post = post;
+        this.expiration = expiration;
         this.uploadStorageHandler = uploadStorageHandler;
         this.uploadMetaHandler = uploadMetaHandler;
     }
@@ -60,15 +69,17 @@ public class CreationFlow
         });
         var setMetadata = validate.Map(t => PostRequestHandler.SetNewMetadata(t.Context, t.Metadata));
         var setFileSize = setMetadata.Map(PostRequestHandler.SetFileSize);
+        var setCreatedDate = setFileSize.Map(common.SetCreatedDate);
+        var setExpiration = setCreatedDate.Map(expiration.SetExpiration);
 
         var hasContentLength = long.TryParse(context.RequestHeaders[HeaderNames.ContentLength], out var contentLength);
         var isUpload = hasContentLength && contentLength > 0;
         if (isUpload)
         {
-            return setFileSize.Bind(PostRequestHandler.CheckIsValidUpload);
+            return setExpiration.Bind(PostRequestHandler.CheckIsValidUpload);
         }
 
-        return setFileSize;
+        return setExpiration;
     }
 
     /// <summary>

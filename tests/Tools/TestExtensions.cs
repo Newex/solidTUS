@@ -1,4 +1,3 @@
-using System;
 using SolidTUS.Models;
 
 namespace SolidTUS.Tests.Tools;
