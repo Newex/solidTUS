@@ -66,7 +66,7 @@ Set the `TusUpload`-attribute and add the `TusUploadContext` as a parameter
 _And done..._
 
 # Extra options
-To see all the configurations go to the [wiki](/wiki/Home.md).
+To see all the configurations go to the [wiki](/wiki).
 ## Configurations
 
 TUS configurations  
