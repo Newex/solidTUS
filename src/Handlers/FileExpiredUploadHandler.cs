@@ -43,7 +43,7 @@ public class FileExpiredUploadHandler : IExpiredUploadHandler
     {
         await foreach (var info in uploadMetaHandler.GetAllResourcesAsync())
         {
-            if (info.ExpirationDate.HasValue)
+            if (info.ExpirationDate.HasValue && !info.Done)
             {
                 var now = clock.UtcNow;
                 var expired = now > info.ExpirationDate.Value;
