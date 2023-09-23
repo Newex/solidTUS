@@ -14,11 +14,13 @@ public record UploadFileInfo
     /// <summary>
     /// Get the file id
     /// </summary>
+    [JsonInclude]
     public string FileId { get; internal set; } = string.Empty;
 
     /// <summary>
     /// Get the bytes that have been uploaded so-far
     /// </summary>
+    [JsonInclude]
     public long ByteOffset { get; internal set; }
 
     /// <summary>
