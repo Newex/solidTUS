@@ -16,7 +16,7 @@ public static class MockHandlers
         mock.Setup(s => s.GetUploadSize(It.IsAny<string>(), It.IsAny<UploadFileInfo>()))
         .Returns(currentSize);
 
-        mock.Setup(s => s.OnPartialUploadAsync(It.IsAny<string>(), It.IsAny<PipeReader>(), It.IsAny<UploadFileInfo>(), It.IsAny<ChecksumContext>(), It.IsAny<CancellationToken>()))
+        mock.Setup(s => s.OnPartialUploadAsync(It.IsAny<PipeReader>(), It.IsAny<UploadFileInfo>(), It.IsAny<ChecksumContext>(), It.IsAny<CancellationToken>()))
         .ReturnsAsync(bytesWritten);
 
         return mock.Object;

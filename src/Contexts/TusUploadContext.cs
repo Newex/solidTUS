@@ -110,7 +110,7 @@ public class TusUploadContext
         UploadHasBeenCalled = true;
 
         // Can append if we dont need to worry about checksum
-        var savedBytes = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, UploadFileInfo, checksumContext, cancellationToken);
+        var savedBytes = await uploadStorageHandler.OnPartialUploadAsync(reader, UploadFileInfo, checksumContext, cancellationToken);
         onDone(UploadFileInfo);
 
         if (UploadFileInfo.Done && onUploadFinishedAsync is not null)

@@ -158,7 +158,7 @@ public class UploadTest
             using var fs = File.OpenRead(samplePath);
             var readFile = FillPipeAsync(fs, pipe.Writer);
 
-            var uploadFile = await uploadStorageHandler.OnPartialUploadAsync(OutputFilename, pipe.Reader, uploadInfo, null, CancellationToken.None);
+            var uploadFile = await uploadStorageHandler.OnPartialUploadAsync(pipe.Reader, uploadInfo, null, CancellationToken.None);
         }
     }
 

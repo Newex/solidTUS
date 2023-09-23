@@ -26,7 +26,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     }
 
     /// <inheritdoc />
-    public async Task<long> OnPartialUploadAsync(string fileId, PipeReader reader, UploadFileInfo uploadInfo, ChecksumContext? checksumContext, CancellationToken cancellationToken)
+    public async Task<long> OnPartialUploadAsync(PipeReader reader, UploadFileInfo uploadInfo, ChecksumContext? checksumContext, CancellationToken cancellationToken)
     {
         var written = 0L;
         var withChecksum = checksumContext is not null;
@@ -121,13 +121,16 @@ public class FileUploadStorageHandler : IUploadStorageHandler
         return size;
     }
 
+    /// <inheritdoc />
+    public async Task DeleteFileAsync(UploadFileInfo uploadFileInfo)
+    {
+        await uploadMetaHandler.DeleteUploadFileInfoAsync(uploadFileInfo.FileId, CancellationToken.None);
+        var file = Path.Combine(uploadFileInfo.FileDirectoryPath, uploadFileInfo.OnDiskFilename);
+        File.Delete(file);
+    }
+
     private static string FullFilenamePath(string filename, string filePath)
     {
         return Path.Combine(filePath, filename);
-    }
-
-    private static string FullChunkFilenamePath(string filename, string filePath)
-    {
-        return Path.Combine(filePath, $"{filename}.chunk");
     }
 }
