@@ -137,7 +137,7 @@ public class TusCreationContext
         if (withUpload)
         {
             // Can append if we dont need to worry about checksum
-            var written = await uploadStorageHandler.OnPartialUploadAsync(fileId, reader, UploadFileInfo, null, cancellationToken);
+            var written = await uploadStorageHandler.OnPartialUploadAsync(reader, UploadFileInfo, null, cancellationToken);
 
             // First server callback -->
             onUpload(written);

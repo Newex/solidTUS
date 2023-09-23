@@ -14,6 +14,7 @@ namespace SolidTUS.ProtocolHandlers;
 /// </summary>
 public class OptionsRequestHandler
 {
+    private readonly bool hasTermination;
     private readonly long? maxSize;
     private readonly IEnumerable<IChecksumValidator> validators;
 
@@ -25,6 +26,7 @@ public class OptionsRequestHandler
     public OptionsRequestHandler(IOptions<TusOptions> options, IEnumerable<IChecksumValidator> validators)
     {
         maxSize = options.Value.MaxSize;
+        hasTermination = options.Value.HasTermination;
         this.validators = validators;
     }
 
@@ -46,7 +48,15 @@ public class OptionsRequestHandler
         // TUS protocol extensions
         var checksumAlgorithms = string.Join(",", validators.Select(v => v.AlgorithmName));
         response.Headers.Add(TusHeaderNames.ChecksumAlgorithm, checksumAlgorithms);
-        response.Headers.Add(TusHeaderNames.Extension, TusHeaderValues.TusSupportedExtensions);
+
+        var extensionList = new List<string> { TusHeaderValues.TusSupportedExtensions };
+        if (hasTermination)
+        {
+            extensionList.Add(TusHeaderValues.TusTermination);
+        }
+
+        var extensions = string.Join(",", extensionList);
+        response.Headers.Add(TusHeaderNames.Extension, extensions);
         return response;
     }
 }

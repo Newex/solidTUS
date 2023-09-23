@@ -17,13 +17,19 @@ public interface IUploadStorageHandler
     /// <remarks>
     /// If checksum is used and mismatches, this partial upload must be rolled back
     /// </remarks>
-    /// <param name="fileId">The file Id</param>
     /// <param name="reader">The pipe reader</param>
     /// <param name="uploadInfo">The upload information</param>
     /// <param name="checksumContext">The checksum context</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>The number of bytes appended</returns>
-    Task<long> OnPartialUploadAsync(string fileId, PipeReader reader, UploadFileInfo uploadInfo, ChecksumContext? checksumContext, CancellationToken cancellationToken);
+    Task<long> OnPartialUploadAsync(PipeReader reader, UploadFileInfo uploadInfo, ChecksumContext? checksumContext, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Delete uploaded resource including the metadata
+    /// </summary>
+    /// <param name="uploadFileInfo">The upload file info</param>
+    /// <returns>An awaitable task</returns>
+    Task DeleteFileAsync(UploadFileInfo uploadFileInfo);
 
     /// <summary>
     /// Get the current upload size

@@ -26,9 +26,13 @@ Extensions:
 
 Note that the checksum feature does not implement the trailing header feature, i.e. A checksum value must be provided upon sending the http request.
 
+- [x] [Termination](https://tus.io/protocols/resumable-upload#termination)
+
+Only termination announcement in OPTION request is implemented.  
+The actual functionality must be implemented by yourself. See examples and documentation on how to and why.
+
 Future goals is to implement all the extensions:
 
-- [ ] [Termination](https://tus.io/protocols/resumable-upload#termination)
 - [ ] [Concatenation](https://tus.io/protocols/resumable-upload#concatenation)
 
 ### Other TUS libraries for C#

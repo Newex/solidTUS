@@ -70,6 +70,17 @@ public record TusOptions
     public TimeSpan ExpirationJobRunnerInterval { get; set; } = TimeSpan.FromDays(1);
 
     /// <summary>
+    /// This will signal the TUS capability when a client sends an OPTION discovery.
+    /// <para>
+    /// By adding the TUS-extension header with "termination".
+    /// </para>
+    /// </summary>
+    /// <remarks>
+    /// You must implement termination yourself. See example or documentation for more info.
+    /// </remarks>
+    public bool HasTermination { get; set; }
+
+    /// <summary>
     /// Get the configuration section name
     /// </summary>
     internal const string TusConfigurationSection = "SolidTUS";
