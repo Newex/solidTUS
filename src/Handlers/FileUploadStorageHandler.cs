@@ -92,6 +92,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
                 }
             }
         }
+        catch (IOException) { }
         finally
         {
             if (validChecksum)
