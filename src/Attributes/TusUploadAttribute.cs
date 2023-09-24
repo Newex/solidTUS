@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -21,6 +22,8 @@ namespace SolidTUS.Attributes;
 /// </summary>
 public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvider, IRouteTemplateProvider
 {
+    private readonly UploadFlow? uploadFlow;
+
     /// <summary>
     /// Instantiate a new <see cref="TusUploadAttribute"/> upload endpoint handler
     /// </summary>
@@ -64,6 +67,7 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
     /// <inheritdoc />
     public string? Name { get; set; }
 
+    /// <inheritdoc />
     int? IRouteTemplateProvider.Order => Order;
 
     /// <inheritdoc />
@@ -109,23 +113,17 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
 
         if (isPatch)
         {
-            var coreProtocolUpload = await requestContext.BindAsync(async c => await uploadFlow.StartUploadingAsync(c, fileId));
-            var checksumExtension = coreProtocolUpload.Bind(uploadFlow.ChecksumFlow);
-            var uploadResponse = checksumExtension.GetTusHttpResponse();
-            response.AddTusHeaders(uploadResponse);
+            requestContext = await requestContext.BindAsync(async c => await uploadFlow.PreUploadAsync(c, fileId));
+            var uploadResponse = requestContext.GetTusHttpResponse();
             if (!uploadResponse.IsSuccess)
             {
                 // Short circuit on error
+                response.AddTusHeaders(uploadResponse);
                 context.Result = new ObjectResult(uploadResponse.Message)
                 {
                     StatusCode = uploadResponse.StatusCode
                 };
                 return;
-            }
-
-            void FinishedUpload(UploadFileInfo uploadFileInfo)
-            {
-                response.Headers.Add(TusHeaderNames.UploadOffset, uploadFileInfo.ByteOffset.ToString());
             }
 
             void OnError(HttpError error)
@@ -136,18 +134,37 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
                 };
             }
 
-            tusContext = uploadFlow.CreateUploadContext(checksumExtension, request.BodyReader, FinishedUpload, OnError, cancel);
+            tusContext = uploadFlow.CreateUploadContext(requestContext, request.BodyReader, OnError, cancel);
             context.ActionArguments[ContextParameterName] = tusContext;
+
+            // Callback before sending headers add all TUS headers
+            context.HttpContext.Response.OnStarting(async state =>
+            {
+                var ctx = (ActionExecutingContext)state;
+
+                if (uploadFlow is not null)
+                {
+                    var headers = await requestContext.MatchAsync(
+                        onSuccess: async c => await uploadFlow.PostUploadAsync(c, cancel),
+                        onError: e => new HeaderDictionary()
+                    );
+
+                    foreach (var item in headers)
+                    {
+                        ctx.HttpContext.Response.Headers.Add(item);
+                    }
+                }
+            }, context);
         }
 
+        // Consider try catch ?! to move the
         await next();
     }
 
     /// <inheritdoc />
     public override async Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
     {
-        // Before result
-        // Before sending headers -->
+        // Force response to 204 on success
         context.HttpContext.Response.OnStarting(state =>
         {
             var ctx = (ResultExecutingContext)state;

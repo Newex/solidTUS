@@ -2,9 +2,8 @@ using System;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
-using SolidTUS.Constants;
+using Microsoft.AspNetCore.Http;
 using SolidTUS.Contexts;
-using SolidTUS.Extensions;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;
@@ -75,7 +74,7 @@ public class UploadFlow
     /// <param name="context">The request context</param>
     /// <param name="fileId">The file ID</param>
     /// <returns>Either an error or a request context</returns>
-    public async ValueTask<Result<RequestContext>> StartUploadingAsync(RequestContext context, string fileId)
+    public async ValueTask<Result<RequestContext>> PreUploadAsync(RequestContext context, string fileId)
     {
         context.FileID = fileId;
         var contentType = PatchRequestHandler.CheckContentType(context);
@@ -86,27 +85,23 @@ public class UploadFlow
         var uploadSize = uploadLength.Bind(PatchRequestHandler.CheckUploadExceedsFileSize);
         var uploadExpired = await uploadSize.BindAsync(expirationRequestHandler.CheckExpirationAsync);
         var uploadUpdatedDate = uploadExpired.Map(common.SetUpdatedDate);
-
-        var setExpiration = uploadUpdatedDate.Map(expirationRequestHandler.SetExpiration);
-        return setExpiration;
+        var checksum = uploadUpdatedDate.Bind(checksumHandler.SetChecksum);
+        return checksum;
     }
 
     /// <summary>
-    /// The checksum flow
+    /// A PATCH request called just prior sending response headers
     /// </summary>
     /// <param name="context">The request context</param>
-    /// <returns>Either an http error or a request context</returns>
-    public Result<RequestContext> ChecksumFlow(RequestContext context)
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <returns>A collection of headers</returns>
+    public async Task<IHeaderDictionary> PostUploadAsync(RequestContext context, CancellationToken cancellationToken)
     {
-        var hasChecksum = context.RequestHeaders.ContainsKey(TusHeaderNames.UploadChecksum);
-        if (!hasChecksum)
-        {
-            return context.Wrap();
-        }
-
-        // Check checksum
-        var parse = ChecksumRequestHandler.ParseChecksum(context);
-        return checksumHandler.SetChecksum(context, parse);
+        context = common.SetUpdatedDate(context);
+        context = expirationRequestHandler.SetExpiration(context);
+        context = CommonRequestHandler.SetUploadByteOffset(context);
+        await uploadMetaHandler.UpdateResourceAsync(context.UploadFileInfo, cancellationToken);
+        return context.ResponseHeaders;
     }
 
     /// <summary>
@@ -114,11 +109,10 @@ public class UploadFlow
     /// </summary>
     /// <param name="context">The request context</param>
     /// <param name="reader">The pipe reader</param>
-    /// <param name="onDone">The callback function</param>
     /// <param name="onError">The callback function when an error occurs</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>An upload context or null</returns>
-    public TusUploadContext? CreateUploadContext(Result<RequestContext> context, PipeReader reader, Action<UploadFileInfo> onDone, Action<HttpError> onError, CancellationToken cancellationToken)
+    public TusUploadContext? CreateUploadContext(Result<RequestContext> context, PipeReader reader, Action<HttpError> onError, CancellationToken cancellationToken)
     {
         var requestContext = context.Match(c => c, _ => null!);
         if (requestContext is null)
@@ -132,7 +126,6 @@ public class UploadFlow
             uploadMetaHandler,
             uploadStorageHandler,
             reader,
-            onDone,
             onError,
             uploadFileInfo,
             cancellationToken

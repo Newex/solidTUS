@@ -16,7 +16,6 @@ public class TusUploadContext
     private readonly IUploadMetaHandler uploadMetaHandler;
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly PipeReader reader;
-    private readonly Action<UploadFileInfo> onDone;
     private readonly Action<HttpError> onError;
     private readonly CancellationToken cancellationToken;
     private Func<UploadFileInfo, Task>? onUploadFinishedAsync;
@@ -29,7 +28,6 @@ public class TusUploadContext
     /// <param name="uploadMetaHandler">The upload meta handler</param>
     /// <param name="uploadStorageHandler">The upload storage handler</param>
     /// <param name="reader">The Pipereader</param>
-    /// <param name="onDone">Callback for when done uploading</param>
     /// <param name="onError">Callback for when an error occurs</param>
     /// <param name="uploadFileInfo">The upload file info</param>
     /// <param name="cancellationToken">The cancellation token</param>
@@ -38,7 +36,6 @@ public class TusUploadContext
         IUploadMetaHandler uploadMetaHandler,
         IUploadStorageHandler uploadStorageHandler,
         PipeReader reader,
-        Action<UploadFileInfo> onDone,
         Action<HttpError> onError,
         UploadFileInfo uploadFileInfo,
         CancellationToken cancellationToken
@@ -47,7 +44,6 @@ public class TusUploadContext
         this.uploadMetaHandler = uploadMetaHandler;
         this.uploadStorageHandler = uploadStorageHandler;
         this.reader = reader;
-        this.onDone = onDone;
         this.onError = onError;
         this.cancellationToken = cancellationToken;
         UploadFileInfo = uploadFileInfo;
@@ -109,41 +105,20 @@ public class TusUploadContext
 
         UploadHasBeenCalled = true;
 
-        // Can append if we dont need to worry about checksum
-        var savedBytes = await uploadStorageHandler.OnPartialUploadAsync(reader, UploadFileInfo, checksumContext, cancellationToken);
-        onDone(UploadFileInfo);
-
-        if (UploadFileInfo.Done && onUploadFinishedAsync is not null)
+        try
         {
-            await onUploadFinishedAsync(UploadFileInfo);
+            await uploadStorageHandler.OnPartialUploadAsync(reader, UploadFileInfo, checksumContext, cancellationToken);
         }
-
-        if (UploadFileInfo.Done && deleteInfoOnDone)
+        finally
         {
-            await uploadMetaHandler.DeleteUploadFileInfoAsync(fileId, cancellationToken);
-            return;
+            if (UploadFileInfo.Done && onUploadFinishedAsync is not null)
+            {
+                await onUploadFinishedAsync(UploadFileInfo);
+            }
+            if (UploadFileInfo.Done && deleteInfoOnDone)
+            {
+                await uploadMetaHandler.DeleteUploadFileInfoAsync(fileId, cancellationToken);
+            }
         }
-    }
-
-    /// <summary>
-    /// Deny an upload
-    /// </summary>
-    /// <param name="fileId">The file Id</param>
-    /// <param name="status">The response status code</param>
-    /// <param name="message">The optional response message</param>
-    /// <exception cref="InvalidOperationException">Thrown if upload has already been started. Cannot accept upload and deny at the same time</exception>
-    public async void TerminateUpload(string fileId, int status = 400, string? message = null)
-    {
-        if (UploadHasBeenCalled)
-        {
-            throw new InvalidOperationException("Cannot upload and terminate request at the same time");
-        }
-
-        // Deny and remove metadata
-        await uploadMetaHandler.DeleteUploadFileInfoAsync(fileId, cancellationToken);
-
-        UploadHasBeenCalled = true;
-        var error = new HttpError(status, new HeaderDictionary(), message);
-        onError(error);
     }
 }

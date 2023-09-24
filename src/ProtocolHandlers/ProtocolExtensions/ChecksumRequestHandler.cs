@@ -45,10 +45,16 @@ public class ChecksumRequestHandler
     /// Set the checksum context for the request
     /// </summary>
     /// <param name="context">The request context</param>
-    /// <param name="checksum">The checksum</param>
     /// <returns>The request context</returns>
-    public Result<RequestContext> SetChecksum(RequestContext context, (string AlgorithmName, byte[] Cipher)? checksum)
+    public Result<RequestContext> SetChecksum(RequestContext context)
     {
+        var hasChecksum = context.RequestHeaders.ContainsKey(TusHeaderNames.UploadChecksum);
+        if (!hasChecksum)
+        {
+            return context.Wrap();
+        }
+
+        var checksum = ParseChecksum(context);
         if (checksum is null)
         {
             return HttpError.BadRequest("Invalid checksum request").Wrap();
