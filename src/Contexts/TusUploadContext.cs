@@ -16,7 +16,6 @@ public class TusUploadContext
     private readonly IUploadMetaHandler uploadMetaHandler;
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly PipeReader reader;
-    private readonly Action<HttpError> onError;
     private readonly CancellationToken cancellationToken;
     private Func<UploadFileInfo, Task>? onUploadFinishedAsync;
     private readonly ChecksumContext? checksumContext;
@@ -28,7 +27,6 @@ public class TusUploadContext
     /// <param name="uploadMetaHandler">The upload meta handler</param>
     /// <param name="uploadStorageHandler">The upload storage handler</param>
     /// <param name="reader">The Pipereader</param>
-    /// <param name="onError">Callback for when an error occurs</param>
     /// <param name="uploadFileInfo">The upload file info</param>
     /// <param name="cancellationToken">The cancellation token</param>
     public TusUploadContext(
@@ -36,7 +34,6 @@ public class TusUploadContext
         IUploadMetaHandler uploadMetaHandler,
         IUploadStorageHandler uploadStorageHandler,
         PipeReader reader,
-        Action<HttpError> onError,
         UploadFileInfo uploadFileInfo,
         CancellationToken cancellationToken
     )
@@ -44,7 +41,6 @@ public class TusUploadContext
         this.uploadMetaHandler = uploadMetaHandler;
         this.uploadStorageHandler = uploadStorageHandler;
         this.reader = reader;
-        this.onError = onError;
         this.cancellationToken = cancellationToken;
         UploadFileInfo = uploadFileInfo;
         this.checksumContext = checksumContext;

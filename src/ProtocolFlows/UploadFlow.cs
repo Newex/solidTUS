@@ -109,10 +109,9 @@ public class UploadFlow
     /// </summary>
     /// <param name="context">The request context</param>
     /// <param name="reader">The pipe reader</param>
-    /// <param name="onError">The callback function when an error occurs</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>An upload context or null</returns>
-    public TusUploadContext? CreateUploadContext(Result<RequestContext> context, PipeReader reader, Action<HttpError> onError, CancellationToken cancellationToken)
+    public TusUploadContext? CreateUploadContext(Result<RequestContext> context, PipeReader reader, CancellationToken cancellationToken)
     {
         var requestContext = context.Match(c => c, _ => null!);
         if (requestContext is null)
@@ -126,7 +125,6 @@ public class UploadFlow
             uploadMetaHandler,
             uploadStorageHandler,
             reader,
-            onError,
             uploadFileInfo,
             cancellationToken
         );

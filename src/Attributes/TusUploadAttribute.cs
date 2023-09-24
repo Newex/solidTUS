@@ -126,15 +126,7 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
                 return;
             }
 
-            void OnError(HttpError error)
-            {
-                context.Result = new ObjectResult(error.Message)
-                {
-                    StatusCode = error.StatusCode
-                };
-            }
-
-            tusContext = uploadFlow.CreateUploadContext(requestContext, request.BodyReader, OnError, cancel);
+            tusContext = uploadFlow.CreateUploadContext(requestContext, request.BodyReader, cancel);
             context.ActionArguments[ContextParameterName] = tusContext;
 
             // Callback before sending headers add all TUS headers
