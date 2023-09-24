@@ -120,8 +120,8 @@ public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadCo
 }
 ```
 
-## Configuration from appSettings.json or environment variables
-You can configure the `Tus-Max-Size` parameter and the default file storage upload folder from the appSettings.json configuration:
+## Configuration from appsettings.json or environment variables
+You can configure the `Tus-Max-Size` parameter and the default file storage upload folder from the appsettings.json configuration:
 
 ```json
 {
