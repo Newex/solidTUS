@@ -98,6 +98,22 @@ public readonly record struct Result<R>
         };
     }
 
+    /// <summary>
+    /// Extract the result type by matching asynchronously
+    /// </summary>
+    /// <typeparam name="T">The return type</typeparam>
+    /// <param name="onSuccess">Called on success</param>
+    /// <param name="onError">Called on error</param>
+    /// <returns>An awaitable result of <typeparamref name="T"/></returns>
+    public async Task<T> MatchAsync<T>(Func<R, Task<T>> onSuccess, Func<HttpError, T> onError)
+    {
+        return !error.HasValue switch
+        {
+            true => await onSuccess(success!),
+            false => onError(error.Value)
+        };
+    }
+
     // --> ASYNC equivalents
     /// <summary>
     /// Asynchronous flat map of this result
