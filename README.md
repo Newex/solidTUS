@@ -65,6 +65,8 @@ Set the `TusUpload`-attribute and add the `TusUploadContext` as a parameter
 
 _And done..._
 
+Congratulations you now have a very basic upload / pause / resume functionality. If you want to add [TUS-termination](https://tus.io/protocols/resumable-upload#termination) then you can add the `TusDelete` attribute to an action. The only requirement is that you ensure the route to the upload endpoint matches the route to the termination endpoint. To see how to implement `Tus-Termination` endpoint see the [wiki](https://github.com/Newex/solidTUS/wiki/TUS-Termination).
+
 # Extra options
 To see all the configurations go to the [wiki](https://github.com/Newex/solidTUS/wiki).
 ## Configurations
