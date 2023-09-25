@@ -75,7 +75,7 @@ public class UploadController : ControllerBase
     }
 
     // Must have same route as the Upload route
-    [HttpDelete("{fileId}")]
+    [TusDelete("{fileId}")]
     public async Task<ActionResult> DeleteUpload(string fileId, CancellationToken cancellationToken)
     {
         // No questions asked - just delete
@@ -99,7 +99,7 @@ public class UploadController : ControllerBase
         }
 
         // Delete info and file respond 204
-        await uploadStorageHandler.DeleteFileAsync(info);
+        await uploadStorageHandler.DeleteFileAsync(info, cancellationToken);
         return NoContent();
     }
 }

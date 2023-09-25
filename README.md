@@ -21,15 +21,13 @@ Basic features:
 Extensions:
 - [x] [Creation](https://tus.io/protocols/resumable-upload#creation)
 - [x] [Creation-With-Upload](https://tus.io/protocols/resumable-upload#creation-with-upload)
-- [x] [Checksum](https://tus.io/protocols/resumable-upload#checksum)
 - [x] [Expiration](https://tus.io/protocols/resumable-upload#expiration)
+- [x] [Checksum](https://tus.io/protocols/resumable-upload#checksum) *
+- [x] [Termination](https://tus.io/protocols/resumable-upload#termination) **
 
-Note that the checksum feature does not implement the trailing header feature, i.e. A checksum value must be provided upon sending the http request.
-
-- [x] [Termination](https://tus.io/protocols/resumable-upload#termination)
-
-Only termination announcement in OPTION request is implemented.  
-The actual functionality must be implemented by yourself. See examples and documentation on how to and why.
+**Notes:**  
+\* Checksum feature does not implement the trailing header feature, i.e. A checksum value must be provided upon sending the http request.  
+\** Termination must be implemented by yourself. See examples and [documentation](https://github.com/Newex/solidTUS/wiki/TUS-Termination) on how to and why.
 
 Future goals is to implement all the extensions:
 
@@ -41,8 +39,8 @@ Future goals is to implement all the extensions:
 # Quickstart
 
 Add the package to your project:  
-```
-$ `dotnet add package SolidTUS`
+```console
+$ dotnet add package SolidTUS
 ```
 
 Register the service in the startup process:
@@ -54,20 +52,7 @@ builder.Services.AddTUS();
 
 In your `Controller` add the `TusCreation`-attribute to the action method endpoint and the `TusCreationContext` as parameter.
 
-```csharp
-[TusCreation]
-public async Task<ActionResult> CreateUpload([FromServices] TusCreationContext context)
-{
-  // ... Construct a file ID and an URL route to the Upload endpoint
-  var fileID = "myFileID";
-  var url = "/url/path/to/upload/action/myFileID";
-  
-  // When ready to create resource metadata
-  await context.StartCreationAsync(fileID, url);
-  
-  return NoContent();
-}
-```
+![create_upload](/assets/tus-creation-attribute.png)
 
 This will not upload any file (unless the client explicitly uses the TUS-extension `Creation-With-Upload` feature).  
 This only sets the ground work for getting information such as file size, and where to upload the data.
@@ -76,25 +61,17 @@ Next the actual upload.
 
 Set the `TusUpload`-attribute and add the `TusUploadContext` as a parameter
 
-```csharp
-[TusUpload]
-[Route("url/path/to/upload/action/{fileId}")]
-public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadContext context)
-{
-  // ... stuff
-  await context.StartAppendDataAsync(fileId);
-  
-  // Important must return 204 on success (TUS-protocol)
-  return NoContent();
-}
-```
+![start_upload](/assets/tus-upload-attribute.png)
 
 _And done..._
 
+Congratulations you now have a very basic upload / pause / resume functionality. If you want to add [TUS-termination](https://tus.io/protocols/resumable-upload#termination) then you can add the `TusDelete` attribute to an action. The only requirement is that you ensure the route to the upload endpoint matches the route to the termination endpoint. To see how to implement `Tus-Termination` endpoint see the [wiki](https://github.com/Newex/solidTUS/wiki/TUS-Termination).
+
 # Extra options
+To see all the configurations go to the [wiki](https://github.com/Newex/solidTUS/wiki).
 ## Configurations
 
-TUS configurations  
+SolidTUS can be configured through the `TusOptions` object, either on startup or using environment variables.
 
 ```csharp
 // Custom metadata provider or set maximum TUS protocol file size
@@ -109,6 +86,7 @@ builder.Services
     options.MaxSize = 5_000_000_000;
   });
 ```
+All options are mentioned in the [wiki/tus-options](https://github.com/Newex/solidTUS/wiki/TusOptions)  
 Note: to change request size limits see: [Microsoft documentation](https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-7.0#kestrel-maximum-request-body-size)
 
 If you don't want to use the default FileUploadStorageHandler you can provide your own, maybe you want to save the files to a database?
@@ -118,15 +96,6 @@ If you don't want to use the default FileUploadStorageHandler you can provide yo
 builder.Services
   .AddTUS()
   .AddStorageHandler<MyStorageHandler>(); // <-- must implement IUploadStorageHandler interface
-```
-
-If you want to support more checksum validators. The default checksum validators are: SHA1 and MD5:
-
-```csharp
-// Add custom checksum validator
-builder.Services
-  .AddTUS()
-  .AddChecksumValidator<MyChecksumValidator>(); // <-- must implement IChecksumValidator interface
 ```
 
 If you use the default FileUploadStorageHandler you can configure the directory where to store files:
@@ -141,7 +110,7 @@ builder.Services
   });
 ```
 
-another option is to determine where each file should be uploaded on per upload basis. In the `Controller` you can specify the file path:
+another option is to determine where each file should be uploaded on per upload basis. In the `Action` you can specify the file path:
 
 
 ```csharp
@@ -154,8 +123,8 @@ public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadCo
 }
 ```
 
-## Configuration from appSettings.json or environment variables
-You can configure the `Tus-Max-Size` parameter and the default file storage upload folder from the appSettings.json configuration:
+## Configuration from appsettings.json or environment variables
+You can configure the `Tus-Max-Size` parameter and the default file storage upload folder from the appsettings.json configuration:
 
 ```json
 {
@@ -175,16 +144,16 @@ The injected context classes are excluded from ModelBinding but do show up in Sw
 **The `StartCreationAsync` and `StartAppendDataAsync` starts upload.**
 
 ### TusUploadContext
-Is responsible for starting or terminating the upload. A termination is a premature ending and signals to the client that the upload has been terminated.  
+Is responsible for starting the upload.
 
 The class contains the following members:
 
 * `OnUploadFinished` - A method that takes an awaitable callback. When the whole file has been completely uploaded the callback is invoked.
 * `StartAppendDataAsync` - Starts accepting the upload stream from the client
-* `TerminateUpload` - Returns an error http response (default: 400 BadRequest)
+* `UploadFileInfo` - Contains the SolidTUS metadata about the current upload.
+* `SetExpirationStrategy` - Defines the expiration strategy for this upload. See [wiki/ExpirationStrategy](https://github.com/Newex/solidTUS/wiki/TusOptions#expirationStrategy) section.
 
-MUST call either `StartAppendDataAsync` or `TerminateUpload` method. Cannot call both in a single request (you can't accept and not accept an upload).
-
+Can only call `StartAppendDataAsync` once - subsequent calls will be ignored.  
 The `TusUploadContext` is injected from the `TusUpload`-attribute.
 
 ### TusUploadAttribute
@@ -202,6 +171,7 @@ public async Task<ActionResult> UploadEndPoint(string Id, TusUploadContext tus)
   /* Logic omitted ... */
 }
 ```
+To see all parameters see [wiki/TusUploadAttribute](https://github.com/Newex/solidTUS/wiki/TusUploadAttribute) section.
 
 ### TusCreationContext
 Is responsible for creating the resource metadata `UploadFileInfo`. Defining the file ID and eventual any TUS-metadata.  
@@ -228,7 +198,7 @@ public async Task<ActionResult> CreationEndPoint(TusUploadContext creationContex
 ```
 
 # The TUS protocol with SolidTUS simplified
-In essence the client sends a request to an endpoint (as marked by the `TusCreation` attribute:
+In essence the client sends a request to an endpoint as marked by the `TusCreation` attribute:
 
 ```
 POST /files HTTP/1.1
@@ -280,6 +250,7 @@ Using unit tests and manually making TUS-request with the official javascript cl
 - [ ] Create wiki pages for all the configuration options
 - [ ] Create wiki pages for library design, and how to extend
 - [ ] Implement all TUS extension features
+- [ ] Add section in readme for examples
 
 # References
 * [TUS-protocol](https://tus.io/protocols/resumable-upload.html#core-protocol)

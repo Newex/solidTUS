@@ -28,8 +28,9 @@ public interface IUploadStorageHandler
     /// Delete uploaded resource including the metadata
     /// </summary>
     /// <param name="uploadFileInfo">The upload file info</param>
+    /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>An awaitable task</returns>
-    Task DeleteFileAsync(UploadFileInfo uploadFileInfo);
+    Task DeleteFileAsync(UploadFileInfo uploadFileInfo, CancellationToken cancellationToken);
 
     /// <summary>
     /// Get the current upload size

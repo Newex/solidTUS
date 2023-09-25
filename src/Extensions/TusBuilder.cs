@@ -127,11 +127,12 @@ public sealed class TusBuilder
         builder.services.TryAddScoped<PatchRequestHandler>();
         builder.services.TryAddScoped<PostRequestHandler>();
         builder.services.TryAddScoped<OptionsRequestHandler>();
+        builder.services.TryAddScoped<TerminationRequestHandler>();
         builder.services.TryAddScoped<ExpirationRequestHandler>();
+        builder.services.TryAddScoped<ChecksumRequestHandler>();
 
         builder.services.TryAddScoped<UploadFlow>();
         builder.services.TryAddScoped<CreationFlow>();
-        builder.services.TryAddScoped<ChecksumRequestHandler>();
         builder.services.Add(builder.uploadMetaDescriptor);
         builder.services.Add(builder.uploadStorageDescriptor);
         builder.services.Add(builder.expiredHandleDescriptor);

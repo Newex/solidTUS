@@ -44,7 +44,7 @@ public class UploadRequestValidationTests
         var handler = Setup.UploadFlow(file: file);
 
         // Act
-        var process = await request.BindAsync(async c => await handler.StartUploadingAsync(c, c.FileID));
+        var process = await request.BindAsync(async c => await handler.PreUploadAsync(c, c.FileID));
         var result = process.IsSuccess();
 
         // Assert
@@ -71,7 +71,7 @@ public class UploadRequestValidationTests
         var handler = Setup.UploadFlow(uploadMetaHandler);
 
         // Act
-        var process = await request.BindAsync(async c => await handler.StartUploadingAsync(c, c.FileID));
+        var process = await request.BindAsync(async c => await handler.PreUploadAsync(c, c.FileID));
         var result = process.IsSuccess();
 
         // Assert

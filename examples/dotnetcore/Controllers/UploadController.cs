@@ -24,8 +24,7 @@ public class UploadController : ControllerBase
         this.uploadMetaHandler = uploadMetaHandler;
     }
 
-    [Route("{fileId}")]
-    [TusUpload]
+    [TusUpload("{fileId}", Name = "CustomRouteNameUpload")]
     [RequestSizeLimit(5_000_000_000)]
     public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadContext context)
     {
@@ -59,7 +58,7 @@ public class UploadController : ControllerBase
     }
 
     // Must have same route as the Upload route
-    [HttpDelete("{fileId}")]
+    [TusDelete("{fileId}", UploadName = "CustomRouteNameUpload")]
     public async Task<ActionResult> DeleteUpload(string fileId, CancellationToken cancellationToken)
     {
         // No questions asked - just delete
@@ -83,7 +82,7 @@ public class UploadController : ControllerBase
         }
 
         // Delete info and file respond 204
-        await uploadStorageHandler.DeleteFileAsync(info);
+        await uploadStorageHandler.DeleteFileAsync(info, cancellationToken);
         return NoContent();
     }
 }
