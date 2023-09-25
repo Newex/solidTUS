@@ -22,8 +22,6 @@ namespace SolidTUS.Attributes;
 /// </summary>
 public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvider, IRouteTemplateProvider
 {
-    private readonly UploadFlow? uploadFlow;
-
     /// <summary>
     /// Instantiate a new <see cref="TusUploadAttribute"/> upload endpoint handler
     /// </summary>
@@ -65,7 +63,7 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
     public string? Template { get; init; }
 
     /// <inheritdoc />
-    public string? Name { get; set; }
+    public string? Name { get; set; } = "SolidTusUploadEndpoint";
 
     /// <inheritdoc />
     int? IRouteTemplateProvider.Order => Order;
