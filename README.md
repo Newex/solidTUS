@@ -86,7 +86,7 @@ builder.Services
     options.MaxSize = 5_000_000_000;
   });
 ```
-All options are mentioned in the [wiki/tus-options](/Newex/solidTUS/wiki/TusOptions)  
+All options are mentioned in the [wiki/tus-options](https://github.com/Newex/solidTUS/wiki/TusOptions)  
 Note: to change request size limits see: [Microsoft documentation](https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-7.0#kestrel-maximum-request-body-size)
 
 If you don't want to use the default FileUploadStorageHandler you can provide your own, maybe you want to save the files to a database?
@@ -151,7 +151,7 @@ The class contains the following members:
 * `OnUploadFinished` - A method that takes an awaitable callback. When the whole file has been completely uploaded the callback is invoked.
 * `StartAppendDataAsync` - Starts accepting the upload stream from the client
 * `UploadFileInfo` - Contains the SolidTUS metadata about the current upload.
-* `SetExpirationStrategy` - Defines the expiration strategy for this upload. See [wiki/ExpirationStrategy](/Newex/solidTUS/wiki/TusOptions#expirationStrategy) section.
+* `SetExpirationStrategy` - Defines the expiration strategy for this upload. See [wiki/ExpirationStrategy](https://github.com/Newex/solidTUS/wiki/TusOptions#expirationStrategy) section.
 
 Can only call `StartAppendDataAsync` once - subsequent calls will be ignored.  
 The `TusUploadContext` is injected from the `TusUpload`-attribute.
@@ -171,7 +171,7 @@ public async Task<ActionResult> UploadEndPoint(string Id, TusUploadContext tus)
   /* Logic omitted ... */
 }
 ```
-To see all parameters see [wiki/TusUploadAttribute](/Newex/solidTUS/wiki/TusUploadAttribute) section.
+To see all parameters see [wiki/TusUploadAttribute](https://github.com/Newex/solidTUS/wiki/TusUploadAttribute) section.
 
 ### TusCreationContext
 Is responsible for creating the resource metadata `UploadFileInfo`. Defining the file ID and eventual any TUS-metadata.  
