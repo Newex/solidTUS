@@ -56,7 +56,7 @@ public class UploadController : ControllerBase
 
         // Construct upload URL
         var id = Guid.NewGuid().ToString("N");
-        var uploadTo = Url.Action(nameof(Upload), new { fileId = id }) ?? string.Empty;
+        // var uploadTo = Url.Action(nameof(Upload), new { fileId = id }) ?? string.Empty;
 
         // Can define callback before starting upload (creation-with-upload)
         context.OnUploadFinished(async () =>
@@ -67,7 +67,7 @@ public class UploadController : ControllerBase
         });
 
         // Start creation (IuploadStorageHandler.CreateResource())
-        await context.StartCreationAsync(id, uploadTo);
+        await context.StartCreationAsync(id, routeValues: new { fileId = id });
 
 
         // Converts a success to 201 created

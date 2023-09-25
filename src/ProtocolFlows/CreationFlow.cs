@@ -1,6 +1,8 @@
 using System;
 using System.IO.Pipelines;
 using System.Threading;
+
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Contexts;
@@ -23,6 +25,7 @@ public class CreationFlow
     private readonly ExpirationRequestHandler expiration;
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
+    private readonly LinkGenerator linkGenerator;
 
     /// <summary>
     /// Instantiate a new object of <see cref="CreationFlow"/>
@@ -33,13 +36,15 @@ public class CreationFlow
     /// <param name="expiration">The expiration request handler</param>
     /// <param name="uploadStorageHandler">The upload storage handler</param>
     /// <param name="uploadMetaHandler">The upload meta handler</param>
+    /// <param name="linkGenerator"></param>
     public CreationFlow(
         IOptions<FileStorageOptions> options,
         CommonRequestHandler common,
         PostRequestHandler post,
         ExpirationRequestHandler expiration,
         IUploadStorageHandler uploadStorageHandler,
-        IUploadMetaHandler uploadMetaHandler
+        IUploadMetaHandler uploadMetaHandler,
+        LinkGenerator linkGenerator
     )
     {
         this.options = options;
@@ -48,6 +53,7 @@ public class CreationFlow
         this.expiration = expiration;
         this.uploadStorageHandler = uploadStorageHandler;
         this.uploadMetaHandler = uploadMetaHandler;
+        this.linkGenerator = linkGenerator;
     }
 
     /// <summary>
@@ -110,6 +116,7 @@ public class CreationFlow
             reader,
             uploadStorageHandler,
             uploadMetaHandler,
+            linkGenerator,
             cancellationToken
         );
     }

@@ -54,6 +54,7 @@ public static class Setup
         var uploadCallback = onUpload ?? ((l) => { });
         var storageHandler = uploadStorageHandler ?? MockHandlers.UploadStorageHandler(currentSize: fakeFileInfo.ByteOffset, bytesWritten: bytesWritten);
         var metaHandler = uploadMetaHandler ?? MockHandlers.UploadMetaHandler(fakeFileInfo);
+        var linkGenerator = MockOthers.LinkGenerator();
         var cancel = cancellationToken ?? CancellationToken.None;
 
         return new TusCreationContext(
@@ -65,6 +66,7 @@ public static class Setup
             reader,
             storageHandler,
             metaHandler,
+            linkGenerator,
             cancel
         );
     }

@@ -134,6 +134,20 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
                 cancel
             );
             context.ActionArguments[ContextParameterName] = tusContext;
+
+            // Callback before sending headers add all TUS headers
+            context.HttpContext.Response.OnStarting(state =>
+            {
+                var ctx = (ActionExecutingContext)state;
+
+                if (creationFlow is not null)
+                {
+                    var tusResponse = requestContext.GetTusHttpResponse(204);
+                    ctx.HttpContext.Response.AddTusHeaders(tusResponse);
+                }
+
+                return Task.CompletedTask;
+            }, context);
         }
 
         await next();
