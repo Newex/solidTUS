@@ -66,7 +66,7 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
     /// <summary>
     /// Get or set the reference for the upload endpoint.
     /// </summary>
-    public string UploadName { get; set; } = EndpointNames.UploadEndpoint;
+    public string UploadNameEndpoint { get; set; } = EndpointNames.UploadEndpoint;
 
     /// <inheritdoc />
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)

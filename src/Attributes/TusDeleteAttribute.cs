@@ -62,7 +62,7 @@ public class TusDeleteAttribute : ActionFilterAttribute, IActionHttpMethodProvid
     /// <remarks>
     /// Default name is "SolidTusUploadEndpoint".
     /// </remarks>
-    public string? UploadName { get; set; } = EndpointNames.UploadEndpoint;
+    public string? UploadNameEndpoint { get; set; } = EndpointNames.UploadEndpoint;
 
     /// <inheritdoc />
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -81,7 +81,7 @@ public class TusDeleteAttribute : ActionFilterAttribute, IActionHttpMethodProvid
 
         var values = context.RouteData.Values.AsEnumerable().Where(x => x.Key != "action" && x.Key != "controller");
         var routeData = new RouteValueDictionary(values);
-        requestContext = requestContext.Bind(c => terminateRequest.ValidateRoute(c, Name, UploadName, routeData));
+        requestContext = requestContext.Bind(c => terminateRequest.ValidateRoute(c, Name, UploadNameEndpoint, routeData));
         var tusResponse = requestContext.GetTusHttpResponse(204);
         if (!tusResponse.IsSuccess)
         {
