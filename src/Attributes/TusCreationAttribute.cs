@@ -61,7 +61,7 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
     int? IRouteTemplateProvider.Order => Order;
 
     /// <inheritdoc />
-    public string? Name { get; set; }
+    public string? Name { get; set; } = "SolidTusCreationEndpoint";
 
     /// <inheritdoc />
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
