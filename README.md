@@ -86,6 +86,7 @@ builder.Services
     options.MaxSize = 5_000_000_000;
   });
 ```
+All options are mentioned in the [wiki/tus-options](/Newex/solidTUS/wiki/TusOptions)  
 Note: to change request size limits see: [Microsoft documentation](https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-7.0#kestrel-maximum-request-body-size)
 
 If you don't want to use the default FileUploadStorageHandler you can provide your own, maybe you want to save the files to a database?
@@ -143,15 +144,16 @@ The injected context classes are excluded from ModelBinding but do show up in Sw
 **The `StartCreationAsync` and `StartAppendDataAsync` starts upload.**
 
 ### TusUploadContext
-Is responsible for starting or terminating the upload. A termination is a premature ending and signals to the client that the upload has been terminated.  
+Is responsible for starting the upload.
 
 The class contains the following members:
 
 * `OnUploadFinished` - A method that takes an awaitable callback. When the whole file has been completely uploaded the callback is invoked.
 * `StartAppendDataAsync` - Starts accepting the upload stream from the client
-* `TerminateUpload` - Returns an error http response (default: 400 BadRequest)
+* `UploadFileInfo` - Contains the SolidTUS metadata about the current upload.
+* `SetExpirationStrategy` - Defines the expiration strategy for this upload. See [wiki/ExpirationStrategy](/Newex/solidTUS/wiki/TusOptions#expirationStrategy) section.
 
-MUST call either `StartAppendDataAsync` or `TerminateUpload` method. Cannot call both in a single request (you can't accept and not accept an upload).
+Can only call `StartAppendDataAsync` once - subsequent calls will be ignored.
 
 The `TusUploadContext` is injected from the `TusUpload`-attribute.
 
@@ -170,6 +172,7 @@ public async Task<ActionResult> UploadEndPoint(string Id, TusUploadContext tus)
   /* Logic omitted ... */
 }
 ```
+To see all parameters see [wiki/TusUploadAttribute](/Newex/solidTUS/wiki/TusUploadAttribute) section.
 
 ### TusCreationContext
 Is responsible for creating the resource metadata `UploadFileInfo`. Defining the file ID and eventual any TUS-metadata.  
@@ -196,7 +199,7 @@ public async Task<ActionResult> CreationEndPoint(TusUploadContext creationContex
 ```
 
 # The TUS protocol with SolidTUS simplified
-In essence the client sends a request to an endpoint (as marked by the `TusCreation` attribute:
+In essence the client sends a request to an endpoint as marked by the `TusCreation` attribute:
 
 ```
 POST /files HTTP/1.1
