@@ -20,6 +20,11 @@ builder.Services
         options.HasTermination = true;
         options.MetadataValidator = (metadata) =>
             metadata.ContainsKey("filename") && metadata.ContainsKey("contentType");
+    })
+    .FileStorageConfiguration(options =>
+    {
+        options.DirectoryPath = "./FILES";
+        options.MetaDirectoryPath = "./FILES";
     });
 
 builder.Services.AddControllers();
@@ -34,6 +39,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseRouting();
+app.UseStaticFiles();
 
 app.UseAuthorization();
 
