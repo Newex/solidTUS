@@ -61,7 +61,12 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
     int? IRouteTemplateProvider.Order => Order;
 
     /// <inheritdoc />
-    public string? Name { get; set; } = "SolidTusCreationEndpoint";
+    public string? Name { get; set; } = EndpointNames.CreationEpoint;
+
+    /// <summary>
+    /// Get or set the reference for the upload endpoint.
+    /// </summary>
+    public string UploadName { get; set; } = EndpointNames.UploadEndpoint;
 
     /// <inheritdoc />
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)

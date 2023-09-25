@@ -63,7 +63,7 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
     public string? Template { get; init; }
 
     /// <inheritdoc />
-    public string? Name { get; set; } = "SolidTusUploadEndpoint";
+    public string? Name { get; set; } = EndpointNames.UploadEndpoint;
 
     /// <inheritdoc />
     int? IRouteTemplateProvider.Order => Order;

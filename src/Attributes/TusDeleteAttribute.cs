@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+
+using SolidTUS.Constants;
 using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
@@ -49,7 +51,7 @@ public class TusDeleteAttribute : ActionFilterAttribute, IActionHttpMethodProvid
     public string? Template { get; init; }
 
     /// <inheritdoc />
-    public string? Name { get; set; } = "SolidTusTerminateEndpoint";
+    public string? Name { get; set; } = EndpointNames.TerminationEndpoint;
 
     /// <inheritdoc />
     int? IRouteTemplateProvider.Order => Order;
@@ -60,7 +62,7 @@ public class TusDeleteAttribute : ActionFilterAttribute, IActionHttpMethodProvid
     /// <remarks>
     /// Default name is "SolidTusUploadEndpoint".
     /// </remarks>
-    public string? UploadName { get; set; } = "SolidTusUploadEndpoint";
+    public string? UploadName { get; set; } = EndpointNames.UploadEndpoint;
 
     /// <inheritdoc />
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
