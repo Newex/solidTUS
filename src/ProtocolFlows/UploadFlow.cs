@@ -69,7 +69,7 @@ public class UploadFlow
     }
 
     /// <summary>
-    /// A PATCH request continues or starts an upload
+    /// Called before upload starts. Checks and validates request.
     /// </summary>
     /// <param name="context">The request context</param>
     /// <param name="fileId">The file ID</param>
@@ -90,7 +90,7 @@ public class UploadFlow
     }
 
     /// <summary>
-    /// A PATCH request called just prior sending response headers
+    /// Called after an upload finishes, before headers are sent.
     /// </summary>
     /// <param name="context">The request context</param>
     /// <param name="cancellationToken">The cancellation token</param>
