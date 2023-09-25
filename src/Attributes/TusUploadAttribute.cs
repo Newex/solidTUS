@@ -136,15 +136,9 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
 
                 if (uploadFlow is not null)
                 {
-                    var headers = await requestContext.MatchAsync(
-                        onSuccess: async c => await uploadFlow.PostUploadAsync(c, cancel),
-                        onError: e => new HeaderDictionary()
-                    );
-
-                    foreach (var item in headers)
-                    {
-                        ctx.HttpContext.Response.Headers.Add(item);
-                    }
+                    requestContext = await requestContext.MapAsync(async c => await uploadFlow.PostUploadAsync(c, cancel));
+                    var tusResponse = requestContext.GetTusHttpResponse(204);
+                    ctx.HttpContext.Response.AddTusHeaders(tusResponse);
                 }
             }, context);
         }

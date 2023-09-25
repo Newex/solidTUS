@@ -95,13 +95,13 @@ public class UploadFlow
     /// <param name="context">The request context</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>A collection of headers</returns>
-    public async Task<IHeaderDictionary> PostUploadAsync(RequestContext context, CancellationToken cancellationToken)
+    public async Task<RequestContext> PostUploadAsync(RequestContext context, CancellationToken cancellationToken)
     {
         context = common.SetUpdatedDate(context);
         context = expirationRequestHandler.SetExpiration(context);
         context = CommonRequestHandler.SetUploadByteOffset(context);
         await uploadMetaHandler.UpdateResourceAsync(context.UploadFileInfo, cancellationToken);
-        return context.ResponseHeaders;
+        return context;
     }
 
     /// <summary>
