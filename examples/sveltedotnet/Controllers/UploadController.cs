@@ -99,7 +99,7 @@ public class UploadController : ControllerBase
         }
 
         // Delete info and file respond 204
-        await uploadStorageHandler.DeleteFileAsync(info);
+        await uploadStorageHandler.DeleteFileAsync(info, cancellationToken);
         return NoContent();
     }
 }
