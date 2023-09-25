@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -13,6 +12,7 @@ using SolidTUS.Contexts;
 using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.ProtocolFlows;
+
 using static Microsoft.AspNetCore.Http.HttpMethods;
 
 namespace SolidTUS.Attributes;
