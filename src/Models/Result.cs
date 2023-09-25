@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
 
+using SolidTUS.Extensions;
+
 namespace SolidTUS.Models;
 
 /// <summary>
@@ -83,6 +85,23 @@ public readonly record struct Result<R>
     }
 
     /// <summary>
+    /// Map the result from one type to another asynchronously
+    /// </summary>
+    /// <typeparam name="T">The transformed result type</typeparam>
+    /// <param name="map">The map function</param>
+    /// <returns>A new result type</returns>
+    public async Task<Result<T>> MapAsync<T>(Func<R, Task<T>> map)
+    {
+        if (!error.HasValue)
+        {
+            var res = await map(success!);
+            return res.Wrap();
+        }
+
+        return new Result<T>(error.Value);
+    }
+
+    /// <summary>
     /// Extract the result type by matching
     /// </summary>
     /// <typeparam name="T">The output type</typeparam>
@@ -95,6 +114,22 @@ public readonly record struct Result<R>
         {
             true => onSuccess(success!),
             false => onError(error!.Value)
+        };
+    }
+
+    /// <summary>
+    /// Extract the result type by matching asynchronously
+    /// </summary>
+    /// <typeparam name="T">The return type</typeparam>
+    /// <param name="onSuccess">Called on success</param>
+    /// <param name="onError">Called on error</param>
+    /// <returns>An awaitable result of <typeparamref name="T"/></returns>
+    public async Task<T> MatchAsync<T>(Func<R, Task<T>> onSuccess, Func<HttpError, T> onError)
+    {
+        return !error.HasValue switch
+        {
+            true => await onSuccess(success!),
+            false => onError(error.Value)
         };
     }
 

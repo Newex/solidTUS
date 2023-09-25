@@ -104,4 +104,15 @@ public class CommonRequestHandler
         context.UploadFileInfo.LastUpdatedDate = clock.UtcNow;
         return context;
     }
+
+    /// <summary>
+    /// Set the upload offset header
+    /// </summary>
+    /// <param name="context">The request context</param>
+    /// <returns>A request context</returns>
+    public static RequestContext SetUploadByteOffset(RequestContext context)
+    {
+        context.ResponseHeaders.Add(TusHeaderNames.UploadOffset, context.UploadFileInfo.ByteOffset.ToString());
+        return context;
+    }
 }

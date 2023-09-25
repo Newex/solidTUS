@@ -5,7 +5,7 @@ namespace SolidTUS.Extensions;
 /// <summary>
 /// Helper extension methods
 /// </summary>
-public static class FunctionalExtensions
+internal static class FunctionalExtensions
 {
     /// <summary>
     /// Get the result from an either http error or a request context as a response

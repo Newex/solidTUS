@@ -28,6 +28,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     /// <inheritdoc />
     public async Task<long> OnPartialUploadAsync(PipeReader reader, UploadFileInfo uploadInfo, ChecksumContext? checksumContext, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var written = 0L;
         var withChecksum = checksumContext is not null;
         var validChecksum = true && !withChecksum;
@@ -91,10 +92,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
                 }
             }
         }
-        catch (IOException)
-        {
-
-        }
+        catch (IOException) { }
         finally
         {
             if (validChecksum)
