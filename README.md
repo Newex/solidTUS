@@ -153,8 +153,7 @@ The class contains the following members:
 * `UploadFileInfo` - Contains the SolidTUS metadata about the current upload.
 * `SetExpirationStrategy` - Defines the expiration strategy for this upload. See [wiki/ExpirationStrategy](/Newex/solidTUS/wiki/TusOptions#expirationStrategy) section.
 
-Can only call `StartAppendDataAsync` once - subsequent calls will be ignored.
-
+Can only call `StartAppendDataAsync` once - subsequent calls will be ignored.  
 The `TusUploadContext` is injected from the `TusUpload`-attribute.
 
 ### TusUploadAttribute
@@ -251,6 +250,7 @@ Using unit tests and manually making TUS-request with the official javascript cl
 - [ ] Create wiki pages for all the configuration options
 - [ ] Create wiki pages for library design, and how to extend
 - [ ] Implement all TUS extension features
+- [ ] Add section in readme for examples
 
 # References
 * [TUS-protocol](https://tus.io/protocols/resumable-upload.html#core-protocol)
