@@ -83,8 +83,12 @@ public class PostRequestHandler
             var allowed = size <= maxSize.Value;
             if (!allowed)
             {
-                return HttpError.EntityTooLarge("File upload is bigger than server restrictions").Wrap();
+                var error = HttpError.EntityTooLarge("File upload is bigger than server restrictions");
+                error.Headers.Add(TusHeaderNames.MaxSize, maxSize.Value.ToString());
+                return error.Wrap();
             }
+
+            context.ResponseHeaders.Add(TusHeaderNames.MaxSize, maxSize.Value.ToString());
         }
 
         return context.Wrap();
