@@ -112,7 +112,7 @@ public class TusUploadContext
             }
             if (UploadFileInfo.Done && deleteInfoOnDone)
             {
-                await uploadMetaHandler.DeleteUploadFileInfoAsync(fileId, cancellationToken);
+                await uploadMetaHandler.DeleteUploadFileInfoAsync(UploadFileInfo, cancellationToken);
             }
         }
     }

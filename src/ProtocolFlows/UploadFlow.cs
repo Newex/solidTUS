@@ -58,14 +58,16 @@ public class UploadFlow
     public async ValueTask<Result<RequestContext>> GetUploadStatusAsync(RequestContext context, string fileId)
     {
         context.FileID = fileId;
-        var noStoreCache = HeadRequestHandler.SetResponseCacheControl(context);
-        var uploadInfoExists = await common.CheckUploadFileInfoExistsAsync(noStoreCache);
-        var uploadOffset = uploadInfoExists.Map(c => HeadRequestHandler.SetUploadOffsetHeader(c));
-        var setFileSizeResponseHeaders = uploadOffset.Map(c => HeadRequestHandler.SetUploadLengthOrDeferred(c));
+        context = HeadRequestHandler.SetResponseCacheControl(context);
+        var requestContext = await common.CheckUploadFileInfoExistsAsync(context);
 
-        // Set metadata headers
-        var result = setFileSizeResponseHeaders.Map(c => HeadRequestHandler.SetMetadataHeader(c));
-        return result;
+        requestContext = await requestContext
+            .Map(HeadRequestHandler.SetUploadOffsetHeader)
+            .Map(HeadRequestHandler.SetUploadLengthOrDeferred)
+            .Map(HeadRequestHandler.SetMetadataHeader)
+            .BindAsync(expirationRequestHandler.CheckExpirationAsync);
+
+        return requestContext;
     }
 
     /// <summary>
@@ -77,16 +79,21 @@ public class UploadFlow
     public async ValueTask<Result<RequestContext>> PreUploadAsync(RequestContext context, string fileId)
     {
         context.FileID = fileId;
-        var contentType = PatchRequestHandler.CheckContentType(context);
-        var uploadOffset = contentType.Bind(PatchRequestHandler.CheckUploadOffset);
-        var uploadInfoExists = await uploadOffset.BindAsync(async c => await common.CheckUploadFileInfoExistsAsync(c));
-        var byteOffset = uploadInfoExists.Bind(PatchRequestHandler.CheckConsistentByteOffset);
-        var uploadLength = byteOffset.Bind(patch.CheckUploadLength);
-        var uploadSize = uploadLength.Bind(PatchRequestHandler.CheckUploadExceedsFileSize);
-        var uploadExpired = await uploadSize.BindAsync(expirationRequestHandler.CheckExpirationAsync);
-        var uploadUpdatedDate = uploadExpired.Map(common.SetUpdatedDate);
-        var checksum = uploadUpdatedDate.Bind(checksumHandler.SetChecksum);
-        return checksum;
+        var requestContext = await PatchRequestHandler.CheckContentType(context)
+            .Bind(PatchRequestHandler.CheckUploadOffset)
+            .BindAsync(async c => await common.CheckUploadFileInfoExistsAsync(c));
+
+        requestContext = await requestContext
+            .Bind(PatchRequestHandler.CheckConsistentByteOffset)
+            .Bind(patch.CheckUploadLength)
+            .Bind(PatchRequestHandler.CheckUploadExceedsFileSize)
+            .BindAsync(expirationRequestHandler.CheckExpirationAsync);
+
+        requestContext = requestContext
+            .Map(common.SetUpdatedDate)
+            .Bind(checksumHandler.SetChecksum);
+
+        return requestContext;
     }
 
     /// <summary>

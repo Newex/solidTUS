@@ -24,6 +24,25 @@ public class UploadController : ControllerBase
         this.uploadMetaHandler = uploadMetaHandler;
     }
 
+    [TusCreation]
+    public async Task<ActionResult> CreateFile([FromServices] TusCreationContext context)
+    {
+        // Read Metadata
+        var filename = context.UploadFileInfo.Metadata["filename"];
+        var mime = context.UploadFileInfo.Metadata["contentType"];
+
+        // Construct upload URL
+        var id = Guid.NewGuid().ToString("N");
+
+        context.SetUploadRouteValues(new { fileId = id }, "CustomRouteNameUpload");
+
+        // Start creation (IuploadStorageHandler.CreateResource())
+        await context.StartCreationAsync(id);
+
+        // Converts a success to 201 created
+        return Ok();
+    }
+
     [TusUpload("{fileId}", Name = "CustomRouteNameUpload")]
     [RequestSizeLimit(5_000_000_000)]
     public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadContext context)
@@ -37,24 +56,6 @@ public class UploadController : ControllerBase
 
         // Must always return 204 on upload success with no Body content
         return NoContent();
-    }
-
-    [TusCreation]
-    public async Task<ActionResult> CreateFile([FromServices] TusCreationContext context)
-    {
-        // Read Metadata
-        var filename = context.UploadFileInfo.Metadata["filename"];
-        var mime = context.UploadFileInfo.Metadata["contentType"];
-
-        // Construct upload URL
-        var id = Guid.NewGuid().ToString("N");
-        var uploadTo = Url.Action(nameof(Upload), new { fileId = id }) ?? string.Empty;
-
-        // Start creation (IuploadStorageHandler.CreateResource())
-        await context.StartCreationAsync(id, uploadTo);
-
-        // Converts a success to 201 created
-        return Ok();
     }
 
     // Must have same route as the Upload route

@@ -30,8 +30,7 @@
       .use(Tus, {
         endpoint,
         uploadDataDuringCreation: false,
-        allowedMetaFields: ["name", "type"],
-        chunkSize: 10_240_000
+        allowedMetaFields: ["name", "type"]
       });
 
     updateLocalStorage();

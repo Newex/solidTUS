@@ -16,7 +16,7 @@ namespace SolidTUS.ProtocolHandlers;
 /// </summary>
 public class PostRequestHandler
 {
-    private readonly Func<Dictionary<string, string>, bool> metadataValidator;
+    private readonly Func<IDictionary<string, string>, bool> metadataValidator;
     private readonly long? maxSize;
 
     /// <summary>
@@ -83,8 +83,12 @@ public class PostRequestHandler
             var allowed = size <= maxSize.Value;
             if (!allowed)
             {
-                return HttpError.EntityTooLarge("File upload is bigger than server restrictions").Wrap();
+                var error = HttpError.EntityTooLarge("File upload is bigger than server restrictions");
+                error.Headers.Add(TusHeaderNames.MaxSize, maxSize.Value.ToString());
+                return error.Wrap();
             }
+
+            context.ResponseHeaders.Add(TusHeaderNames.MaxSize, maxSize.Value.ToString());
         }
 
         return context.Wrap();
@@ -95,22 +99,23 @@ public class PostRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A tuple containing the raw string metadata and the parsed metadata</returns>
-    public static (StringValues Raw, Dictionary<string, string> Parsed) ParseMetadata(RequestContext context)
+    public static RequestContext ParseMetadata(RequestContext context)
     {
         var rawMetadata = context.RequestHeaders[TusHeaderNames.UploadMetadata];
         var metadata = MetadataParser.ParseFast(rawMetadata!);
-        return (rawMetadata, metadata);
+        context.UploadFileInfo.Metadata = metadata.AsReadOnly();
+        context.UploadFileInfo.RawMetadata = rawMetadata;
+        return context;
     }
 
     /// <summary>
     /// Validate the metadata
     /// </summary>
     /// <param name="context">THe request context</param>
-    /// <param name="metadata">The parsed metadata</param>
     /// <returns>Either an error or a request context</returns>
-    public Result<RequestContext> ValidateMetadata(RequestContext context, Dictionary<string, string> metadata)
+    public Result<RequestContext> ValidateMetadata(RequestContext context)
     {
-        var isValid = metadataValidator(metadata);
+        var isValid = metadataValidator(context.UploadFileInfo.Metadata);
         return isValid ? context.Wrap() : HttpError.BadRequest("Invalid Upload-Metadata").Wrap();
     }
 
@@ -167,8 +172,15 @@ public class PostRequestHandler
     /// <returns>Either an error or a request context</returns>
     public static Result<RequestContext> CheckIsValidUpload(RequestContext context)
     {
-        var contentType = context.RequestHeaders[HeaderNames.ContentType];
+        var hasContentLength = long.TryParse(context.RequestHeaders[HeaderNames.ContentLength], out var contentLength);
+        var isUpload = hasContentLength && contentLength > 0;
+        if (!isUpload)
+        {
+            // Does not contain upload data
+            return context.Wrap();
+        }
 
+        var contentType = context.RequestHeaders[HeaderNames.ContentType];
         var isValid = string.Equals(contentType, TusHeaderValues.PatchContentType, StringComparison.OrdinalIgnoreCase);
         if (!isValid)
         {

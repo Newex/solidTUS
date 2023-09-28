@@ -26,6 +26,7 @@ public class TusCreationContext
     private readonly LinkGenerator linkGenerator;
     private readonly Action<string> onCreated;
     private readonly Action<long> onUpload;
+    private RouteNameValuePair? uploadRoute = null;
     private bool isCalledMoreThanOnce = false;
 
     private Func<UploadFileInfo, Task>? onResourceCreatedAsync;
@@ -110,66 +111,15 @@ public class TusCreationContext
     }
 
     /// <summary>
-    /// Start resource creation
+    /// Set the route values to the <c>TusUpload</c> endpoint
     /// </summary>
-    /// <remarks>
-    /// The metadata upload file info will only be deleted if the request contains the whole upload. Otherwise the client will be directed to the upload location.
-    /// It is recommended to create a unique and different filename to avoid any malicious uploads overwriting other files.
-    /// The metadata.json file that is created by default by <see cref="FileUploadMetaHandler"/> creates a filename using the file id.
-    /// Be careful not to overwrite other uploads that are in progress by naming them the same.
-    /// </remarks>
-    /// <param name="fileId">The file Id</param>
-    /// <param name="uploadLocationUrl">The upload location URL</param>
-    /// <param name="directoryPath">The optional file directory path</param>
-    /// <param name="filename">The filename on disk. Defaults to <paramref name="fileId"/> value</param>
-    /// <param name="deleteInfoOnDone">True if the metadata upload info file should be deleted when upload has been finished otherwise false</param>
-    /// <returns>An awaitable task</returns>
-    public async Task StartCreationAsync(string fileId, string uploadLocationUrl, string? directoryPath = null, string? filename = null, bool deleteInfoOnDone = false)
+    /// <typeparam name="T">The route value type, must be a reference type</typeparam>
+    /// <param name="routeValues">The route values</param>
+    /// <param name="routeName">The route name. If null the default name will be used <see cref="EndpointNames.UploadEndpoint"/></param>
+    public void SetUploadRouteValues<T>(T routeValues, string? routeName = null)
+    where T : class
     {
-        if (isCalledMoreThanOnce)
-        {
-            return;
-        }
-
-        UploadFileInfo.OnDiskFilename = filename ?? fileId;
-        UploadFileInfo.FileDirectoryPath = directoryPath ?? defaultFileDirectory;
-        UploadFileInfo.FileId = fileId;
-        var created = await uploadMetaHandler.CreateResourceAsync(UploadFileInfo, cancellationToken);
-        if (created)
-        {
-            // Server side callback
-            onCreated(uploadLocationUrl);
-
-            if (onResourceCreatedAsync is not null)
-            {
-                // Client side callback
-                await onResourceCreatedAsync(UploadFileInfo);
-            }
-        }
-
-        if (withUpload)
-        {
-            // Can append if we dont need to worry about checksum
-            var written = await uploadStorageHandler.OnPartialUploadAsync(reader, UploadFileInfo, null, cancellationToken);
-
-            // First server callback -->
-            onUpload(written);
-
-            // Finished upload -->
-            var isFinished = written == UploadFileInfo.FileSize;
-            if (isFinished && onUploadFinishedAsync is not null)
-            {
-                // Client callback -->
-                await onUploadFinishedAsync();
-            }
-
-            if (isFinished && deleteInfoOnDone)
-            {
-                await uploadMetaHandler.DeleteUploadFileInfoAsync(fileId, cancellationToken);
-            }
-        }
-
-        isCalledMoreThanOnce = true;
+        uploadRoute = new(routeName, routeValues);
     }
 
     /// <summary>
@@ -181,29 +131,34 @@ public class TusCreationContext
     /// The metadata.json file that is created by default by <see cref="FileUploadMetaHandler"/> creates a filename using the file id.
     /// Be careful not to overwrite other uploads that are in progress by naming them the same.
     /// </remarks>
-    /// <param name="fileId">The file id</param>
-    /// <param name="routeValues">The route values</param>
-    /// <param name="routeName">The optional route name, default is <see cref="EndpointNames.UploadEndpoint"/></param>
+    /// <param name="fileId">The file Id</param>
     /// <param name="directoryPath">The optional file directory path</param>
     /// <param name="filename">The filename on disk. Defaults to <paramref name="fileId"/> value</param>
     /// <param name="deleteInfoOnDone">True if the metadata upload info file should be deleted when upload has been finished otherwise false</param>
     /// <returns>An awaitable task</returns>
-    public async Task StartCreationAsync(string fileId, object routeValues, string? routeName = null, string? directoryPath = null, string? filename = null, bool deleteInfoOnDone = false)
+    public async Task StartCreationAsync(string fileId, string? directoryPath = null, string? filename = null, bool deleteInfoOnDone = false)
+    {
+        var routeName = uploadRoute.HasValue ? (uploadRoute.Value.RouteName ?? EndpointNames.UploadEndpoint) : EndpointNames.UploadEndpoint;
+        var routeValues = uploadRoute.HasValue ? uploadRoute.Value.RouteValues : null;
+        var uploadUrl = linkGenerator.GetPathByName(routeName, routeValues);
+        if (uploadUrl is null)
+        {
+            throw new ArgumentException("Could not create URL to the upload endpoint route");
+        }
+
+        await UploadBeginAsync(fileId, uploadUrl, directoryPath, filename, deleteInfoOnDone);
+    }
+
+    private async Task UploadBeginAsync(string fileId, string uploadLocationUrl, string? directoryPath = null, string? filename = null, bool deleteInfoOnDone = false)
     {
         if (isCalledMoreThanOnce)
         {
             return;
         }
 
-        var uploadLocationUrl = linkGenerator.GetPathByName(routeName ?? EndpointNames.UploadEndpoint, routeValues);
-        if (uploadLocationUrl is null)
-        {
-            throw new ArgumentException("Could not create URL to the upload endpoint route");
-        }
-
+        UploadFileInfo.FileId = fileId;
         UploadFileInfo.OnDiskFilename = filename ?? fileId;
         UploadFileInfo.FileDirectoryPath = directoryPath ?? defaultFileDirectory;
-        UploadFileInfo.FileId = fileId;
 
         var created = await uploadMetaHandler.CreateResourceAsync(UploadFileInfo, cancellationToken);
         if (created)
@@ -236,7 +191,7 @@ public class TusCreationContext
 
             if (isFinished && deleteInfoOnDone)
             {
-                await uploadMetaHandler.DeleteUploadFileInfoAsync(fileId, cancellationToken);
+                await uploadMetaHandler.DeleteUploadFileInfoAsync(UploadFileInfo, cancellationToken);
             }
         }
 

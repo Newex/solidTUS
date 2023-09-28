@@ -5,6 +5,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
+
+using Microsoft.Extensions.Internal;
+
+
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.Options;
@@ -117,7 +121,8 @@ public class UploadTest
             MetaDirectoryPath = "./TestItems"
         };
         uploadMetaHandler = new FileUploadMetaHandler(Microsoft.Extensions.Options.Options.Create(options));
-        uploadStorageHandler = new FileUploadStorageHandler(uploadMetaHandler);
+        var clock = new SystemClock();
+        uploadStorageHandler = new FileUploadStorageHandler(clock, uploadMetaHandler);
         var info = uploadMetaHandler.GetResourceAsync(OutputFilename, CancellationToken.None).Result;
         if (info is not null)
         {

@@ -48,8 +48,8 @@ public interface IUploadMetaHandler
     /// <remarks>
     /// Delete meta resource when file has been fully uploaded
     /// </remarks>
-    /// <param name="fileId">The file Id</param>
+    /// <param name="info">The upload file info</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>True if resource has been deleted otherwise false</returns>
-    Task<bool> DeleteUploadFileInfoAsync(string fileId, CancellationToken cancellationToken);
+    Task<bool> DeleteUploadFileInfoAsync(UploadFileInfo info, CancellationToken cancellationToken);
 }

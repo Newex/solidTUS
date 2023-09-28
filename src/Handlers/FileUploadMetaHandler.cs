@@ -66,9 +66,9 @@ public class FileUploadMetaHandler : IUploadMetaHandler
     }
 
     /// <inheritdoc />
-    public Task<bool> DeleteUploadFileInfoAsync(string fileId, CancellationToken cancellationToken)
+    public Task<bool> DeleteUploadFileInfoAsync(UploadFileInfo info, CancellationToken cancellationToken)
     {
-        var path = MetadataFullFilenamePath(fileId);
+        var path = MetadataFullFilenamePath(info.FileId);
         var exists = File.Exists(path);
         if (!exists)
         {
@@ -87,8 +87,14 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         var filenames = Directory.GetFiles(directoryPath, "*.metadata.json");
         foreach (var filename in filenames)
         {
-            var text = await File.ReadAllTextAsync(filename);
-            var info = JsonSerializer.Deserialize<UploadFileInfo>(text);
+            UploadFileInfo? info = null;
+            try
+            {
+                var text = await File.ReadAllTextAsync(filename);
+                info = JsonSerializer.Deserialize<UploadFileInfo>(text);
+            }
+            catch (IOException) { }
+            catch (JsonException) { }
             if (info is not null)
             {
                 yield return info;
@@ -120,9 +126,16 @@ public class FileUploadMetaHandler : IUploadMetaHandler
             return null;
         }
 
-        var fileInfoTxt = File.ReadAllText(filename);
-        var fileInfo = JsonSerializer.Deserialize<UploadFileInfo>(fileInfoTxt);
-        return fileInfo!;
+        try
+        {
+            var fileInfoTxt = File.ReadAllText(filename);
+            var fileInfo = JsonSerializer.Deserialize<UploadFileInfo>(fileInfoTxt);
+            return fileInfo;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private string MetadataFullFilenamePath(string fileId) => Path.Combine(directoryPath, $"{fileId}.metadata.json");

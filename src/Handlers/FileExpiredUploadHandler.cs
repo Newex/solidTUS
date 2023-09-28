@@ -30,15 +30,15 @@ public class FileExpiredUploadHandler : IExpiredUploadHandler
     }
 
     /// <inheritdoc />
-    public async Task ExpiredUploadAsync(UploadFileInfo uploadFileInfo)
+    public async Task ExpiredUploadAsync(UploadFileInfo uploadFileInfo, CancellationToken cancellationToken)
     {
-        await uploadMetaHandler.DeleteUploadFileInfoAsync(uploadFileInfo.FileId, CancellationToken.None);
+        await uploadMetaHandler.DeleteUploadFileInfoAsync(uploadFileInfo, cancellationToken);
         var file = Path.Combine(uploadFileInfo.FileDirectoryPath, uploadFileInfo.OnDiskFilename);
         File.Delete(file);
     }
 
     /// <inheritdoc />
-    public async Task StartScanForExpiredUploadsAsync()
+    public async Task StartScanForExpiredUploadsAsync(CancellationToken cancellationToken)
     {
         await foreach (var info in uploadMetaHandler.GetAllResourcesAsync())
         {
@@ -48,7 +48,7 @@ public class FileExpiredUploadHandler : IExpiredUploadHandler
                 var expired = now > info.ExpirationDate.Value;
                 if (expired)
                 {
-                    await ExpiredUploadAsync(info);
+                    await ExpiredUploadAsync(info, cancellationToken);
                 }
             }
         }
