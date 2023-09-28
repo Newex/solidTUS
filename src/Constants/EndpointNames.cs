@@ -19,4 +19,9 @@ public static class EndpointNames
     /// Get default name for the tus-termination endpoint
     /// </summary>
     public const string TerminationEndpoint = "SolidTusTerminateEndpoint";
+
+    /// <summary>
+    /// Get the default route name for the parallel endpoint
+    /// </summary>
+    public const string ParallelEndpoint = "SolidTusParallelEndpoint";
 }
