@@ -2,12 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
-
 using Microsoft.Extensions.Options;
-
-
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
 using SolidTUS.Handlers;
@@ -16,11 +12,19 @@ using SolidTUS.Options;
 
 namespace SolidTUS.ProtocolHandlers.ProtocolExtensions;
 
+/// <summary>
+/// Concatenation request handler
+/// </summary>
 public class ConcatenationRequestHandler
 {
     private readonly IUploadMetaHandler uploadMetaHandler;
     private readonly long? maxSize;
 
+    /// <summary>
+    /// Instantiate a new object of <see cref="ConcatenationRequestHandler"/>
+    /// </summary>
+    /// <param name="uploadMetaHandler">The upload metadata handler</param>
+    /// <param name="options">The TUS options</param>
     public ConcatenationRequestHandler(
         IUploadMetaHandler uploadMetaHandler,
         IOptions<TusOptions> options
@@ -30,6 +34,11 @@ public class ConcatenationRequestHandler
         maxSize = options.Value.MaxSize;
     }
 
+    /// <summary>
+    /// Set the <see cref="UploadFileInfo.IsPartial"/> if present
+    /// </summary>
+    /// <param name="context">The request context</param>
+    /// <returns>A request context</returns>
     public RequestContext SetIfUploadIsPartial(RequestContext context)
     {
         context.UploadFileInfo.IsPartial = context.RequestHeaders.Any(
@@ -39,9 +48,21 @@ public class ConcatenationRequestHandler
         return context;
     }
 
-    public async Task<Result<RequestContext>> CheckIfUploadPartialIsFinalAsync(RequestContext context, string template, string partialParameterName, CancellationToken cancellationToken)
+    /// <summary>
+    /// Check if a final partial upload is valid
+    /// </summary>
+    /// <param name="context">The request context</param>
+    /// <param name="template">The route template</param>
+    /// <param name="partialParameterName">The partial id parameter name</param>
+    /// <returns>A request context or an error</returns>
+    public async Task<Result<RequestContext>> CheckIfUploadPartialIsFinalAsync(RequestContext context, string template, string partialParameterName)
     {
         var concat = context.RequestHeaders[TusHeaderNames.UploadConcat].ToString();
+        if (string.IsNullOrWhiteSpace(concat))
+        {
+            return context.Wrap();
+        }
+
         var isFinal = concat.StartsWith(TusHeaderValues.UploadFinal, StringComparison.OrdinalIgnoreCase);
         var uploadInfos = new List<UploadFileInfo>();
         HttpError? error = null;
@@ -106,7 +127,7 @@ public class ConcatenationRequestHandler
                         break;
                     }
 
-                    var info = await uploadMetaHandler.GetResourceAsync(partialId, cancellationToken);
+                    var info = await uploadMetaHandler.GetResourceAsync(partialId, context.CancellationToken);
                     if (info is not null)
                     {
                         if (uploadInfos.Exists(x => x.FileId == partialId))
@@ -149,6 +170,13 @@ public class ConcatenationRequestHandler
         return context.Wrap();
     }
 
+    /// <summary>
+    /// Parse an input according to a template and returns the value of the token
+    /// </summary>
+    /// <param name="input">The input</param>
+    /// <param name="template">The route template</param>
+    /// <param name="token">The token value to extract from input</param>
+    /// <returns>A string value of the token or null</returns>
     public static string? GetTemplateValue(string input, string template, string token)
     {
         string pattern = Regex.Escape(template).Replace("\\{", "{").Replace("\\}", "}");

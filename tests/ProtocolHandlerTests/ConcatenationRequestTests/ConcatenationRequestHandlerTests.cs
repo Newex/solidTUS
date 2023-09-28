@@ -29,7 +29,7 @@ public class ConcatenationRequestHandlerTests
 
         // Act
         var response = await requestContext.BindAsync(
-                async c => await concatenationHandler.CheckIfUploadPartialIsFinalAsync(c, "partial/{id}", "id", CancellationToken.None));
+                async c => await concatenationHandler.CheckIfUploadPartialIsFinalAsync(c, "partial/{id}", "id"));
         var result = response.GetTusHttpResponse(204);
 
         // Assert
@@ -59,7 +59,7 @@ public class ConcatenationRequestHandlerTests
 
         // Act
         var response = await requestContext.BindAsync(
-                async c => await concatenationHandler.CheckIfUploadPartialIsFinalAsync(c, "partial/{id}", "id", CancellationToken.None));
+                async c => await concatenationHandler.CheckIfUploadPartialIsFinalAsync(c, "partial/{id}", "id"));
         var result = response.GetTusHttpResponse(204);
 
         // Assert 413 request entity too large
@@ -82,7 +82,7 @@ public class ConcatenationRequestHandlerTests
 
         // Act
         var response = await requestContext.BindAsync(
-                async c => await concatenationHandler.CheckIfUploadPartialIsFinalAsync(c, "partial/{id}", "id", CancellationToken.None));
+                async c => await concatenationHandler.CheckIfUploadPartialIsFinalAsync(c, "partial/{id}", "id"));
         var uploads = response.Match(c => c.PartialFinalUploadInfos, _ => null);
 
         // Assert
@@ -107,7 +107,7 @@ public class ConcatenationRequestHandlerTests
 
         // Act
         var response = await requestContext.BindAsync(
-                async c => await concatenationHandler.CheckIfUploadPartialIsFinalAsync(c, "partial/{id}", "id", CancellationToken.None));
+                async c => await concatenationHandler.CheckIfUploadPartialIsFinalAsync(c, "partial/{id}", "id"));
         var context = response.Match<RequestContext?>(c => c, _ => null);
 
         // Assert

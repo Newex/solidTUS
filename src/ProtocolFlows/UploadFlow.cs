@@ -20,6 +20,7 @@ public class UploadFlow
     private readonly PatchRequestHandler patch;
     private readonly ChecksumRequestHandler checksumHandler;
     private readonly ExpirationRequestHandler expirationRequestHandler;
+    private readonly ConcatenationRequestHandler concatenationRequestHandler;
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
 
@@ -30,6 +31,7 @@ public class UploadFlow
     /// <param name="patchRequestHandler">The patch request handler</param>
     /// <param name="checksumRequestHandler">The checksum request handler</param>
     /// <param name="expirationRequestHandler">The expiration request handler</param>
+    /// <param name="concatenationRequestHandler">The concatenation request handler</param>
     /// <param name="uploadStorageHandler">The upload storage handler</param>
     /// <param name="uploadMetaHandler">The upload meta handler</param>
     public UploadFlow(
@@ -37,6 +39,7 @@ public class UploadFlow
         PatchRequestHandler patchRequestHandler,
         ChecksumRequestHandler checksumRequestHandler,
         ExpirationRequestHandler expirationRequestHandler,
+        ConcatenationRequestHandler concatenationRequestHandler,
         IUploadStorageHandler uploadStorageHandler,
         IUploadMetaHandler uploadMetaHandler
     )
@@ -45,6 +48,7 @@ public class UploadFlow
         patch = patchRequestHandler;
         checksumHandler = checksumRequestHandler;
         this.expirationRequestHandler = expirationRequestHandler;
+        this.concatenationRequestHandler = concatenationRequestHandler;
         this.uploadStorageHandler = uploadStorageHandler;
         this.uploadMetaHandler = uploadMetaHandler;
     }
@@ -67,6 +71,20 @@ public class UploadFlow
             .Map(HeadRequestHandler.SetMetadataHeader)
             .BindAsync(expirationRequestHandler.CheckExpirationAsync);
 
+        return requestContext;
+    }
+
+    /// <summary>
+    /// Called before partial upload starts. Checks and validates request.
+    /// </summary>
+    /// <param name="context">The request context</param>
+    /// <param name="template">The route template</param>
+    /// <param name="partialIdName">The partial id name</param>
+    /// <returns>Either an error or a request context</returns>
+    public async ValueTask<Result<RequestContext>> PrePartialUploadAsync(RequestContext context, string template, string partialIdName)
+    {
+        context = concatenationRequestHandler.SetIfUploadIsPartial(context);
+        var requestContext = await concatenationRequestHandler.CheckIfUploadPartialIsFinalAsync(context, template, partialIdName);
         return requestContext;
     }
 

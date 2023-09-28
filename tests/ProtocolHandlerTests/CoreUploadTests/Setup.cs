@@ -27,11 +27,13 @@ public static class Setup
         var ioptions = Microsoft.Extensions.Options.Options.Create(options ?? new());
         var expirationHandler = MockHandlers.ExpiredUploadHandler();
         var expiration = new ExpirationRequestHandler(clock, expirationHandler, ioptions);
+        var concatenation = new ConcatenationRequestHandler(upload, ioptions);
         return new UploadFlow(
             common,
             patch,
             checksum,
             expiration,
+            concatenation,
             storageHandler,
             upload
         );
