@@ -34,6 +34,12 @@ public record UploadFileInfo
     public long? FileSize { get; init; }
 
     /// <summary>
+    /// Get if the upload file is a partial file
+    /// </summary>
+    [JsonInclude]
+    public bool IsPartial { get; internal set; }
+
+    /// <summary>
     /// Get the parsed TUS metadata
     /// </summary>
     [JsonReadOnlyDictionary]

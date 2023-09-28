@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using Microsoft.AspNetCore.Http;
 using SolidTUS.Constants;
@@ -58,6 +59,11 @@ public record RequestContext
     /// The checksum context
     /// </summary>
     public ChecksumContext? ChecksumContext { get; init; }
+
+    /// <summary>
+    /// The partial upload file infos to be used in a final concatenation
+    /// </summary>
+    public IList<UploadFileInfo>? PartialFinalUploadInfos { get; internal set; }
 
     /// <summary>
     /// Get the cancellation token

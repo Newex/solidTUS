@@ -29,4 +29,14 @@ public static class TusHeaderValues
     /// Get the termination string value
     /// </summary>
     public const string TusTermination = "termination";
+
+    /// <summary>
+    /// Get the <c>Upload-Concat</c> string value
+    /// </summary>
+    public const string UploadPartial = "partial";
+
+    /// <summary>
+    /// Get the <c>Upload-Concat</c> string value
+    /// </summary>
+    public const string UploadFinal = "final";
 }
