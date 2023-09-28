@@ -34,8 +34,10 @@ public class UploadController : ControllerBase
         // Construct some unique file id
         var id = Guid.NewGuid().ToString("N");
 
+        context.SetUploadRouteValues(new { fileId = id });
+
         // Accept creating upload and redirect to TusUpload
-        await context.StartCreationAsync(id, routeValues: new { fileId = id });
+        await context.StartCreationAsync(id);
 
         // Converts a success to 201 created
         return Ok();
