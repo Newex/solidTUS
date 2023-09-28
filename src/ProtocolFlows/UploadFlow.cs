@@ -58,14 +58,16 @@ public class UploadFlow
     public async ValueTask<Result<RequestContext>> GetUploadStatusAsync(RequestContext context, string fileId)
     {
         context.FileID = fileId;
-        var noStoreCache = HeadRequestHandler.SetResponseCacheControl(context);
-        var uploadInfoExists = await common.CheckUploadFileInfoExistsAsync(noStoreCache);
-        var uploadOffset = uploadInfoExists.Map(c => HeadRequestHandler.SetUploadOffsetHeader(c));
-        var setFileSizeResponseHeaders = uploadOffset.Map(c => HeadRequestHandler.SetUploadLengthOrDeferred(c));
+        context = HeadRequestHandler.SetResponseCacheControl(context);
+        var requestContext = await common.CheckUploadFileInfoExistsAsync(context);
 
-        // Set metadata headers
-        var result = setFileSizeResponseHeaders.Map(c => HeadRequestHandler.SetMetadataHeader(c));
-        return result;
+        requestContext = await requestContext
+            .Map(HeadRequestHandler.SetUploadOffsetHeader)
+            .Map(HeadRequestHandler.SetUploadLengthOrDeferred)
+            .Map(HeadRequestHandler.SetMetadataHeader)
+            .BindAsync(expirationRequestHandler.CheckExpirationAsync);
+
+        return requestContext;
     }
 
     /// <summary>
