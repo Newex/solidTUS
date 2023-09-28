@@ -54,6 +54,12 @@ public class ExpirationRequestHandler
     public async Task<Result<RequestContext>> CheckExpirationAsync(RequestContext context)
     {
         var info = context.UploadFileInfo;
+        if (info.Done)
+        {
+            // File uploaded - can only expire unfinished uploads
+            return context.Wrap();
+        }
+
         var strategy = info.ExpirationStrategy ?? expirationStrategy;
         var lastTime = info.LastUpdatedDate ?? info.CreatedDate;
         if (lastTime is null)
