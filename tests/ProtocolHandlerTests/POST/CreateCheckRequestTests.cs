@@ -142,7 +142,7 @@ public class CreateCheckRequestTests
         var handler = new PostRequestHandler(options);
 
         // Act
-        var response = request.Bind(c => handler.ValidateMetadata(c, metadata));
+        var response = request.Bind(handler.ValidateMetadata);
         var result = response.StatusCode();
 
         // Assert
@@ -169,7 +169,7 @@ public class CreateCheckRequestTests
         var handler = new PostRequestHandler(options);
 
         // Act
-        var response = request.Bind(c => handler.ValidateMetadata(c, metadata));
+        var response = request.Bind(handler.ValidateMetadata);
         var result = response.StatusCode();
 
         // Assert

@@ -66,15 +66,9 @@ public class CreationFlow
         var lengthAndDefer = PostRequestHandler.CheckUploadLengthOrDeferred(context);
         var maxSize = lengthAndDefer.Bind(c => post.CheckMaximumSize(c));
 
-        var parseMetadata = maxSize.Map(c => (Context: c, Metadata: PostRequestHandler.ParseMetadata(c)));
-        var validate = parseMetadata.Bind(t =>
-        {
-            var (ctx, meta) = t;
-            var valid = post.ValidateMetadata(ctx, meta.Parsed);
-            return valid.Map(c => (Context: c, Metadata: meta));
-        });
-        var setMetadata = validate.Map(t => PostRequestHandler.SetNewMetadata(t.Context, t.Metadata));
-        var setFileSize = setMetadata.Map(PostRequestHandler.SetFileSize);
+        var parseMetadata = maxSize.Map(PostRequestHandler.ParseMetadata);
+        var validate = parseMetadata.Bind(post.ValidateMetadata);
+        var setFileSize = validate.Map(PostRequestHandler.SetFileSize);
         var setCreatedDate = setFileSize.Map(common.SetCreatedDate);
 
         var hasContentLength = long.TryParse(context.RequestHeaders[HeaderNames.ContentLength], out var contentLength);

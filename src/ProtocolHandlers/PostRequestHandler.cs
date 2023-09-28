@@ -99,22 +99,23 @@ public class PostRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A tuple containing the raw string metadata and the parsed metadata</returns>
-    public static (StringValues Raw, Dictionary<string, string> Parsed) ParseMetadata(RequestContext context)
+    public static RequestContext ParseMetadata(RequestContext context)
     {
         var rawMetadata = context.RequestHeaders[TusHeaderNames.UploadMetadata];
         var metadata = MetadataParser.ParseFast(rawMetadata!);
-        return (rawMetadata, metadata);
+        context.UploadFileInfo.Metadata = metadata.AsReadOnly();
+        context.UploadFileInfo.RawMetadata = rawMetadata;
+        return context;
     }
 
     /// <summary>
     /// Validate the metadata
     /// </summary>
     /// <param name="context">THe request context</param>
-    /// <param name="metadata">The parsed metadata</param>
     /// <returns>Either an error or a request context</returns>
-    public Result<RequestContext> ValidateMetadata(RequestContext context, Dictionary<string, string> metadata)
+    public Result<RequestContext> ValidateMetadata(RequestContext context)
     {
-        var isValid = metadataValidator(metadata);
+        var isValid = metadataValidator(context.UploadFileInfo.Metadata);
         return isValid ? context.Wrap() : HttpError.BadRequest("Invalid Upload-Metadata").Wrap();
     }
 

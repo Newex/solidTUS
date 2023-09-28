@@ -37,14 +37,14 @@ public record UploadFileInfo
     /// Get the parsed TUS metadata
     /// </summary>
     [JsonReadOnlyDictionary]
-    public ReadOnlyDictionary<string, string> Metadata { get; init; } = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>());
+    public ReadOnlyDictionary<string, string> Metadata { get; internal set; } = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>());
 
     /// <summary>
     /// Get the original raw metadata
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonInclude]
-    public string? RawMetadata { get; init; }
+    public string? RawMetadata { get; internal set; }
 
     /// <summary>
     /// Get the file directory path for this file
