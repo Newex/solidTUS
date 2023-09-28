@@ -4,6 +4,9 @@ using System.IO;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Microsoft.Extensions.Internal;
+
 using SolidTUS.Contexts;
 using SolidTUS.Models;
 
@@ -14,14 +17,20 @@ namespace SolidTUS.Handlers;
 /// </summary>
 public class FileUploadStorageHandler : IUploadStorageHandler
 {
+    private readonly ISystemClock clock;
     private readonly IUploadMetaHandler uploadMetaHandler;
 
     /// <summary>
     /// Instantiate a new <see cref="FileUploadStorageHandler"/>
     /// </summary>
+    /// <param name="clock">The system clock provider</param>
     /// <param name="uploadMetaHandler">The metadata file handler</param>
-    public FileUploadStorageHandler(IUploadMetaHandler uploadMetaHandler)
+    public FileUploadStorageHandler(
+        ISystemClock clock,
+        IUploadMetaHandler uploadMetaHandler
+    )
     {
+        this.clock = clock;
         this.uploadMetaHandler = uploadMetaHandler;
     }
 
@@ -98,6 +107,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
             if (validChecksum)
             {
                 uploadInfo.AddBytes(written);
+                uploadInfo.LastUpdatedDate = clock.UtcNow;
                 await uploadMetaHandler.UpdateResourceAsync(uploadInfo, cancellationToken);
             }
         }
