@@ -120,9 +120,16 @@ public class FileUploadMetaHandler : IUploadMetaHandler
             return null;
         }
 
-        var fileInfoTxt = File.ReadAllText(filename);
-        var fileInfo = JsonSerializer.Deserialize<UploadFileInfo>(fileInfoTxt);
-        return fileInfo!;
+        try
+        {
+            var fileInfoTxt = File.ReadAllText(filename);
+            var fileInfo = JsonSerializer.Deserialize<UploadFileInfo>(fileInfoTxt);
+            return fileInfo;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private string MetadataFullFilenamePath(string fileId) => Path.Combine(directoryPath, $"{fileId}.metadata.json");
