@@ -2,6 +2,7 @@ using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 
 namespace SolidTUS.Tests.ParserTests.RouteTemplateParserTests;
 
+[UnitTest]
 public class RouteTemplateParserTests
 {
     [Theory]

@@ -27,7 +27,7 @@ public static class MockHandlers
         var mock = new Mock<IUploadMetaHandler>();
 
         mock.Setup(s => s.GetResourceAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-        .ReturnsAsync(file);
+        .ReturnsAsync((string id, CancellationToken ct) => file is not null ? (file with { FileId = id }) : null);
 
         mock.Setup(s => s.UpdateResourceAsync(It.IsAny<UploadFileInfo>(), It.IsAny<CancellationToken>()))
         .ReturnsAsync(updated);
