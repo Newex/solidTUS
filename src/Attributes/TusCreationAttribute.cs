@@ -142,7 +142,7 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
 
                 if (creationFlow is not null)
                 {
-                    var tusResponse = requestContext.GetTusHttpResponse(204);
+                    var tusResponse = requestContext.GetTusHttpResponse(201);
                     ctx.HttpContext.Response.AddTusHeaders(tusResponse);
                 }
 
@@ -160,7 +160,6 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
         context.HttpContext.Response.OnStarting(state =>
         {
             var ctx = (ResultExecutingContext)state;
-            var httpMethodOverride = ctx.HttpContext.Request.Headers["X-HTTP-Method-Override"];
             var isPost = IsPost(ctx.HttpContext.Request.Method);
             var response = ctx.HttpContext.Response;
             var isSuccess = response.StatusCode >= 200 && response.StatusCode < 300;
