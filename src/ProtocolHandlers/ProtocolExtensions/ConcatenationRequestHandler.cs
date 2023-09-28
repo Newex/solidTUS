@@ -39,13 +39,33 @@ public class ConcatenationRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A request context</returns>
-    public RequestContext SetIfUploadIsPartial(RequestContext context)
+    public static Result<RequestContext> SetIfUploadIsPartial(RequestContext context)
     {
-        context.UploadFileInfo.IsPartial = context.RequestHeaders.Any(
-            x => x.Key == TusHeaderNames.UploadConcat
-                 && x.Value == TusHeaderValues.UploadPartial);
+        var concat = context.RequestHeaders[TusHeaderNames.UploadConcat].ToString();
+        context.UploadFileInfo.IsPartial = !string.IsNullOrEmpty(concat);
 
-        return context;
+        if (context.UploadFileInfo.IsPartial)
+        {
+            var isFinal = concat.StartsWith(TusHeaderValues.UploadFinal, StringComparison.OrdinalIgnoreCase);
+            if (isFinal)
+            {
+                context.PartialMode = PartialMode.Final;
+            }
+
+            var isPartial = string.Equals(concat, TusHeaderValues.UploadPartial, StringComparison.OrdinalIgnoreCase);
+            if (isPartial)
+            {
+                context.PartialMode = PartialMode.Partial;
+            }
+
+            if (!isFinal && !isPartial)
+            {
+                return HttpError.BadRequest("Upload-Concat must either be partial or final").Wrap();
+            }
+        }
+
+
+        return context.Wrap();
     }
 
     /// <summary>

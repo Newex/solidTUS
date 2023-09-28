@@ -70,7 +70,8 @@ public class CreationFlow
             .Bind(post.ValidateMetadata)
             .Map(PostRequestHandler.SetFileSize)
             .Map(common.SetCreatedDate)
-            .Bind(PostRequestHandler.CheckIsValidUpload);
+            .Bind(PostRequestHandler.CheckIsValidUpload)
+            .Bind(ConcatenationRequestHandler.SetIfUploadIsPartial);
 
         return requestContext;
     }

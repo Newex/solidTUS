@@ -66,6 +66,11 @@ public record RequestContext
     public IList<UploadFileInfo>? PartialFinalUploadInfos { get; internal set; }
 
     /// <summary>
+    /// Get the partial mode
+    /// </summary>
+    public PartialMode PartialMode { get; internal set; }
+
+    /// <summary>
     /// Get the cancellation token
     /// </summary>
     public CancellationToken CancellationToken { get; }
