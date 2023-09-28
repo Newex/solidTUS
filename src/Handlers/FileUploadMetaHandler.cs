@@ -87,8 +87,14 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         var filenames = Directory.GetFiles(directoryPath, "*.metadata.json");
         foreach (var filename in filenames)
         {
-            var text = await File.ReadAllTextAsync(filename);
-            var info = JsonSerializer.Deserialize<UploadFileInfo>(text);
+            UploadFileInfo? info = null;
+            try
+            {
+                var text = await File.ReadAllTextAsync(filename);
+                info = JsonSerializer.Deserialize<UploadFileInfo>(text);
+            }
+            catch (IOException) { }
+            catch (JsonException) { }
             if (info is not null)
             {
                 yield return info;
