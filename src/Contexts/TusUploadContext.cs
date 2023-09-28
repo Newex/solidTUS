@@ -99,6 +99,7 @@ public class TusUploadContext
         }
 
         UploadHasBeenCalled = true;
+        UploadFileInfo.FileId = fileId;
 
         try
         {
