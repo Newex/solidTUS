@@ -165,7 +165,7 @@ public class TusCreationContext
 
             if (isFinished && deleteInfoOnDone)
             {
-                await uploadMetaHandler.DeleteUploadFileInfoAsync(fileId, cancellationToken);
+                await uploadMetaHandler.DeleteUploadFileInfoAsync(UploadFileInfo, cancellationToken);
             }
         }
 
@@ -236,7 +236,7 @@ public class TusCreationContext
 
             if (isFinished && deleteInfoOnDone)
             {
-                await uploadMetaHandler.DeleteUploadFileInfoAsync(fileId, cancellationToken);
+                await uploadMetaHandler.DeleteUploadFileInfoAsync(UploadFileInfo, cancellationToken);
             }
         }
 

@@ -32,7 +32,7 @@ public class FileExpiredUploadHandler : IExpiredUploadHandler
     /// <inheritdoc />
     public async Task ExpiredUploadAsync(UploadFileInfo uploadFileInfo)
     {
-        await uploadMetaHandler.DeleteUploadFileInfoAsync(uploadFileInfo.FileId, CancellationToken.None);
+        await uploadMetaHandler.DeleteUploadFileInfoAsync(uploadFileInfo, CancellationToken.None);
         var file = Path.Combine(uploadFileInfo.FileDirectoryPath, uploadFileInfo.OnDiskFilename);
         File.Delete(file);
     }

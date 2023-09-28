@@ -132,7 +132,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     /// <inheritdoc />
     public async Task DeleteFileAsync(UploadFileInfo uploadFileInfo, CancellationToken cancellationToken)
     {
-        await uploadMetaHandler.DeleteUploadFileInfoAsync(uploadFileInfo.FileId, cancellationToken);
+        await uploadMetaHandler.DeleteUploadFileInfoAsync(uploadFileInfo, cancellationToken);
         var file = Path.Combine(uploadFileInfo.FileDirectoryPath, uploadFileInfo.OnDiskFilename);
         File.Delete(file);
     }

@@ -66,9 +66,9 @@ public class FileUploadMetaHandler : IUploadMetaHandler
     }
 
     /// <inheritdoc />
-    public Task<bool> DeleteUploadFileInfoAsync(string fileId, CancellationToken cancellationToken)
+    public Task<bool> DeleteUploadFileInfoAsync(UploadFileInfo info, CancellationToken cancellationToken)
     {
-        var path = MetadataFullFilenamePath(fileId);
+        var path = MetadataFullFilenamePath(info.FileId);
         var exists = File.Exists(path);
         if (!exists)
         {
