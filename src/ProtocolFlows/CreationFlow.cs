@@ -63,22 +63,16 @@ public class CreationFlow
     /// <returns>Either an error or a request context</returns>
     public Result<RequestContext> StartResourceCreation(RequestContext context)
     {
-        var lengthAndDefer = PostRequestHandler.CheckUploadLengthOrDeferred(context);
-        var maxSize = lengthAndDefer.Bind(c => post.CheckMaximumSize(c));
+        var requestContext = PostRequestHandler
+            .CheckUploadLengthOrDeferred(context)
+            .Bind(post.CheckMaximumSize)
+            .Map(PostRequestHandler.ParseMetadata)
+            .Bind(post.ValidateMetadata)
+            .Map(PostRequestHandler.SetFileSize)
+            .Map(common.SetCreatedDate)
+            .Bind(PostRequestHandler.CheckIsValidUpload);
 
-        var parseMetadata = maxSize.Map(PostRequestHandler.ParseMetadata);
-        var validate = parseMetadata.Bind(post.ValidateMetadata);
-        var setFileSize = validate.Map(PostRequestHandler.SetFileSize);
-        var setCreatedDate = setFileSize.Map(common.SetCreatedDate);
-
-        var hasContentLength = long.TryParse(context.RequestHeaders[HeaderNames.ContentLength], out var contentLength);
-        var isUpload = hasContentLength && contentLength > 0;
-        if (isUpload)
-        {
-            return setCreatedDate.Bind(PostRequestHandler.CheckIsValidUpload);
-        }
-
-        return setCreatedDate;
+        return requestContext;
     }
 
     /// <summary>

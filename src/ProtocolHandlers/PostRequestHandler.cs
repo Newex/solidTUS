@@ -172,8 +172,15 @@ public class PostRequestHandler
     /// <returns>Either an error or a request context</returns>
     public static Result<RequestContext> CheckIsValidUpload(RequestContext context)
     {
-        var contentType = context.RequestHeaders[HeaderNames.ContentType];
+        var hasContentLength = long.TryParse(context.RequestHeaders[HeaderNames.ContentLength], out var contentLength);
+        var isUpload = hasContentLength && contentLength > 0;
+        if (!isUpload)
+        {
+            // Does not contain upload data
+            return context.Wrap();
+        }
 
+        var contentType = context.RequestHeaders[HeaderNames.ContentType];
         var isValid = string.Equals(contentType, TusHeaderValues.PatchContentType, StringComparison.OrdinalIgnoreCase);
         if (!isValid)
         {
