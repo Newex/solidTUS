@@ -37,6 +37,7 @@ public record UploadFileInfo
     /// Get the parsed TUS metadata
     /// </summary>
     [JsonReadOnlyDictionary]
+    [JsonInclude]
     public ReadOnlyDictionary<string, string> Metadata { get; internal set; } = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>());
 
     /// <summary>

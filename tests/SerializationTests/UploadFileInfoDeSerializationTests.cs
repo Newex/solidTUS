@@ -33,4 +33,15 @@ public class UploadFileInfoDeSerializationTests
         var interval = uploadFileInfo?.Interval;
         interval.Should().NotBeNull().And.Be(TimeSpan.FromSeconds(30));
     }
+
+    [Fact]
+    public void UploadFileInfo_deserialization_should_include_metadata_property()
+    {
+        var uploadFileInfo = JsonSerializer.Deserialize<UploadFileInfo>(Json);
+        var metadata = uploadFileInfo?.Metadata;
+        metadata.Should()
+            .NotBeNull().And
+            .HaveCount(4).And
+            .ContainKey("name");
+    }
 }
