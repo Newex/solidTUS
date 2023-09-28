@@ -80,7 +80,7 @@ public class ExpirationRequestHandler
         var expired = now > deadline.Value;
         if (expired && !allowExpiredUploads)
         {
-            await expiredUploadHandler.ExpiredUploadAsync(info);
+            await expiredUploadHandler.ExpiredUploadAsync(info, context.CancellationToken);
             return HttpError.Gone("Upload expired").Wrap();
         }
 

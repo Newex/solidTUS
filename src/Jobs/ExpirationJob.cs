@@ -50,16 +50,16 @@ public class ExpirationJob : BackgroundService
         logger.LogInformation("Starting expired uploads scanner job, every {Interval}", interval);
         while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync())
         {
-            await Scan();
+            await Scan(stoppingToken);
         }
     }
 
-    private async Task Scan()
+    private async Task Scan(CancellationToken cancellationToken)
     {
         logger.LogInformation("Scanning for expired uploads...");
         using var scope = serviceProvider.CreateScope();
         var handler = scope.ServiceProvider.GetRequiredService<IExpiredUploadHandler>();
 
-        await handler.StartScanForExpiredUploadsAsync();
+        await handler.StartScanForExpiredUploadsAsync(cancellationToken);
     }
 }
