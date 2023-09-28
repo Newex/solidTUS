@@ -99,8 +99,8 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
 
         if (isHead)
         {
-            var uploadStatus = await requestContext.BindAsync(async c => await uploadFlow.GetUploadStatusAsync(c, fileId));
-            var statusResponse = uploadStatus.GetTusHttpResponse(204);
+            requestContext = await requestContext.BindAsync(async c => await uploadFlow.GetUploadStatusAsync(c, fileId));
+            var statusResponse = requestContext.GetTusHttpResponse(204);
             response.AddTusHeaders(statusResponse);
             context.Result = new ObjectResult(statusResponse.Message)
             {
