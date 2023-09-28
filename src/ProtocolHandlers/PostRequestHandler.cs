@@ -16,7 +16,7 @@ namespace SolidTUS.ProtocolHandlers;
 /// </summary>
 public class PostRequestHandler
 {
-    private readonly Func<Dictionary<string, string>, bool> metadataValidator;
+    private readonly Func<IDictionary<string, string>, bool> metadataValidator;
     private readonly long? maxSize;
 
     /// <summary>
