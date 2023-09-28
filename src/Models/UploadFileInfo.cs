@@ -110,6 +110,7 @@ public record UploadFileInfo
     /// <summary>
     /// If the upload has finished
     /// </summary>
+    [JsonIgnore]
     public bool Done => FileSize.HasValue && FileSize.Value == ByteOffset;
 
     /// <summary>
