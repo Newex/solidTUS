@@ -55,7 +55,7 @@ public class TusCreationContext
         IUploadMetaHandler uploadMetaHandler,
         LinkGenerator linkGenerator,
         CancellationToken cancellationToken
-)
+    )
     {
         defaultFileDirectory = options.Value.DirectoryPath;
         this.withUpload = withUpload;
