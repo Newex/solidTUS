@@ -51,12 +51,12 @@ public class TusParallelAttribute : ActionFilterAttribute, IActionHttpMethodProv
     /// <summary>
     /// Gets or sets the name of the partial Id parameter
     /// </summary>
-    public string PartialIdParameterName { get; set; } = "partialId";
+    public string PartialIdParameterName { get; set; } = ParameterNames.ParallelPartialIdParameterName;
 
     /// <summary>
     /// Gets or sets the name of the TUS context parameter
     /// </summary>
-    public virtual string ContextParameterName { get; set; } = "context";
+    public virtual string ContextParameterName { get; set; } = ParameterNames.TusUploadContextParameterName;
 
     /// <inheritdoc />
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)

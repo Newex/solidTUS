@@ -44,7 +44,7 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
     /// <summary>
     /// Get or set the name of the TUS context parameter
     /// </summary>
-    public virtual string ContextParameterName { get; set; } = "context";
+    public virtual string ContextParameterName { get; set; } = ParameterNames.TusCreationContextParameterName;
 
     /// <summary>
     /// Gets the supported http methods

@@ -44,12 +44,12 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
     /// <summary>
     /// Get or set the name of the file ID parameter
     /// </summary>
-    public virtual string FileIdParameterName { get; set; } = "fileId";
+    public virtual string FileIdParameterName { get; set; } = ParameterNames.FileIdParameterName;
 
     /// <summary>
     /// Get or set the name of the TUS context parameter
     /// </summary>
-    public virtual string ContextParameterName { get; set; } = "context";
+    public virtual string ContextParameterName { get; set; } = ParameterNames.TusUploadContextParameterName;
 
     /// <summary>
     /// Gets the supported http metods

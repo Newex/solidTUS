@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
 using SolidTUS.Models;
