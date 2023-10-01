@@ -19,7 +19,6 @@ public sealed class ParallelUploadBuilder
 
     private string? partialId;
     private string? partialIdName;
-    private Func<IList<UploadFileInfo>, string>? finalId;
     private Func<IList<UploadFileInfo>, bool>? allow;
     private object? routeValues;
 
@@ -72,18 +71,6 @@ public sealed class ParallelUploadBuilder
     }
 
     /// <summary>
-    /// Set the handler for naming the final file when a collection of files should be merged.
-    /// <para>If no handler is set, the fileId from the <see cref="TusCreationContext.StartCreationAsync(string, string?, bool)"/> will be used.</para>
-    /// </summary>
-    /// <param name="setFinalId">The final file id handler</param>
-    /// <returns>A builder</returns>
-    public ParallelUploadBuilder OnFinalFileIdHandler(Func<IList<UploadFileInfo>, string> setFinalId)
-    {
-        finalId = setFinalId;
-        return this;
-    }
-
-    /// <summary>
     /// The merge handler, if it returns true, the merge will be allowed otherwise the merge will be denied.
     /// </summary>
     /// <param name="allow">The merge allow callback</param>
@@ -109,7 +96,7 @@ public sealed class ParallelUploadBuilder
             throw new ArgumentNullException(nameof(allow));
         }
 
-        return new(template, partialIdName ?? ParameterNames.ParallelPartialIdParameterName, partialId, routeName, routeValues, allow, finalId);
+        return new(template, partialIdName ?? ParameterNames.ParallelPartialIdParameterName, partialId, routeName, routeValues, allow);
     }
 
     /// <summary>
@@ -122,8 +109,7 @@ public sealed class ParallelUploadBuilder
                                       string? partialId,
                                       string routeName,
                                       object? routeValues,
-                                      Func<IList<UploadFileInfo>, bool> allow,
-                                      Func<IList<UploadFileInfo>, string>? setFinalId)
+                                      Func<IList<UploadFileInfo>, bool> allow)
         {
             Template = template;
             PartialIdName = partialIdName;
@@ -132,7 +118,6 @@ public sealed class ParallelUploadBuilder
             RouteValues = routeValues;
 
             Allow = allow;
-            SetFinalId = setFinalId;
         }
 
         /// <summary>
@@ -172,10 +157,5 @@ public sealed class ParallelUploadBuilder
         /// The merge allow callback function. If returning true the merge will be accepted otherwise denied.
         /// </summary>
         public Func<IList<UploadFileInfo>, bool> Allow { get; }
-
-        /// <summary>
-        /// The optional renaming of the final file id for the collection of partial uploads.
-        /// </summary>
-        public Func<IList<UploadFileInfo>, string>? SetFinalId { get; }
     }
 }

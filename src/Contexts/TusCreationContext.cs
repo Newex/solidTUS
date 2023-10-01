@@ -1,15 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.IO.Pipelines;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.Options;
+using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 
 using static SolidTUS.Extensions.ParallelUploadBuilder;
 
@@ -20,6 +24,7 @@ namespace SolidTUS.Contexts;
 /// </summary>
 public class TusCreationContext
 {
+    private readonly long? maxSize;
     private readonly bool withUpload;
     private readonly PartialMode partialMode;
     private readonly IList<string> partialUrls;
@@ -27,6 +32,7 @@ public class TusCreationContext
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
     private readonly CancellationToken cancellationToken;
+    private readonly ILogger logger;
     private readonly LinkGenerator linkGenerator;
     private readonly Action<string> onCreated;
     private readonly Action<long> onUpload;
@@ -51,6 +57,8 @@ public class TusCreationContext
     /// <param name="uploadMetaHandler">The upload meta handler</param>
     /// <param name="linkGenerator">The link generator</param>
     /// <param name="cancellationToken">The cancellation token</param>
+    /// <param name="options">The tus options</param>
+    /// <param name="logger">The optional logger</param>
     public TusCreationContext(
         bool withUpload,
         PartialMode partialMode,
@@ -62,7 +70,9 @@ public class TusCreationContext
         IUploadStorageHandler uploadStorageHandler,
         IUploadMetaHandler uploadMetaHandler,
         LinkGenerator linkGenerator,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        IOptions<TusOptions> options,
+        ILogger? logger = null
     )
     {
         this.withUpload = withUpload;
@@ -76,6 +86,8 @@ public class TusCreationContext
         this.uploadMetaHandler = uploadMetaHandler;
         this.cancellationToken = cancellationToken;
         this.linkGenerator = linkGenerator;
+        maxSize = options.Value.MaxSize;
+        this.logger = logger ?? NullLogger.Instance;
     }
 
     /// <summary>
@@ -206,6 +218,45 @@ public class TusCreationContext
         else if (partialMode == PartialMode.Final)
         {
             // Begin merging final uploads
+            if (parallelUploadConfig is null)
+            {
+                throw new ArgumentNullException("Must provide parallel upload configuration");
+            }
+
+            var partialIdStrings = partialUrls.Select(url => ConcatenationRequestHandler.GetTemplateValue(url, parallelUploadConfig.Template, parallelUploadConfig.PartialIdName));
+            var partials = new List<UploadFileInfo>();
+            var currentSize = 0L;
+            foreach (var partialId in partialIdStrings)
+            {
+                if (partialId is null)
+                {
+                    logger.LogError("Cannot extract partial id from the given template: {Template} and the provided route for the parameter named: {ParameterName}", parallelUploadConfig.Template, parallelUploadConfig.PartialIdName);
+                    throw new ArgumentException("Partial id not extractet check the template and/or parameter name for the parallel upload");
+                }
+
+                var info = await uploadMetaHandler.GetPartialResourceAsync(partialId, cancellationToken);
+                if (info is null)
+                {
+                    logger.LogError("Missing partial upload info for {PartialId}", partialId);
+                    throw new InvalidOperationException("Missing partial upload file info");
+                }
+
+                partials.Add(info);
+                currentSize += info.ByteOffset;
+            }
+
+            if (maxSize.HasValue && currentSize > maxSize.Value)
+            {
+                throw new InvalidOperationException("The maximum upload size is exceeded");
+            }
+
+            var allowed = parallelUploadConfig.Allow(partials);
+            if (!allowed)
+            {
+                throw new InvalidOperationException("Not allowed to merge files");
+            }
+
+            await uploadStorageHandler.MergePartialFilesAsync(filename ?? fileId, partials, cancellationToken);
         }
     }
 

@@ -2,9 +2,13 @@ using System;
 using System.IO.Pipelines;
 using System.Threading;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using SolidTUS.Contexts;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
+using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 
@@ -17,35 +21,39 @@ public class CreationFlow
 {
     private readonly CommonRequestHandler common;
     private readonly PostRequestHandler post;
-    private readonly ExpirationRequestHandler expiration;
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
     private readonly LinkGenerator linkGenerator;
+    private readonly IOptions<TusOptions> options;
+    private readonly ILogger logger;
 
     /// <summary>
     /// Instantiate a new object of <see cref="CreationFlow"/>
     /// </summary>
     /// <param name="common">The common request handler</param>
     /// <param name="post">The post request handler</param>
-    /// <param name="expiration">The expiration request handler</param>
     /// <param name="uploadStorageHandler">The upload storage handler</param>
     /// <param name="uploadMetaHandler">The upload meta handler</param>
     /// <param name="linkGenerator"></param>
+    /// <param name="options">The tus options</param>
+    /// <param name="logger">The optional logger</param>
     public CreationFlow(
         CommonRequestHandler common,
         PostRequestHandler post,
-        ExpirationRequestHandler expiration,
         IUploadStorageHandler uploadStorageHandler,
         IUploadMetaHandler uploadMetaHandler,
-        LinkGenerator linkGenerator
+        LinkGenerator linkGenerator,
+        IOptions<TusOptions> options,
+        ILogger? logger = null
     )
     {
         this.common = common;
         this.post = post;
-        this.expiration = expiration;
         this.uploadStorageHandler = uploadStorageHandler;
         this.uploadMetaHandler = uploadMetaHandler;
         this.linkGenerator = linkGenerator;
+        this.options = options;
+        this.logger = logger ?? NullLogger.Instance;
     }
 
     /// <summary>
@@ -100,7 +108,9 @@ public class CreationFlow
             uploadStorageHandler,
             uploadMetaHandler,
             linkGenerator,
-            cancellationToken
+            cancellationToken,
+            options,
+            logger
         );
     }
 }

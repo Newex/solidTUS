@@ -54,6 +54,7 @@ public static class Setup
         var metaHandler = uploadMetaHandler ?? MockHandlers.UploadMetaHandler(fakeFileInfo);
         var linkGenerator = MockOthers.LinkGenerator();
         var cancel = cancellationToken ?? CancellationToken.None;
+        var ioptions = Microsoft.Extensions.Options.Options.Create(new TusOptions());
 
         return new TusCreationContext(
             withUpload,
@@ -68,7 +69,8 @@ public static class Setup
             storageHandler,
             metaHandler,
             linkGenerator,
-            cancel
+            cancel,
+            ioptions
         );
     }
 }

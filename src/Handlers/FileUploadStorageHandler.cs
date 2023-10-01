@@ -1,5 +1,6 @@
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipelines;
 using System.Threading;
@@ -139,6 +140,17 @@ public class FileUploadStorageHandler : IUploadStorageHandler
         await uploadMetaHandler.DeleteUploadFileInfoAsync(uploadFileInfo, cancellationToken);
         var file = Path.Combine(directory, uploadFileInfo.OnDiskFilename);
         File.Delete(file);
+    }
+
+    /// <inheritdoc />
+    public Task MergePartialFilesAsync(string filename, IList<UploadFileInfo> files, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        foreach (var file in files)
+        {
+        }
+
+        throw new NotImplementedException();
     }
 
     private static string FullFilenamePath(string filename, string filePath)

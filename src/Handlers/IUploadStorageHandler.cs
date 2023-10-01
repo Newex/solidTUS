@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,4 +40,13 @@ public interface IUploadStorageHandler
     /// <param name="uploadInfo">The upload information</param>
     /// <returns>The number of bytes uploaded so far or null</returns>
     long? GetUploadSize(string fileId, UploadFileInfo uploadInfo);
+
+    /// <summary>
+    /// Merge the list of uploads in order
+    /// </summary>
+    /// <param name="filename">The final filename</param>
+    /// <param name="files">The list of files to merge</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <returns>An awaitabe task</returns>
+    Task MergePartialFilesAsync(string filename, IList<UploadFileInfo> files, CancellationToken cancellationToken);
 }
