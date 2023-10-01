@@ -40,6 +40,13 @@ public record UploadFileInfo
     public bool IsPartial { get; internal set; }
 
     /// <summary>
+    /// Get the url path for the partial upload
+    /// </summary>
+    [JsonInclude]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PartialUrlPath { get; internal set; }
+
+    /// <summary>
     /// Get the parsed TUS metadata
     /// </summary>
     [JsonReadOnlyDictionary]

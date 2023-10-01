@@ -35,6 +35,14 @@ public interface IUploadMetaHandler
     IAsyncEnumerable<UploadFileInfo> GetAllResourcesAsync();
 
     /// <summary>
+    /// Get the partial resource by its relative url path
+    /// </summary>
+    /// <param name="url">The unique relative url for the partial resource</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <returns>An upload file info or null</returns>
+    Task<UploadFileInfo?> GetPartialResourceAsync(string url, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Update file info
     /// </summary>
     /// <param name="fileInfo">The updated file info</param>
