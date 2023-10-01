@@ -60,15 +60,6 @@ public record UploadFileInfo
     public string? RawMetadata { get; internal set; }
 
     /// <summary>
-    /// Get the file directory path for this file
-    /// </summary>
-    /// <remarks>
-    /// The directory path
-    /// </remarks>
-    [JsonInclude]
-    public string FileDirectoryPath { get; internal set; } = string.Empty;
-
-    /// <summary>
     /// Get the filename as it is on the disk
     /// </summary>
     /// <remarks>

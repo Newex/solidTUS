@@ -12,6 +12,7 @@ using Microsoft.Extensions.Internal;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.Options;
+using MSOptions = Microsoft.Extensions.Options.Options;
 
 namespace SolidTUS.Benchmarks.FileWriter;
 
@@ -120,9 +121,9 @@ public class UploadTest
             DirectoryPath = "./TestItems",
             MetaDirectoryPath = "./TestItems"
         };
-        uploadMetaHandler = new FileUploadMetaHandler(Microsoft.Extensions.Options.Options.Create(options));
+        uploadMetaHandler = new FileUploadMetaHandler(MSOptions.Create(options));
         var clock = new SystemClock();
-        uploadStorageHandler = new FileUploadStorageHandler(clock, uploadMetaHandler);
+        uploadStorageHandler = new FileUploadStorageHandler(clock, uploadMetaHandler, MSOptions.Create(options));
         var info = uploadMetaHandler.GetResourceAsync(OutputFilename, CancellationToken.None).Result;
         if (info is not null)
         {

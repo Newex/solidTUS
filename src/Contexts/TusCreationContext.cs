@@ -20,7 +20,6 @@ namespace SolidTUS.Contexts;
 /// </summary>
 public class TusCreationContext
 {
-    private readonly string defaultFileDirectory;
     private readonly bool withUpload;
     private readonly PartialMode partialMode;
     private readonly IList<string> partialUrls;
@@ -41,7 +40,6 @@ public class TusCreationContext
     /// <summary>
     /// Instantiate a new object of <see cref="TusCreationContext"/>
     /// </summary>
-    /// <param name="options">The options</param>
     /// <param name="withUpload">True if request includes upload otherwise false</param>
     /// <param name="partialMode">The upload request is either single upload, partial or final</param>
     /// <param name="partialUrls">The partial urls</param>
@@ -54,7 +52,6 @@ public class TusCreationContext
     /// <param name="linkGenerator">The link generator</param>
     /// <param name="cancellationToken">The cancellation token</param>
     public TusCreationContext(
-        IOptions<FileStorageOptions> options,
         bool withUpload,
         PartialMode partialMode,
         IList<string> partialUrls,
@@ -68,7 +65,6 @@ public class TusCreationContext
         CancellationToken cancellationToken
     )
     {
-        defaultFileDirectory = options.Value.DirectoryPath;
         this.withUpload = withUpload;
         this.partialMode = partialMode;
         this.partialUrls = partialUrls;
@@ -165,11 +161,10 @@ public class TusCreationContext
     /// Be careful not to overwrite other uploads that are in progress by naming them the same.
     /// </remarks>
     /// <param name="fileId">The file Id</param>
-    /// <param name="directoryPath">The optional file directory path</param>
     /// <param name="filename">The filename on disk. Defaults to <paramref name="fileId"/> value</param>
     /// <param name="deleteInfoOnDone">True if the metadata upload info file should be deleted when upload has been finished otherwise false</param>
     /// <returns>An awaitable task</returns>
-    public async Task StartCreationAsync(string fileId, string? directoryPath = null, string? filename = null, bool deleteInfoOnDone = false)
+    public async Task StartCreationAsync(string fileId, string? filename = null, bool deleteInfoOnDone = false)
     {
         // Three possible directions
         // 1 - upload single file (normal)
@@ -187,7 +182,7 @@ public class TusCreationContext
             }
 
             UploadFileInfo.FileId = fileId;
-            await UploadBeginAsync(fileId, uploadUrl, directoryPath, filename, deleteInfoOnDone);
+            await UploadBeginAsync(fileId, uploadUrl, filename, deleteInfoOnDone);
         }
         else if (partialMode == PartialMode.Partial)
         {
@@ -206,7 +201,7 @@ public class TusCreationContext
             }
 
             UploadFileInfo.PartialId = parallelUploadConfig.PartialId ?? fileId;
-            await UploadBeginAsync(UploadFileInfo.PartialId, uploadUrl, directoryPath, filename, deleteInfoOnDone);
+            await UploadBeginAsync(UploadFileInfo.PartialId, uploadUrl, filename, deleteInfoOnDone);
         }
         else if (partialMode == PartialMode.Final)
         {
@@ -214,7 +209,7 @@ public class TusCreationContext
         }
     }
 
-    private async Task UploadBeginAsync(string fileId, string uploadLocationUrl, string? directoryPath = null, string? filename = null, bool deleteInfoOnDone = false)
+    private async Task UploadBeginAsync(string fileId, string uploadLocationUrl, string? filename = null, bool deleteInfoOnDone = false)
     {
         if (isCalledMoreThanOnce)
         {
@@ -222,7 +217,6 @@ public class TusCreationContext
         }
 
         UploadFileInfo.OnDiskFilename = filename ?? fileId;
-        UploadFileInfo.FileDirectoryPath = directoryPath ?? defaultFileDirectory;
 
         var created = await uploadMetaHandler.CreateResourceAsync(UploadFileInfo, cancellationToken);
         if (created)

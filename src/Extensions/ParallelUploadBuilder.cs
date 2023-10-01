@@ -73,7 +73,7 @@ public sealed class ParallelUploadBuilder
 
     /// <summary>
     /// Set the handler for naming the final file when a collection of files should be merged.
-    /// <para>If no handler is set, the fileId from the <see cref="TusCreationContext.StartCreationAsync(string, string?, string?, bool)"/> will be used.</para>
+    /// <para>If no handler is set, the fileId from the <see cref="TusCreationContext.StartCreationAsync(string, string?, bool)"/> will be used.</para>
     /// </summary>
     /// <param name="setFinalId">The final file id handler</param>
     /// <returns>A builder</returns>

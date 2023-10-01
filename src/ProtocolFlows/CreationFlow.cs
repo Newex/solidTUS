@@ -2,11 +2,9 @@ using System;
 using System.IO.Pipelines;
 using System.Threading;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Options;
 using SolidTUS.Contexts;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
-using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 
@@ -17,7 +15,6 @@ namespace SolidTUS.ProtocolFlows;
 /// </summary>
 public class CreationFlow
 {
-    private readonly IOptions<FileStorageOptions> options;
     private readonly CommonRequestHandler common;
     private readonly PostRequestHandler post;
     private readonly ExpirationRequestHandler expiration;
@@ -28,7 +25,6 @@ public class CreationFlow
     /// <summary>
     /// Instantiate a new object of <see cref="CreationFlow"/>
     /// </summary>
-    /// <param name="options">The file storage options</param>
     /// <param name="common">The common request handler</param>
     /// <param name="post">The post request handler</param>
     /// <param name="expiration">The expiration request handler</param>
@@ -36,7 +32,6 @@ public class CreationFlow
     /// <param name="uploadMetaHandler">The upload meta handler</param>
     /// <param name="linkGenerator"></param>
     public CreationFlow(
-        IOptions<FileStorageOptions> options,
         CommonRequestHandler common,
         PostRequestHandler post,
         ExpirationRequestHandler expiration,
@@ -45,7 +40,6 @@ public class CreationFlow
         LinkGenerator linkGenerator
     )
     {
-        this.options = options;
         this.common = common;
         this.post = post;
         this.expiration = expiration;
@@ -96,7 +90,6 @@ public class CreationFlow
         var info = requestContext.UploadFileInfo;
 
         return new TusCreationContext(
-            options,
             uploadSize > 0,
             requestContext.PartialMode,
             requestContext.PartialUrls,

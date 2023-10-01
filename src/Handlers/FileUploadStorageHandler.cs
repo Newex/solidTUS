@@ -4,11 +4,11 @@ using System.IO;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
-
 using Microsoft.Extensions.Internal;
-
+using Microsoft.Extensions.Options;
 using SolidTUS.Contexts;
 using SolidTUS.Models;
+using SolidTUS.Options;
 
 namespace SolidTUS.Handlers;
 
@@ -19,19 +19,23 @@ public class FileUploadStorageHandler : IUploadStorageHandler
 {
     private readonly ISystemClock clock;
     private readonly IUploadMetaHandler uploadMetaHandler;
+    private readonly string directory;
 
     /// <summary>
     /// Instantiate a new <see cref="FileUploadStorageHandler"/>
     /// </summary>
     /// <param name="clock">The system clock provider</param>
     /// <param name="uploadMetaHandler">The metadata file handler</param>
+    /// <param name="options"></param>
     public FileUploadStorageHandler(
         ISystemClock clock,
-        IUploadMetaHandler uploadMetaHandler
+        IUploadMetaHandler uploadMetaHandler,
+        IOptions<FileStorageOptions> options
     )
     {
         this.clock = clock;
         this.uploadMetaHandler = uploadMetaHandler;
+        directory = options.Value.DirectoryPath;
     }
 
     /// <inheritdoc />
@@ -44,7 +48,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
 
         try
         {
-            var filename = FullFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath);
+            var filename = FullFilenamePath(uploadInfo.OnDiskFilename, directory);
 
             using var fs = new FileStream(filename, FileMode.Append);
 
@@ -118,7 +122,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     /// <inheritdoc />
     public long? GetUploadSize(string fileId, UploadFileInfo uploadInfo)
     {
-        var filename = FullFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath);
+        var filename = FullFilenamePath(uploadInfo.OnDiskFilename, directory);
         var exists = File.Exists(filename);
         if (!exists)
         {
@@ -133,7 +137,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     public async Task DeleteFileAsync(UploadFileInfo uploadFileInfo, CancellationToken cancellationToken)
     {
         await uploadMetaHandler.DeleteUploadFileInfoAsync(uploadFileInfo, cancellationToken);
-        var file = Path.Combine(uploadFileInfo.FileDirectoryPath, uploadFileInfo.OnDiskFilename);
+        var file = Path.Combine(directory, uploadFileInfo.OnDiskFilename);
         File.Delete(file);
     }
 

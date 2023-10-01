@@ -40,7 +40,6 @@ public static class Setup
     public static TusCreationContext TusCreationContext(bool withUpload,
                                                         PipeReader reader,
                                                         long bytesWritten = 0L,
-                                                        FileStorageOptions? options = null,
                                                         UploadFileInfo? fileInfo = null,
                                                         Action<string>? onCreated = null,
                                                         Action<long>? onUpload = null,
@@ -48,7 +47,6 @@ public static class Setup
                                                         IUploadMetaHandler? uploadMetaHandler = null,
                                                         CancellationToken? cancellationToken = null)
     {
-        var fileOptions = Microsoft.Extensions.Options.Options.Create(options ?? new FileStorageOptions());
         var fakeFileInfo = fileInfo ?? Fakes.RandomEntities.UploadFileInfo();
         var createCallback = onCreated ?? ((s) => { });
         var uploadCallback = onUpload ?? ((l) => { });
@@ -58,7 +56,6 @@ public static class Setup
         var cancel = cancellationToken ?? CancellationToken.None;
 
         return new TusCreationContext(
-            fileOptions,
             withUpload,
 
             PartialMode.None,
