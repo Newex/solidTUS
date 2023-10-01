@@ -39,7 +39,7 @@ public class UploadController : ControllerBase
         context.SetUploadRouteValues(new { fileId = id });
 
         var parallel = context
-            .SetupParallelUploads("/part/{partialId}")
+            .SetupParallelUploads("/part/{partialId}/{hello}")
             .SetParallelIdParameterNameInTemplate("partialId")
             .SetPartialId(partialId)
             .SetRouteValues(new { partialId, hello = "World" })
