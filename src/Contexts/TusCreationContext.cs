@@ -271,6 +271,10 @@ public class TusCreationContext
                 FileSize = currentSize
             };
             var merged = await uploadStorageHandler.MergePartialFilesAsync(finalInfo, partials, cancellationToken);
+            if (!merged.Done)
+            {
+                throw new InvalidOperationException("Merged file does not equal partial uploads");
+            }
 
             var routeName = uploadRoute.HasValue ? (uploadRoute.Value.RouteName ?? EndpointNames.UploadEndpoint) : EndpointNames.UploadEndpoint;
             var routeValues = uploadRoute.HasValue ? uploadRoute.Value.RouteValues : null;

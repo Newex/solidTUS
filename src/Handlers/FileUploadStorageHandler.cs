@@ -165,6 +165,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
 
             final.CreatedDate = clock.UtcNow;
             final.LastUpdatedDate = null;
+            final.ByteOffset = destination.Position;
         }
         catch(Exception)
         {
