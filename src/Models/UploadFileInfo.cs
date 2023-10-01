@@ -18,6 +18,12 @@ public record UploadFileInfo
     public string FileId { get; internal set; } = string.Empty;
 
     /// <summary>
+    /// Get the partial id
+    /// </summary>
+    [JsonInclude]
+    public string PartialId { get; internal set; } = string.Empty;
+
+    /// <summary>
     /// Get the bytes that have been uploaded so-far
     /// </summary>
     [JsonInclude]
@@ -38,13 +44,6 @@ public record UploadFileInfo
     /// </summary>
     [JsonInclude]
     public bool IsPartial { get; internal set; }
-
-    /// <summary>
-    /// Get the url path for the partial upload
-    /// </summary>
-    [JsonInclude]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? PartialUrlPath { get; internal set; }
 
     /// <summary>
     /// Get the parsed TUS metadata

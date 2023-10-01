@@ -1,13 +1,17 @@
 using System;
+using System.Collections.Generic;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Options;
 using SolidTUS.Constants;
+using SolidTUS.Extensions;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.Options;
+
+using static SolidTUS.Extensions.ParallelUploadBuilder;
 
 namespace SolidTUS.Contexts;
 
@@ -18,6 +22,8 @@ public class TusCreationContext
 {
     private readonly string defaultFileDirectory;
     private readonly bool withUpload;
+    private readonly PartialMode partialMode;
+    private readonly IList<string> partialUrls;
     private readonly PipeReader reader;
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
@@ -27,6 +33,7 @@ public class TusCreationContext
     private readonly Action<long> onUpload;
     private RouteNameValuePair? uploadRoute = null;
     private bool isCalledMoreThanOnce = false;
+    private ParallelUploadConfig? parallelUploadConfig;
 
     private Func<UploadFileInfo, Task>? onResourceCreatedAsync;
     private Func<Task>? onUploadFinishedAsync;
@@ -36,6 +43,8 @@ public class TusCreationContext
     /// </summary>
     /// <param name="options">The options</param>
     /// <param name="withUpload">True if request includes upload otherwise false</param>
+    /// <param name="partialMode">The upload request is either single upload, partial or final</param>
+    /// <param name="partialUrls">The partial urls</param>
     /// <param name="uploadFileInfo">The upload file info</param>
     /// <param name="onCreated">Callback when resource has been created</param>
     /// <param name="onUpload">Callback when resource has been uploaded</param>
@@ -47,6 +56,8 @@ public class TusCreationContext
     public TusCreationContext(
         IOptions<FileStorageOptions> options,
         bool withUpload,
+        PartialMode partialMode,
+        IList<string> partialUrls,
         UploadFileInfo uploadFileInfo,
         Action<string> onCreated,
         Action<long> onUpload,
@@ -59,6 +70,8 @@ public class TusCreationContext
     {
         defaultFileDirectory = options.Value.DirectoryPath;
         this.withUpload = withUpload;
+        this.partialMode = partialMode;
+        this.partialUrls = partialUrls;
         UploadFileInfo = uploadFileInfo;
         this.onCreated = onCreated;
         this.onUpload = onUpload;
@@ -105,6 +118,7 @@ public class TusCreationContext
     /// <param name="interval">The optional time span interval</param>
     public void SetExpirationStrategy(ExpirationStrategy expiration, TimeSpan? interval = null)
     {
+        // Question should this be set for partial uploads?
         UploadFileInfo.ExpirationStrategy = expiration;
         UploadFileInfo.Interval = interval;
     }
@@ -119,6 +133,26 @@ public class TusCreationContext
     where T : class
     {
         uploadRoute = new(routeName, routeValues);
+    }
+
+    /// <summary>
+    /// Setup parallel upload configuration
+    /// </summary>
+    /// <param name="templateForParallelUpload">The route template for the parallel upload endpoint</param>
+    /// <param name="routeNameForParallelUpload">The route name for the parallel upload endpoint. If null; the default value will be used <see cref="EndpointNames.ParallelEndpoint"/></param>
+    /// <returns>A parallel upload configuration builder</returns>
+    public ParallelUploadBuilder SetupParallelUploads(string templateForParallelUpload, string? routeNameForParallelUpload = null)
+    {
+        return new ParallelUploadBuilder(templateForParallelUpload, routeNameForParallelUpload ?? EndpointNames.ParallelEndpoint);
+    }
+
+    /// <summary>
+    /// Apply the configurations from the parallel upload setup
+    /// </summary>
+    /// <param name="config">The configuration settings</param>
+    public void ApplyParallelUploadsConfiguration(ParallelUploadConfig config)
+    {
+        parallelUploadConfig = config;
     }
 
     /// <summary>
@@ -137,15 +171,47 @@ public class TusCreationContext
     /// <returns>An awaitable task</returns>
     public async Task StartCreationAsync(string fileId, string? directoryPath = null, string? filename = null, bool deleteInfoOnDone = false)
     {
-        var routeName = uploadRoute.HasValue ? (uploadRoute.Value.RouteName ?? EndpointNames.UploadEndpoint) : EndpointNames.UploadEndpoint;
-        var routeValues = uploadRoute.HasValue ? uploadRoute.Value.RouteValues : null;
-        var uploadUrl = linkGenerator.GetPathByName(routeName, routeValues);
-        if (uploadUrl is null)
-        {
-            throw new ArgumentException("Could not create URL to the upload endpoint route");
-        }
+        // Three possible directions
+        // 1 - upload single file (normal)
+        // 2 - upload part parallel
+        // 3 - merge parts
 
-        await UploadBeginAsync(fileId, uploadUrl, directoryPath, filename, deleteInfoOnDone);
+        if (partialMode == PartialMode.None)
+        {
+            var routeName = uploadRoute.HasValue ? (uploadRoute.Value.RouteName ?? EndpointNames.UploadEndpoint) : EndpointNames.UploadEndpoint;
+            var routeValues = uploadRoute.HasValue ? uploadRoute.Value.RouteValues : null;
+            var uploadUrl = linkGenerator.GetPathByName(routeName, routeValues);
+            if (uploadUrl is null)
+            {
+                throw new ArgumentException("Could not create URL to the upload endpoint route");
+            }
+
+            UploadFileInfo.FileId = fileId;
+            await UploadBeginAsync(fileId, uploadUrl, directoryPath, filename, deleteInfoOnDone);
+        }
+        else if (partialMode == PartialMode.Partial)
+        {
+            // Start new parallel upload
+            if (parallelUploadConfig is null)
+            {
+                throw new ArgumentNullException("Must provide parallel upload configuration");
+            }
+
+            var routeName = parallelUploadConfig.RouteName;
+            var routeValues = parallelUploadConfig.RouteValues;
+            var uploadUrl = linkGenerator.GetPathByName(routeName, routeValues);
+            if (uploadUrl is null)
+            {
+                throw new ArgumentException("Could not create URL to the parallel upload endpoint route");
+            }
+
+            UploadFileInfo.PartialId = parallelUploadConfig.PartialId ?? fileId;
+            await UploadBeginAsync(UploadFileInfo.PartialId, uploadUrl, directoryPath, filename, deleteInfoOnDone);
+        }
+        else if (partialMode == PartialMode.Final)
+        {
+            // Begin merging final uploads
+        }
     }
 
     private async Task UploadBeginAsync(string fileId, string uploadLocationUrl, string? directoryPath = null, string? filename = null, bool deleteInfoOnDone = false)
@@ -155,7 +221,6 @@ public class TusCreationContext
             return;
         }
 
-        UploadFileInfo.FileId = fileId;
         UploadFileInfo.OnDiskFilename = filename ?? fileId;
         UploadFileInfo.FileDirectoryPath = directoryPath ?? defaultFileDirectory;
 

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -33,14 +34,31 @@ public class UploadController : ControllerBase
 
         // Construct some unique file id
         var id = Guid.NewGuid().ToString("N");
+        var partialId = id[..8];
 
         context.SetUploadRouteValues(new { fileId = id });
+
+        var parallel = context
+            .SetupParallelUploads("/part/{partialId}")
+            .SetParallelIdParameterNameInTemplate("partialId")
+            .SetPartialId(partialId)
+            .SetRouteValues(new { partialId, hello = "World" })
+            .OnMergeHandler((files) => files.Count > 1);
+
+        context.ApplyParallelUploadsConfiguration(parallel.Build());
+
 
         // Accept creating upload and redirect to TusUpload
         await context.StartCreationAsync(id);
 
         // Converts a success to 201 created
         return Ok();
+    }
+
+    [TusParallel("/part/{partialId}/{hello}")]
+    public Task<ActionResult> ParallelUploads(string partialId, string hello, [FromServices] TusUploadContext context)
+    {
+        throw new NotImplementedException();
     }
 
     [TusUpload("{fileId}")]

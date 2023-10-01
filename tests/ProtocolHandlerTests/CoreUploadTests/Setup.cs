@@ -60,6 +60,9 @@ public static class Setup
         return new TusCreationContext(
             fileOptions,
             withUpload,
+
+            PartialMode.None,
+
             fakeFileInfo,
             createCallback,
             uploadCallback,

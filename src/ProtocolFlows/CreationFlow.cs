@@ -1,10 +1,8 @@
 using System;
 using System.IO.Pipelines;
 using System.Threading;
-
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Options;
-using Microsoft.Net.Http.Headers;
 using SolidTUS.Contexts;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
@@ -71,7 +69,8 @@ public class CreationFlow
             .Map(PostRequestHandler.SetFileSize)
             .Map(common.SetCreatedDate)
             .Bind(PostRequestHandler.CheckIsValidUpload)
-            .Bind(ConcatenationRequestHandler.SetIfUploadIsPartial);
+            .Bind(ConcatenationRequestHandler.SetIfUploadIsPartial)
+            .Bind(ConcatenationRequestHandler.SetPartialUrlsIfFinal);
 
         return requestContext;
     }
@@ -99,6 +98,8 @@ public class CreationFlow
         return new TusCreationContext(
             options,
             uploadSize > 0,
+            requestContext.PartialMode,
+            requestContext.PartialUrls,
             info,
             onCreated,
             onUploadPartial,

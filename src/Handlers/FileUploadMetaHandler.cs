@@ -96,7 +96,7 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         }
         else
         {
-            path = MetadataPartialFilenamePath(info.PartialUrlPath ?? string.Empty, info.FileId);
+            path = MetadataPartialFilenamePath(info.PartialId);
         }
         var exists = File.Exists(path);
         if (!exists)
@@ -111,27 +111,11 @@ public class FileUploadMetaHandler : IUploadMetaHandler
     }
 
     /// <inheritdoc />
-    public async Task<UploadFileInfo?> GetPartialResourceAsync(string url, CancellationToken cancellationToken)
+    public async Task<UploadFileInfo?> GetPartialResourceAsync(string partialId, CancellationToken cancellationToken)
     {
         try
         {
-            // Construct the directory path based on the URL
-            var directory = MetadataPartialDirectoryPath(url);
-
-            // Check if the directory exists
-            if (!Directory.Exists(directory))
-            {
-                return null;
-            }
-
-            // Get all files in the directory with the ".chunk.metadata.json" extension
-            var metadataFiles = Directory.GetFiles(directory, "*.chunk.metadata.json");
-
-            // Check if there is exactly one metadata file in the directory
-            if (metadataFiles.Length != 1)
-            {
-                return null;
-            }
+            var file = MetadataPartialFilenamePath(partialId);
 
             var locked = Rwl.TryEnterReadLock(maxWaitMs);
             if (!locked)
@@ -142,7 +126,7 @@ public class FileUploadMetaHandler : IUploadMetaHandler
             try
             {
                 // Read and deserialize the metadata file
-                var fileInfoText = await File.ReadAllTextAsync(metadataFiles[0], cancellationToken);
+                var fileInfoText = await File.ReadAllTextAsync(file, cancellationToken);
                 return JsonSerializer.Deserialize<UploadFileInfo>(fileInfoText);
             }
             finally
@@ -152,8 +136,8 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Could not retrieve partial upload file info for URL: {Url}", url);
-            return null; // Return null if an error occurs
+            logger.LogError(ex, "Could not retrieve partial upload file info for partial id: {PartialID}", partialId);
+            return null;
         }
     }
 
@@ -204,7 +188,7 @@ public class FileUploadMetaHandler : IUploadMetaHandler
                 cancellationToken.ThrowIfCancellationRequested();
                 if (locked)
                 {
-                    var filename = MetadataPartialFilenamePath(fileInfo.PartialUrlPath ?? string.Empty, fileInfo.FileId);
+                    var filename = MetadataPartialFilenamePath(fileInfo.PartialId);
                     var content = JsonSerializer.Serialize(fileInfo);
                     File.WriteAllText(filename, content);
                     return true;
@@ -250,29 +234,11 @@ public class FileUploadMetaHandler : IUploadMetaHandler
 
     private string MetadataFullFilenamePath(string fileId) => Path.Combine(directoryPath, $"{fileId}.metadata.json");
 
-    private string MetadataPartialDirectoryPath(string url)
+    private string MetadataPartialFilenamePath(string partialId)
     {
-        if (!url.StartsWith("/"))
-        {
-            throw new ArgumentException(url);
-        }
-
-        var queryIndex = url.LastIndexOf("?");
-        if (queryIndex > 0)
-        {
-            // Cut the query off
-            url = url[..queryIndex];
-        }
-
-        url = directoryPath + "/" + url;
-        var segments = url.Split("/").Where(x => !string.IsNullOrWhiteSpace(x));
-        return Path.Combine(segments.ToArray()[..^1]);
-    }
-
-    private string MetadataPartialFilenamePath(string url, string partialId)
-    {
-        var directory = MetadataPartialDirectoryPath(url);
-        var path = Path.Combine(directory, $"{partialId}.chunk.metadata.json");
+        var temp = partialId.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries);
+        var sanitized = string.Join("_", temp);
+        var path = Path.Combine(directoryPath, sanitized, "chunk.metadata.json");
         return path;
     }
 }

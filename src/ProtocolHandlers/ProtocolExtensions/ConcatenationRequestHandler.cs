@@ -61,131 +61,35 @@ public class ConcatenationRequestHandler
             {
                 return HttpError.BadRequest("Upload-Concat must either be partial or final").Wrap();
             }
+
+            return context.Wrap();
         }
 
-
+        context.PartialMode = PartialMode.None;
         return context.Wrap();
     }
 
     /// <summary>
-    /// Check if a final partial upload is valid
+    /// Set the partial urls if request is final
     /// </summary>
     /// <param name="context">The request context</param>
-    /// <param name="template">The route template</param>
-    /// <param name="partialParameterName">The partial id parameter name</param>
     /// <returns>A request context or an error</returns>
-    public async Task<Result<RequestContext>> CheckIfUploadPartialIsFinalAsync(RequestContext context, string template, string partialParameterName)
+    public static Result<RequestContext> SetPartialUrlsIfFinal(RequestContext context)
     {
-        var concat = context.RequestHeaders[TusHeaderNames.UploadConcat].ToString();
-        if (string.IsNullOrWhiteSpace(concat))
+        if (context.PartialMode != PartialMode.Final)
         {
             return context.Wrap();
         }
 
-        var isFinal = concat.StartsWith(TusHeaderValues.UploadFinal, StringComparison.OrdinalIgnoreCase);
-        var uploadInfos = new List<UploadFileInfo>();
-        HttpError? error = null;
-        if (isFinal)
+        var header = context.RequestHeaders[TusHeaderNames.UploadConcat].ToString();
+        var list = header[(header.IndexOf(";") + 1)..];
+        if (list.Length == 0)
         {
-            // final;
-            var list = concat[(concat.IndexOf(';') + 1)..];
-            if (list.Length == 0)
-            {
-                return HttpError.BadRequest("Must provide a list of files to concatenate").Wrap();
-            }
-
-            var partialIds = new string[list.Length];
-            var pathCount = 0;
-            var start = 0;
-            for (var i = 0; i < list.Length; i++)
-            {
-                if (i == list.Length - 1)
-                {
-                    var path = list[start..];
-                    if (path is null)
-                    {
-                        break;
-                    }
-
-                    var value = GetTemplateValue(path.ToString(), template, partialParameterName);
-                    if (value is not null)
-                    {
-                        partialIds[pathCount] = value;
-                    }
-                }
-
-                if (list[i] == ' ')
-                {
-                    var path = list[start..i];
-                    if (path is null)
-                    {
-                        continue;
-                    }
-
-                    var value = GetTemplateValue(path.ToString(), template, partialParameterName);
-                    if (value is not null)
-                    {
-                        partialIds[pathCount] = value;
-                        pathCount++;
-                        start = i + 1;
-                    }
-                }
-            }
-
-            if (partialIds.Length == 0)
-            {
-                error = HttpError.BadRequest("Missing partial uploads for final concatenation");
-            }
-            else
-            {
-                var partialTotalSize = 0L;
-                foreach (var partialId in partialIds)
-                {
-                    if (partialId is null)
-                    {
-                        break;
-                    }
-
-                    var info = await uploadMetaHandler.GetResourceAsync(partialId, context.CancellationToken);
-                    if (info is not null)
-                    {
-                        if (uploadInfos.Exists(x => x.FileId == partialId))
-                        {
-                            error = HttpError.BadRequest("Can only use partial upload once per concatenation");
-                            break;
-                        }
-
-                        if (!info.Done)
-                        {
-                            error = HttpError.Forbidden("Can only merge partial uploads that are fully uploaded");
-                            break;
-                        }
-
-                        uploadInfos.Add(info);
-                        partialTotalSize += info.ByteOffset;
-
-                        if (maxSize.HasValue && partialTotalSize > maxSize.Value)
-                        {
-                            error = HttpError.EntityTooLarge("Partial files exceed Tus-Max-Size limit");
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        error = HttpError.NotFound($"Could not find file: {partialId} used in concatenation");
-                        break;
-                    }
-                }
-
-                context.PartialFinalUploadInfos = uploadInfos;
-            }
+            return HttpError.BadRequest("Must provide a list of files to concatenate").Wrap();
         }
 
-        if (error.HasValue)
-        {
-            return error.Value.Wrap();
-        }
-
+        var urls = list.Split(" ");
+        context.PartialUrls = urls;
         return context.Wrap();
     }
 

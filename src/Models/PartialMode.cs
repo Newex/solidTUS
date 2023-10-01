@@ -6,6 +6,11 @@ namespace SolidTUS.Models;
 public enum PartialMode
 {
     /// <summary>
+    /// Default mode, single file upload.
+    /// </summary>
+    None,
+
+    /// <summary>
     /// Starting new partial file
     /// </summary>
     /// <remarks>
@@ -19,5 +24,5 @@ public enum PartialMode
     /// <remarks>
     /// This corresponds to <c>Upload-Concat: final</c> header.
     /// </remarks>
-    Final
+    Final,
 }

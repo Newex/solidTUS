@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Microsoft.AspNetCore.Http;
 using SolidTUS.Constants;
@@ -61,9 +62,9 @@ public record RequestContext
     public ChecksumContext? ChecksumContext { get; init; }
 
     /// <summary>
-    /// The partial upload file infos to be used in a final concatenation
+    /// The partial urls composing the final file
     /// </summary>
-    public IList<UploadFileInfo>? PartialFinalUploadInfos { get; internal set; }
+    public IList<string> PartialUrls { get; internal set; } = Enumerable.Empty<string>().ToList();
 
     /// <summary>
     /// Get the partial mode
