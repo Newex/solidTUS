@@ -271,6 +271,16 @@ public class TusCreationContext
                 FileSize = currentSize
             };
             var merged = await uploadStorageHandler.MergePartialFilesAsync(finalInfo, partials, cancellationToken);
+
+            var routeName = uploadRoute.HasValue ? (uploadRoute.Value.RouteName ?? EndpointNames.UploadEndpoint) : EndpointNames.UploadEndpoint;
+            var routeValues = uploadRoute.HasValue ? uploadRoute.Value.RouteValues : null;
+            var uploadUrl = linkGenerator.GetPathByName(routeName, routeValues);
+            if (uploadUrl is null)
+            {
+                throw new ArgumentException("Could not create URL to the upload endpoint route");
+            }
+
+            onCreated(uploadUrl);
         }
     }
 
