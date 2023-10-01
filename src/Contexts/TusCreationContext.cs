@@ -241,6 +241,13 @@ public class TusCreationContext
                     throw new InvalidOperationException("Missing partial upload file info");
                 }
 
+                var duplicate = partials.Any(x => x.PartialId == info.PartialId);
+                if (duplicate)
+                {
+                    logger.LogError("Partial files must not contain duplicates {PartialId}", partialId);
+                    throw new ArgumentException("Partial id duplicated, must only use 1 partial upload once per upload");
+                }
+
                 partials.Add(info);
                 currentSize += info.ByteOffset;
             }
