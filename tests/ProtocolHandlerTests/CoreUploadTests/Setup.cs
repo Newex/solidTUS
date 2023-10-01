@@ -62,6 +62,7 @@ public static class Setup
             withUpload,
 
             PartialMode.None,
+            new List<string>(),
 
             fakeFileInfo,
             createCallback,
