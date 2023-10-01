@@ -143,14 +143,36 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     }
 
     /// <inheritdoc />
-    public Task MergePartialFilesAsync(string filename, IList<UploadFileInfo> files, CancellationToken cancellationToken)
+    public async Task<UploadFileInfo> MergePartialFilesAsync(UploadFileInfo final, IList<UploadFileInfo> files, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        foreach (var file in files)
+        var filepath = FullFilenamePath(final.OnDiskFilename, directory);
+        if (File.Exists(filepath))
         {
+            throw new InvalidOperationException("File exists. Cannot merge partial files on top by overwrite existing file.");
         }
 
-        throw new NotImplementedException();
+        try
+        {
+            using var destination = new FileStream(filepath, FileMode.Append);
+
+            foreach (var file in files)
+            {
+                var otherPath = FullFilenamePath(file.OnDiskFilename, directory);
+                using var readFs = File.OpenRead(otherPath);
+                await readFs.CopyToAsync(destination, cancellationToken);
+            }
+
+            final.CreatedDate = clock.UtcNow;
+            final.LastUpdatedDate = null;
+        }
+        catch(Exception)
+        {
+            File.Delete(filepath);
+            throw;
+        }
+
+        return final;
     }
 
     private static string FullFilenamePath(string filename, string filePath)

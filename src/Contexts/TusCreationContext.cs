@@ -263,7 +263,14 @@ public class TusCreationContext
                 throw new InvalidOperationException("Not allowed to merge files");
             }
 
-            await uploadStorageHandler.MergePartialFilesAsync(filename ?? fileId, partials, cancellationToken);
+            UploadFileInfo.OnDiskFilename = filename ?? fileId;
+            UploadFileInfo.FileId = fileId;
+            UploadFileInfo.ByteOffset = currentSize;
+            var finalInfo = UploadFileInfo with
+            {
+                FileSize = currentSize
+            };
+            var merged = await uploadStorageHandler.MergePartialFilesAsync(finalInfo, partials, cancellationToken);
         }
     }
 

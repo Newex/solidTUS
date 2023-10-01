@@ -44,9 +44,9 @@ public interface IUploadStorageHandler
     /// <summary>
     /// Merge the list of uploads in order
     /// </summary>
-    /// <param name="filename">The final filename</param>
+    /// <param name="final">The final upload info</param>
     /// <param name="files">The list of files to merge</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>An awaitabe task</returns>
-    Task MergePartialFilesAsync(string filename, IList<UploadFileInfo> files, CancellationToken cancellationToken);
+    Task<UploadFileInfo> MergePartialFilesAsync(UploadFileInfo final, IList<UploadFileInfo> files, CancellationToken cancellationToken);
 }
