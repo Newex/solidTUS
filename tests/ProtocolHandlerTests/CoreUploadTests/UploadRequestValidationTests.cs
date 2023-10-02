@@ -97,7 +97,11 @@ public class UploadRequestValidationTests
         };
         using var memory = new MemoryStream(array);
         var reader = PipeReader.Create(memory);
-        var handler = Setup.TusCreationContext(withUpload: true, reader, bytesWritten: fileSize, fileInfo: file);
+        var handler = Setup.TusCreationContext(withUpload: true,
+                                               reader,
+                                               bytesWritten: fileSize,
+                                               url: "/path/to/upload",
+                                               fileInfo: file);
         var called = false;
         Task OnUploadFinished()
         {
@@ -120,7 +124,7 @@ public class UploadRequestValidationTests
         var metaHandler = MockHandlers.UploadMetaHandler();
         var clock = MockOthers.Clock();
         var options = MSOptions.Create(new TusOptions());
-        var linkGenerator = MockOthers.LinkGenerator();
+        var linkGenerator = MockOthers.LinkGenerator("/path/to/upload");
         var common = new CommonRequestHandler(storageHandler, metaHandler, clock);
         var post = new PostRequestHandler(options);
         var creation = new CreationFlow(
@@ -141,9 +145,9 @@ public class UploadRequestValidationTests
 
         // Act
         var start = request.Bind(creation.StartResourceCreation);
-        var result = start.IsSuccess();
+        var info = start.Match<PartialMode?>(c => c.PartialMode, _ => null);
 
         // Assert
-        result.Should().BeTrue();
+        info.Should().NotBeNull().And.Be(PartialMode.Partial);
     }
 }

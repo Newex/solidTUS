@@ -40,6 +40,7 @@ public static class Setup
     public static TusCreationContext TusCreationContext(bool withUpload,
                                                         PipeReader reader,
                                                         long bytesWritten = 0L,
+                                                        string? url = null,
                                                         UploadFileInfo? fileInfo = null,
                                                         Action<string>? onCreated = null,
                                                         Action<long>? onUpload = null,
@@ -52,7 +53,7 @@ public static class Setup
         var uploadCallback = onUpload ?? ((l) => { });
         var storageHandler = uploadStorageHandler ?? MockHandlers.UploadStorageHandler(currentSize: fakeFileInfo.ByteOffset, bytesWritten: bytesWritten);
         var metaHandler = uploadMetaHandler ?? MockHandlers.UploadMetaHandler(fakeFileInfo);
-        var linkGenerator = MockOthers.LinkGenerator();
+        var linkGenerator = MockOthers.LinkGenerator(url);
         var cancel = cancellationToken ?? CancellationToken.None;
         var ioptions = Microsoft.Extensions.Options.Options.Create(new TusOptions());
 

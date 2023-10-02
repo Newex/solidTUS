@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Internal;
 using Moq;
 
+using SolidTUS.Wrappers;
+
 namespace SolidTUS.Tests.Mocks;
 
 public static class MockOthers
@@ -17,9 +19,12 @@ public static class MockOthers
         return mock.Object;
     }
 
-    public static LinkGenerator LinkGenerator()
+    public static ILinkGeneratorWrapper LinkGenerator(string? url = null)
     {
-        var mock = new Mock<LinkGenerator>();
+        var mock = new Mock<ILinkGeneratorWrapper>();
+
+        mock.Setup(x => x.GetPathByName(It.IsAny<string>(), It.IsAny<object?>()))
+        .Returns(url);
 
         return mock.Object;
     }
