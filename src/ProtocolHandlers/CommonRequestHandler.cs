@@ -44,7 +44,16 @@ public class CommonRequestHandler
     /// <returns>Either an error or a request context</returns>
     public async ValueTask<Result<RequestContext>> CheckUploadFileInfoExistsAsync(RequestContext context)
     {
-        var fileInfo = await uploadMetaHandler.GetResourceAsync(context.FileID, context.CancellationToken);
+        UploadFileInfo? fileInfo;
+        if (context.PartialMode != PartialMode.None)
+        {
+            fileInfo = await uploadMetaHandler.GetResourceAsync(context.FileID, context.CancellationToken);
+        }
+        else
+        {
+            fileInfo = await uploadMetaHandler.GetPartialResourceAsync(context.FileID, context.CancellationToken);
+        }
+
         if (fileInfo is null)
         {
             return HttpError.NotFound("File resource does not exists").Wrap();
