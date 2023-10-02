@@ -102,6 +102,11 @@ public class PostRequestHandler
     public static RequestContext ParseMetadata(RequestContext context)
     {
         var rawMetadata = context.RequestHeaders[TusHeaderNames.UploadMetadata];
+        if (rawMetadata.Count == 0)
+        {
+            return context;
+        }
+
         var metadata = MetadataParser.ParseFast(rawMetadata!);
         context.UploadFileInfo.Metadata = metadata.AsReadOnly();
         context.UploadFileInfo.RawMetadata = rawMetadata;

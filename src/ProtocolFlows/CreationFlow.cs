@@ -65,14 +65,14 @@ public class CreationFlow
     {
         var requestContext = PostRequestHandler
             .CheckUploadLengthOrDeferred(context)
+            .Bind(ConcatenationRequestHandler.SetIfUploadIsPartial)
+            .Bind(ConcatenationRequestHandler.SetPartialUrlsIfFinal)
             .Bind(post.CheckMaximumSize)
             .Map(PostRequestHandler.ParseMetadata)
             .Bind(post.ValidateMetadata)
             .Map(PostRequestHandler.SetFileSize)
             .Map(common.SetCreatedDate)
-            .Bind(PostRequestHandler.CheckIsValidUpload)
-            .Bind(ConcatenationRequestHandler.SetIfUploadIsPartial)
-            .Bind(ConcatenationRequestHandler.SetPartialUrlsIfFinal);
+            .Bind(PostRequestHandler.CheckIsValidUpload);
 
         return requestContext;
     }
