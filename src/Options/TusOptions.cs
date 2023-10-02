@@ -19,6 +19,14 @@ public record TusOptions
     public Func<IDictionary<string, string>, bool> MetadataValidator { get; set; } = (_) => true;
 
     /// <summary>
+    /// Get or set if the parallel / partial uploads should require to conform to the metadata validator specifications.
+    /// </summary>
+    /// <remarks>
+    /// Beware setting this to true might unnecessarily invalidate parallel uploads.
+    /// </remarks>
+    public bool ValidateMetadataForParallelUploads { get; set; }
+
+    /// <summary>
     /// Get or set the maximum TUS upload size
     /// </summary>
     public long? MaxSize { get; set; }

@@ -16,6 +16,7 @@ namespace SolidTUS.ProtocolHandlers;
 /// </summary>
 public class PostRequestHandler
 {
+    private readonly bool validatePartial;
     private readonly Func<IDictionary<string, string>, bool> metadataValidator;
     private readonly long? maxSize;
 
@@ -29,6 +30,7 @@ public class PostRequestHandler
     {
         metadataValidator = options.Value.MetadataValidator;
         maxSize = options.Value.MaxSize;
+        validatePartial = options.Value.ValidateMetadataForParallelUploads;
     }
 
     /// <summary>
@@ -120,6 +122,13 @@ public class PostRequestHandler
     /// <returns>Either an error or a request context</returns>
     public Result<RequestContext> ValidateMetadata(RequestContext context)
     {
+        var isPartial = context.PartialMode == PartialMode.Partial;
+        var validate = validatePartial && isPartial;
+        if (!validate)
+        {
+            return context.Wrap();
+        }
+
         var isValid = metadataValidator(context.UploadFileInfo.Metadata);
         return isValid ? context.Wrap() : HttpError.BadRequest("Invalid Upload-Metadata").Wrap();
     }
