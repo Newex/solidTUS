@@ -276,6 +276,10 @@ public class TusCreationContext
                 throw new InvalidOperationException("Merged file does not equal partial uploads");
             }
 
+            merged.ConcatHeaderFinal = "final;" + string.Join(" ", partialUrls);
+            merged.IsPartial = false;
+            var createInfo = await uploadMetaHandler.CreateResourceAsync(merged, cancellationToken);
+
             var routeName = uploadRoute.HasValue ? (uploadRoute.Value.RouteName ?? EndpointNames.UploadEndpoint) : EndpointNames.UploadEndpoint;
             var routeValues = uploadRoute.HasValue ? uploadRoute.Value.RouteValues : null;
             var uploadUrl = linkGenerator.GetPathByName(routeName, routeValues);

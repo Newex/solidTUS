@@ -46,6 +46,16 @@ public record UploadFileInfo
     public bool IsPartial { get; internal set; }
 
     /// <summary>
+    /// The <c>Upload-Concat</c> header value.
+    /// </summary>
+    /// <remarks>
+    /// Only set when the value is finalized and merged.
+    /// </remarks>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonInclude]
+    public string? ConcatHeaderFinal { get; internal set; }
+
+    /// <summary>
     /// Get the parsed TUS metadata
     /// </summary>
     [JsonReadOnlyDictionary]
