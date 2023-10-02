@@ -51,7 +51,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
         {
             var filename = FullFilenamePath(uploadInfo.OnDiskFilename, directory);
 
-            using var fs = new FileStream(filename, FileMode.Append);
+            using var fs = new FileStream(filename, FileMode.Append, FileAccess.Write);
 
             BufferedStream? bs = null;
             Pipe? checksumPipe = null;

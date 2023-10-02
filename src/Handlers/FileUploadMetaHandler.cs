@@ -18,9 +18,7 @@ namespace SolidTUS.Handlers;
 /// </summary>
 public class FileUploadMetaHandler : IUploadMetaHandler
 {
-    private static readonly ReaderWriterLockSlim Rwl = new();
     private readonly string directoryPath;
-    private readonly int maxWaitMs;
     private readonly ILogger<FileUploadMetaHandler> logger;
 
     /// <summary>
@@ -34,7 +32,6 @@ public class FileUploadMetaHandler : IUploadMetaHandler
     )
     {
         directoryPath = options.Value.MetaDirectoryPath;
-        maxWaitMs = options.Value.MaxWaitInMilliseconds;
         this.logger = logger ?? NullLogger<FileUploadMetaHandler>.Instance;
     }
 
@@ -117,22 +114,9 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         {
             var file = MetadataPartialFilenamePath(partialId);
 
-            var locked = Rwl.TryEnterReadLock(maxWaitMs);
-            if (!locked)
-            {
-                return null;
-            }
-
-            try
-            {
-                // Read and deserialize the metadata file
-                var fileInfoText = await File.ReadAllTextAsync(file, cancellationToken);
-                return JsonSerializer.Deserialize<UploadFileInfo>(fileInfoText);
-            }
-            finally
-            {
-                Rwl.ExitReadLock();
-            }
+            // Read and deserialize the metadata file
+            var fileInfoText = await File.ReadAllTextAsync(file, cancellationToken);
+            return JsonSerializer.Deserialize<UploadFileInfo>(fileInfoText);
         }
         catch (Exception ex)
         {
@@ -182,28 +166,13 @@ public class FileUploadMetaHandler : IUploadMetaHandler
     {
         try
         {
-            var locked = Rwl.TryEnterWriteLock(maxWaitMs);
-            try
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                if (locked)
-                {
-                    var filename = MetadataPartialFilenamePath(fileInfo.PartialId);
-                    var sysInfo = new FileInfo(filename);
-                    sysInfo.Directory?.Create();
-                    var content = JsonSerializer.Serialize(fileInfo);
-                    File.WriteAllText(filename, content);
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            finally
-            {
-                Rwl.ExitWriteLock();
-            }
+            cancellationToken.ThrowIfCancellationRequested();
+            var filename = MetadataPartialFilenamePath(fileInfo.PartialId);
+            var sysInfo = new FileInfo(filename);
+            sysInfo.Directory?.Create();
+            var content = JsonSerializer.Serialize(fileInfo);
+            File.WriteAllText(filename, content);
+            return true;
         }
         catch (Exception ex)
         {
