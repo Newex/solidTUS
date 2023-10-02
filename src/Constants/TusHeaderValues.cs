@@ -23,7 +23,7 @@ public static class TusHeaderValues
     /// <summary>
     /// Get the actual supported protocol extensions
     /// </summary>
-    public const string TusSupportedExtensions = "creation,creation-with-upload,checksum,expiration";
+    public const string TusSupportedExtensions = "creation,creation-with-upload,checksum,expiration,concatenation";
 
     /// <summary>
     /// Get the termination string value
