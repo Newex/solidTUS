@@ -59,9 +59,10 @@ public class UploadController : ControllerBase
     }
 
     [TusParallel("/part/{partialId}/{hello}")]
-    public Task<ActionResult> ParallelUploads(string partialId, string hello, [FromServices] TusUploadContext context)
+    public async Task<ActionResult> ParallelUploads(string partialId, string hello, [FromServices] TusUploadContext context)
     {
-        throw new NotImplementedException();
+        await context.StartAppendDataAsync(partialId);
+        return NoContent();
     }
 
     [TusUpload("{fileId}")]
