@@ -65,6 +65,8 @@ public class UploadFlow
             .Map(HeadRequestHandler.SetUploadOffsetHeader)
             .Map(HeadRequestHandler.SetUploadLengthOrDeferred)
             .Map(HeadRequestHandler.SetMetadataHeader)
+            .Bind(ConcatenationRequestHandler.SetIfUploadIsPartial)
+            .Map(ConcatenationRequestHandler.SetUploadConcatFinalUrls)
             .BindAsync(expirationRequestHandler.CheckExpirationAsync);
 
         return requestContext;

@@ -94,6 +94,23 @@ public class ConcatenationRequestHandler
     }
 
     /// <summary>
+    /// Set the header for the <c>Upload-Concat</c> to the stored value from the metadata info file.
+    /// </summary>
+    /// <param name="context">The request context</param>
+    /// <returns>A request context</returns>
+    public static RequestContext SetUploadConcatFinalUrls(RequestContext context)
+    {
+        if (context.PartialMode != PartialMode.Final)
+        {
+            return context;
+        }
+
+        var final = context.UploadFileInfo.ConcatHeaderFinal;
+        context.ResponseHeaders.Add(TusHeaderNames.UploadConcat, final);
+        return context;
+    }
+
+    /// <summary>
     /// Parse an input according to a template and returns the value of the token
     /// </summary>
     /// <param name="input">The input</param>
