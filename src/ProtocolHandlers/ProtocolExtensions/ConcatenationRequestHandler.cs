@@ -49,12 +49,14 @@ public class ConcatenationRequestHandler
             if (isFinal)
             {
                 context.PartialMode = PartialMode.Final;
+                return context.Wrap();
             }
 
             var isPartial = string.Equals(concat, TusHeaderValues.UploadPartial, StringComparison.OrdinalIgnoreCase);
             if (isPartial)
             {
                 context.PartialMode = PartialMode.Partial;
+                return context.Wrap();
             }
 
             if (!isFinal && !isPartial)
