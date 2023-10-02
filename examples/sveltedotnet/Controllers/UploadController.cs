@@ -27,9 +27,12 @@ public class UploadController : ControllerBase
     [TusCreation("/api/upload")]
     public async Task<ActionResult> CreateFile([FromServices] TusCreationContext context)
     {
-        // Read Metadata
-        var filename = context.UploadFileInfo.Metadata["name"];
-        var mime = context.UploadFileInfo.Metadata["type"];
+        if (!context.UploadFileInfo.IsPartial)
+        {
+            // Read Metadata
+            var filename = context.UploadFileInfo.Metadata["name"];
+            var mime = context.UploadFileInfo.Metadata["type"];
+        }
 
         // Construct some unique file id
         var id = Guid.NewGuid().ToString("N");
