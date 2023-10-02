@@ -7,9 +7,14 @@ using System.Threading.Tasks;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
 using SolidTUS.Models;
+using SolidTUS.Options;
+using SolidTUS.ProtocolFlows;
+using SolidTUS.ProtocolHandlers;
 using SolidTUS.Tests.Fakes;
 using SolidTUS.Tests.Mocks;
 using SolidTUS.Tests.Tools;
+
+using MSOptions = Microsoft.Extensions.Options.Options;
 
 namespace SolidTUS.Tests.ProtocolHandlerTests.CoreUploadTests;
 
@@ -90,13 +95,6 @@ public class UploadRequestValidationTests
             FileSize = fileSize,
             ByteOffset = 0
         };
-        var http = MockHttps.HttpRequest("POST",
-            (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
-            (HeaderNames.ContentType, TusHeaderValues.PatchContentType),
-            (HeaderNames.ContentLength, "100"),
-            (TusHeaderNames.UploadOffset, file.ByteOffset.ToString())
-        );
-        var request = RequestContext.Create(http, CancellationToken.None);
         using var memory = new MemoryStream(array);
         var reader = PipeReader.Create(memory);
         var handler = Setup.TusCreationContext(withUpload: true, reader, bytesWritten: fileSize, fileInfo: file);
@@ -109,9 +107,43 @@ public class UploadRequestValidationTests
 
         // Act: MUST call the on upload finished before starting upload!
         handler.OnUploadFinished(OnUploadFinished);
-        await handler.StartCreationAsync("file_123", "/upload-to-here");
+        await handler.StartCreationAsync("file_123");
 
         // Assert
         Assert.True(called);
+    }
+
+    [Fact]
+    public void PartialUpload_should_return_with_location()
+    {
+        var storageHandler = MockHandlers.UploadStorageHandler();
+        var metaHandler = MockHandlers.UploadMetaHandler();
+        var clock = MockOthers.Clock();
+        var options = MSOptions.Create(new TusOptions());
+        var linkGenerator = MockOthers.LinkGenerator();
+        var common = new CommonRequestHandler(storageHandler, metaHandler, clock);
+        var post = new PostRequestHandler(options);
+        var creation = new CreationFlow(
+            common,
+            post,
+            storageHandler,
+            metaHandler,
+            linkGenerator,
+            options
+        );
+        var http = MockHttps.HttpRequest("POST",
+            (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
+            ("Upload-Concat", "partial"),
+            ("Upload-Length", "5"),
+            (HeaderNames.ContentLength, "0")
+        );
+        var request = RequestContext.Create(http, CancellationToken.None);
+
+        // Act
+        var start = request.Bind(creation.StartResourceCreation);
+        var result = start.IsSuccess();
+
+        // Assert
+        result.Should().BeTrue();
     }
 }
