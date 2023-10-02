@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -43,9 +42,10 @@ public class UploadController : ControllerBase
             .SetParallelIdParameterNameInTemplate("partialId")
             .SetPartialId(partialId)
             .SetRouteValues(new { partialId, hello = "World" })
-            .OnMergeHandler((files) => files.Count > 1);
+            .OnMergeHandler((files) => files.Count > 1)
+            .Build();
 
-        context.ApplyParallelUploadsConfiguration(parallel.Build());
+        context.ApplyParallelUploadsConfiguration(parallel);
 
 
         // Accept creating upload and redirect to TusUpload

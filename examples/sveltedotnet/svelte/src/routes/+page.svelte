@@ -30,7 +30,8 @@
       .use(Tus, {
         endpoint,
         uploadDataDuringCreation: false,
-        allowedMetaFields: ["name", "type"]
+        allowedMetaFields: ["name", "type"],
+        parallelUploads: 3
       });
 
     updateLocalStorage();
