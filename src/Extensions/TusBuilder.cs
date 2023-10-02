@@ -12,6 +12,7 @@ using SolidTUS.ProtocolFlows;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 using SolidTUS.Validators;
+using SolidTUS.Wrappers;
 
 namespace SolidTUS.Extensions;
 
@@ -149,6 +150,8 @@ public sealed class TusBuilder
 
         builder.services.AddScoped<IChecksumValidator, SHA1ChecksumValidator>();
         builder.services.AddScoped<IChecksumValidator, MD5ChecksumValidator>();
+
+        builder.services.TryAddScoped<ILinkGeneratorWrapper, LinkGeneratorWrapper>();
         return builder;
     }
 }

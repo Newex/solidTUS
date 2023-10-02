@@ -11,6 +11,7 @@ using SolidTUS.Models;
 using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
+using SolidTUS.Wrappers;
 
 namespace SolidTUS.ProtocolFlows;
 
@@ -23,7 +24,7 @@ public class CreationFlow
     private readonly PostRequestHandler post;
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
-    private readonly LinkGenerator linkGenerator;
+    private readonly ILinkGeneratorWrapper linkGenerator;
     private readonly IOptions<TusOptions> options;
     private readonly ILogger logger;
 
@@ -42,7 +43,7 @@ public class CreationFlow
         PostRequestHandler post,
         IUploadStorageHandler uploadStorageHandler,
         IUploadMetaHandler uploadMetaHandler,
-        LinkGenerator linkGenerator,
+        ILinkGeneratorWrapper linkGenerator,
         IOptions<TusOptions> options,
         ILogger? logger = null
     )

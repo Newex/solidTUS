@@ -14,6 +14,7 @@ using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
+using SolidTUS.Wrappers;
 
 using static SolidTUS.Extensions.ParallelUploadBuilder;
 
@@ -33,7 +34,7 @@ public class TusCreationContext
     private readonly IUploadMetaHandler uploadMetaHandler;
     private readonly CancellationToken cancellationToken;
     private readonly ILogger logger;
-    private readonly LinkGenerator linkGenerator;
+    private readonly ILinkGeneratorWrapper linkGenerator;
     private readonly Action<string> onCreated;
     private readonly Action<long> onUpload;
     private RouteNameValuePair? uploadRoute = null;
@@ -69,7 +70,7 @@ public class TusCreationContext
         PipeReader reader,
         IUploadStorageHandler uploadStorageHandler,
         IUploadMetaHandler uploadMetaHandler,
-        LinkGenerator linkGenerator,
+        ILinkGeneratorWrapper linkGenerator,
         CancellationToken cancellationToken,
         IOptions<TusOptions> options,
         ILogger? logger = null
