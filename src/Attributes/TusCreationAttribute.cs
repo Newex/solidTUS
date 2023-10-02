@@ -110,8 +110,8 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
 
             var cancel = http.RequestAborted;
             var requestContext = RequestContext.Create(request, cancel);
-            var startCreation = requestContext.Bind(creationFlow.StartResourceCreation);
-            var creationResponse = startCreation.GetTusHttpResponse();
+            requestContext = requestContext.Bind(creationFlow.StartResourceCreation);
+            var creationResponse = requestContext.GetTusHttpResponse();
             if (!creationResponse.IsSuccess)
             {
                 response.AddTusHeaders(creationResponse);
@@ -127,7 +127,7 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
             void PartialUpload(long written) => response.Headers.Add(TusHeaderNames.UploadOffset, written.ToString());
 
             tusContext = creationFlow.CreateTusContext(
-                startCreation,
+                requestContext,
                 request.BodyReader,
                 CreatedResource,
                 PartialUpload,
