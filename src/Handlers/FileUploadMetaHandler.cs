@@ -189,6 +189,8 @@ public class FileUploadMetaHandler : IUploadMetaHandler
                 if (locked)
                 {
                     var filename = MetadataPartialFilenamePath(fileInfo.PartialId);
+                    var sysInfo = new FileInfo(filename);
+                    sysInfo.Directory?.Create();
                     var content = JsonSerializer.Serialize(fileInfo);
                     File.WriteAllText(filename, content);
                     return true;
