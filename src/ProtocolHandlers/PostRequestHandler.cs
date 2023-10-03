@@ -123,14 +123,13 @@ public class PostRequestHandler
     public Result<RequestContext> ValidateMetadata(RequestContext context)
     {
         var isPartial = context.PartialMode == PartialMode.Partial;
-        var validate = validatePartial && isPartial;
-        if (!validate)
+        if (validatePartial || !isPartial)
         {
-            return context.Wrap();
+            var isValid = metadataValidator(context.UploadFileInfo.Metadata);
+            return isValid ? context.Wrap() : HttpError.BadRequest("Invalid Upload-Metadata").Wrap();
         }
 
-        var isValid = metadataValidator(context.UploadFileInfo.Metadata);
-        return isValid ? context.Wrap() : HttpError.BadRequest("Invalid Upload-Metadata").Wrap();
+        return context.Wrap();
     }
 
     /// <summary>

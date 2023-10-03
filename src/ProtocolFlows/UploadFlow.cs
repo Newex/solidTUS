@@ -83,6 +83,7 @@ public class UploadFlow
         context.FileID = fileId;
         var requestContext = await PatchRequestHandler.CheckContentType(context)
             .Bind(PatchRequestHandler.CheckUploadOffset)
+            .Bind(ConcatenationRequestHandler.SetIfUploadIsPartial)
             .BindAsync(async c => await common.CheckUploadFileInfoExistsAsync(c));
 
         requestContext = await requestContext

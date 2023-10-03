@@ -1,6 +1,8 @@
 using System;
 using System.IO.Pipelines;
 using System.Threading;
+
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -83,11 +85,10 @@ public class CreationFlow
     /// </summary>
     /// <param name="context">The request context</param>
     /// <param name="reader">The pipeline reader</param>
-    /// <param name="onCreated">Callback for when resource has been created</param>
-    /// <param name="onUploadPartial">Callback for when data has been uploaded</param>
+    /// <param name="responseHeaders">The response headers</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>A TUS creation context</returns>
-    public TusCreationContext? CreateTusContext(Result<RequestContext> context, PipeReader reader, Action<string> onCreated, Action<long> onUploadPartial, CancellationToken cancellationToken)
+    public TusCreationContext? CreateTusContext(Result<RequestContext> context, PipeReader reader, IHeaderDictionary responseHeaders, CancellationToken cancellationToken)
     {
         var requestContext = context.Match(c => c, _ => null!);
         if (requestContext is null)
@@ -103,8 +104,7 @@ public class CreationFlow
             requestContext.PartialMode,
             requestContext.PartialUrls,
             info,
-            onCreated,
-            onUploadPartial,
+            responseHeaders,
             reader,
             uploadStorageHandler,
             uploadMetaHandler,

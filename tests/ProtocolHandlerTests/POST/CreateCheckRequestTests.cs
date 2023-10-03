@@ -160,7 +160,7 @@ public class CreateCheckRequestTests
             {
                 validationRun = true;
                 return metadata.ContainsKey("filename") && metadata.ContainsKey("is_confidential");
-            }
+            },
         });
         var request = Setup.CreateRequest(resumable: true,
             (TusHeaderNames.UploadLength, 123L.ToString())

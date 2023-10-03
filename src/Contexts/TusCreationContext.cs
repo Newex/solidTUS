@@ -4,10 +4,11 @@ using System.IO.Pipelines;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
 using SolidTUS.Handlers;
@@ -29,14 +30,14 @@ public class TusCreationContext
     private readonly bool withUpload;
     private readonly PartialMode partialMode;
     private readonly IList<string> partialUrls;
+    private readonly IHeaderDictionary responseHeaders;
     private readonly PipeReader reader;
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
     private readonly CancellationToken cancellationToken;
     private readonly ILogger logger;
     private readonly ILinkGeneratorWrapper linkGenerator;
-    private readonly Action<string> onCreated;
-    private readonly Action<long> onUpload;
+
     private RouteNameValuePair? uploadRoute = null;
     private bool isCalledMoreThanOnce = false;
     private ParallelUploadConfig? parallelUploadConfig;
@@ -51,8 +52,7 @@ public class TusCreationContext
     /// <param name="partialMode">The upload request is either single upload, partial or final</param>
     /// <param name="partialUrls">The partial urls</param>
     /// <param name="uploadFileInfo">The upload file info</param>
-    /// <param name="onCreated">Callback when resource has been created</param>
-    /// <param name="onUpload">Callback when resource has been uploaded</param>
+    /// <param name="responseHeaders">The response headers</param>
     /// <param name="reader">The upload reader</param>
     /// <param name="uploadStorageHandler">The upload storage handler</param>
     /// <param name="uploadMetaHandler">The upload meta handler</param>
@@ -65,8 +65,7 @@ public class TusCreationContext
         PartialMode partialMode,
         IList<string> partialUrls,
         UploadFileInfo uploadFileInfo,
-        Action<string> onCreated,
-        Action<long> onUpload,
+        IHeaderDictionary responseHeaders,
         PipeReader reader,
         IUploadStorageHandler uploadStorageHandler,
         IUploadMetaHandler uploadMetaHandler,
@@ -80,8 +79,7 @@ public class TusCreationContext
         this.partialMode = partialMode;
         this.partialUrls = partialUrls;
         UploadFileInfo = uploadFileInfo;
-        this.onCreated = onCreated;
-        this.onUpload = onUpload;
+        this.responseHeaders = responseHeaders;
         this.reader = reader;
         this.uploadStorageHandler = uploadStorageHandler;
         this.uploadMetaHandler = uploadMetaHandler;
@@ -289,7 +287,7 @@ public class TusCreationContext
                 throw new ArgumentException("Could not create URL to the upload endpoint route");
             }
 
-            onCreated(uploadUrl);
+            responseHeaders.TryAdd(HeaderNames.Location, uploadUrl);
         }
     }
 
@@ -305,8 +303,7 @@ public class TusCreationContext
         var created = await uploadMetaHandler.CreateResourceAsync(UploadFileInfo, cancellationToken);
         if (created)
         {
-            // Server side callback
-            onCreated(uploadLocationUrl);
+            responseHeaders.TryAdd(HeaderNames.Location, uploadLocationUrl);
 
             if (onResourceCreatedAsync is not null)
             {
@@ -319,9 +316,7 @@ public class TusCreationContext
         {
             // Can append if we dont need to worry about checksum
             var written = await uploadStorageHandler.OnPartialUploadAsync(reader, UploadFileInfo, null, cancellationToken);
-
-            // First server callback -->
-            onUpload(written);
+            responseHeaders.TryAdd(TusHeaderNames.UploadOffset, written.ToString());
 
             // Finished upload -->
             var isFinished = written == UploadFileInfo.FileSize;

@@ -61,6 +61,7 @@ public class TusParallelAttribute : ActionFilterAttribute, IActionHttpMethodProv
     /// <inheritdoc />
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
+        // TODO: HEAD request for partial
         var http = context.HttpContext;
         var request = http.Request;
         var isPatch = IsPatch(request.Method) || (IsPost(request.Method) && IsPatch(request.Headers[TusHeaderNames.HttpMethodOverride]!));

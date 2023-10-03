@@ -86,7 +86,7 @@ public class FileUploadMetaHandler : IUploadMetaHandler
     /// <inheritdoc />
     public Task<bool> DeleteUploadFileInfoAsync(UploadFileInfo info, CancellationToken cancellationToken)
     {
-        var path = "";
+        string? path;
         if (!info.IsPartial)
         {
             path = MetadataFullFilenamePath(info.FileId);
@@ -209,7 +209,8 @@ public class FileUploadMetaHandler : IUploadMetaHandler
     {
         var temp = partialId.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries);
         var sanitized = string.Join("_", temp);
-        var path = Path.Combine(directoryPath, sanitized, "chunk.metadata.json");
+        var filename = sanitized + ".chunk.metadata.json";
+        var path = Path.Combine(directoryPath, filename);
         return path;
     }
 }

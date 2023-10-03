@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO.Pipelines;
 using System.Threading;
+
+using Microsoft.AspNetCore.Http;
+
 using SolidTUS.Contexts;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
@@ -45,8 +48,6 @@ public static class Setup
         List<string>? urls = null,
         string? url = null,
         UploadFileInfo? fileInfo = null,
-        Action<string>? onCreated = null,
-        Action<long>? onUpload = null,
         IUploadStorageHandler? uploadStorageHandler = null,
         IUploadMetaHandler? uploadMetaHandler = null,
         CancellationToken? cancellationToken = null)
@@ -54,8 +55,6 @@ public static class Setup
 
         reader ??= new Pipe().Reader;
         var fakeFileInfo = fileInfo ?? Fakes.RandomEntities.UploadFileInfo();
-        var createCallback = onCreated ?? ((s) => { });
-        var uploadCallback = onUpload ?? ((l) => { });
         urls ??= new List<string>();
         var storageHandler = uploadStorageHandler ?? MockHandlers.UploadStorageHandler(currentSize: fakeFileInfo.ByteOffset, bytesWritten: bytesWritten);
         var metaHandler = uploadMetaHandler ?? MockHandlers.UploadMetaHandler(fakeFileInfo);
@@ -65,13 +64,10 @@ public static class Setup
 
         return new TusCreationContext(
             withUpload,
-
             partialMode,
             urls,
-
             fakeFileInfo,
-            createCallback,
-            uploadCallback,
+            new HeaderDictionary(),
             reader,
             storageHandler,
             metaHandler,

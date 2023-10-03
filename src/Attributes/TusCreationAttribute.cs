@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
 using SolidTUS.Contexts;
 using SolidTUS.Extensions;
@@ -122,15 +121,10 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
                 return;
             }
 
-            // Callbacks
-            void CreatedResource(string location) => response.Headers.Add(HeaderNames.Location, location);
-            void PartialUpload(long written) => response.Headers.Add(TusHeaderNames.UploadOffset, written.ToString());
-
             tusContext = creationFlow.CreateTusContext(
                 requestContext,
                 request.BodyReader,
-                CreatedResource,
-                PartialUpload,
+                response.Headers,
                 cancel
             );
             context.ActionArguments[ContextParameterName] = tusContext;

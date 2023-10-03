@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using SolidTUS.Attributes;
 using SolidTUS.Contexts;
+using SolidTUS.Extensions;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 

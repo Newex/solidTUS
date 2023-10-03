@@ -45,13 +45,13 @@ public class CommonRequestHandler
     public async ValueTask<Result<RequestContext>> CheckUploadFileInfoExistsAsync(RequestContext context)
     {
         UploadFileInfo? fileInfo;
-        if (context.PartialMode != PartialMode.None)
+        if (context.PartialMode == PartialMode.Partial)
         {
-            fileInfo = await uploadMetaHandler.GetResourceAsync(context.FileID, context.CancellationToken);
+            fileInfo = await uploadMetaHandler.GetPartialResourceAsync(context.FileID, context.CancellationToken);
         }
         else
         {
-            fileInfo = await uploadMetaHandler.GetPartialResourceAsync(context.FileID, context.CancellationToken);
+            fileInfo = await uploadMetaHandler.GetResourceAsync(context.FileID, context.CancellationToken);
         }
 
         if (fileInfo is null)
