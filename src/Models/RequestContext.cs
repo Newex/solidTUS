@@ -1,8 +1,5 @@
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using Microsoft.AspNetCore.Http;
-using SolidTUS.Constants;
 using SolidTUS.Contexts;
 using SolidTUS.ProtocolHandlers;
 
@@ -18,16 +15,12 @@ public record RequestContext
     /// </summary>
     /// <param name="method">The http method</param>
     /// <param name="headers">The request headers</param>
-    /// <param name="cancellationToken">The cancellation token</param>
     private RequestContext(
         string method,
-        IHeaderDictionary headers,
-        CancellationToken cancellationToken
+        IHeaderDictionary headers
     )
     {
-        CancellationToken = cancellationToken;
         RequestHeaders = headers;
-        ResponseHeaders = new HeaderDictionary();
         Method = method;
     }
 
@@ -37,24 +30,9 @@ public record RequestContext
     public string Method { get; }
 
     /// <summary>
-    /// Get the file Id
-    /// </summary>
-    public string FileID { get; set; } = string.Empty;
-
-    /// <summary>
     /// Get the request headers
     /// </summary>
     public IHeaderDictionary RequestHeaders { get; }
-
-    /// <summary>
-    /// Get the response headers
-    /// </summary>
-    public IHeaderDictionary ResponseHeaders { get; }
-
-    /// <summary>
-    /// Get the upload file info
-    /// </summary>
-    public UploadFileInfo UploadFileInfo { get; internal set; } = new();
 
     /// <summary>
     /// The checksum context
@@ -62,34 +40,23 @@ public record RequestContext
     public ChecksumContext? ChecksumContext { get; init; }
 
     /// <summary>
-    /// The partial urls composing the final file
-    /// </summary>
-    public IList<string> PartialUrls { get; internal set; } = Enumerable.Empty<string>().ToList();
-
-    /// <summary>
     /// Get the partial mode
     /// </summary>
     public PartialMode PartialMode { get; internal set; }
 
     /// <summary>
-    /// Get the cancellation token
+    /// Get the parsed metadata
     /// </summary>
-    public CancellationToken CancellationToken { get; }
+    public IReadOnlyDictionary<string, string>? Metadata { get; internal set; }
 
     /// <summary>
     /// Create new <see cref="RequestContext"/> if request is supported by the server otherwise <see cref="HttpError"/>
     /// </summary>
     /// <param name="request">The request</param>
-    /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Either a success of <see cref="RequestContext"/> or an error of <see cref="HttpError"/></returns>
-    public static Result<RequestContext> Create(HttpRequest request, CancellationToken cancellationToken)
+    public static Result<RequestContext> Create(HttpRequest request)
     {
-        var context = new RequestContext(request.Method, request.Headers, cancellationToken);
-        var checkVersion = CommonRequestHandler.CheckTusVersion(context);
-        return checkVersion.Map(c =>
-        {
-            c.ResponseHeaders.Add(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion);
-            return c;
-        });
+        var context = new RequestContext(request.Method, request.Headers);
+        return CommonRequestHandler.CheckTusVersion(context);
     }
 }

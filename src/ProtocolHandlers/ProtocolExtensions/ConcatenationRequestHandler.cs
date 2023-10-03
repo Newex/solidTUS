@@ -34,16 +34,15 @@ public class ConcatenationRequestHandler
     }
 
     /// <summary>
-    /// Set the <see cref="UploadFileInfo.IsPartial"/> if present
+    /// Set the <see cref="RequestContext.PartialMode"/>
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A request context</returns>
-    public static Result<RequestContext> SetIfUploadIsPartial(RequestContext context)
+    public static Result<RequestContext> SetPartialMode(RequestContext context)
     {
         var concat = context.RequestHeaders[TusHeaderNames.UploadConcat].ToString();
-        context.UploadFileInfo.IsPartial = !string.IsNullOrEmpty(concat);
 
-        if (context.UploadFileInfo.IsPartial)
+        if (!string.IsNullOrEmpty(concat))
         {
             var isFinal = concat.StartsWith(TusHeaderValues.UploadFinal, StringComparison.OrdinalIgnoreCase);
             if (isFinal)
@@ -72,11 +71,11 @@ public class ConcatenationRequestHandler
     }
 
     /// <summary>
-    /// Set the partial urls if request is final
+    /// Check the partial urls if request is final
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A request context or an error</returns>
-    public static Result<RequestContext> SetPartialUrlsIfFinal(RequestContext context)
+    public static Result<RequestContext> CheckPartialFinalFormat(RequestContext context)
     {
         if (context.PartialMode != PartialMode.Final)
         {
@@ -90,8 +89,6 @@ public class ConcatenationRequestHandler
             return HttpError.BadRequest("Must provide a list of files to concatenate").Wrap();
         }
 
-        var urls = list.Split(" ");
-        context.PartialUrls = urls;
         return context.Wrap();
     }
 
@@ -102,14 +99,15 @@ public class ConcatenationRequestHandler
     /// <returns>A request context</returns>
     public static RequestContext SetUploadConcatFinalUrls(RequestContext context)
     {
-        if (context.PartialMode != PartialMode.Final)
-        {
-            return context;
-        }
+        throw new NotImplementedException();
+        // if (context.PartialMode != PartialMode.Final)
+        // {
+        //     return context;
+        // }
 
-        var final = context.UploadFileInfo.ConcatHeaderFinal;
-        context.ResponseHeaders.Add(TusHeaderNames.UploadConcat, final);
-        return context;
+        // var final = context.UploadFileInfo.ConcatHeaderFinal;
+        // context.ResponseHeaders.Add(TusHeaderNames.UploadConcat, final);
+        // return context;
     }
 
     /// <summary>

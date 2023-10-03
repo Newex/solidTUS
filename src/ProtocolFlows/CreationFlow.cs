@@ -1,9 +1,7 @@
 using System;
 using System.IO.Pipelines;
 using System.Threading;
-
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -60,24 +58,36 @@ public class CreationFlow
     }
 
     /// <summary>
-    /// Create resource metadata
+    /// Check and set info for the resource creation request
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public Result<RequestContext> StartResourceCreation(RequestContext context)
+    public Result<RequestContext> PreResourceCreation(RequestContext context)
     {
         var requestContext = PostRequestHandler
             .CheckUploadLengthOrDeferred(context)
-            .Bind(ConcatenationRequestHandler.SetIfUploadIsPartial)
-            .Bind(ConcatenationRequestHandler.SetPartialUrlsIfFinal)
+            .Bind(ConcatenationRequestHandler.SetPartialMode)
+            .Bind(ConcatenationRequestHandler.CheckPartialFinalFormat)
             .Bind(post.CheckMaximumSize)
             .Map(PostRequestHandler.ParseMetadata)
             .Bind(post.ValidateMetadata)
-            .Map(PostRequestHandler.SetFileSize)
-            .Map(common.SetCreatedDate)
             .Bind(PostRequestHandler.CheckIsValidUpload);
 
         return requestContext;
+    }
+
+    /// <summary>
+    /// TODO on after creation
+    /// </summary>
+    /// <exception cref="NotImplementedException"></exception>
+    public void TODO_Post()
+    {
+        // Set the following
+        // 1. Set Upload-Offset header to the size of uploaded bytes
+        // 2. Set created date for the file (SolidTus metadata)
+        // 3. Set the Tus-Resumable header = 1.0.0
+
+        throw new NotImplementedException();
     }
 
     /// <summary>
@@ -90,28 +100,29 @@ public class CreationFlow
     /// <returns>A TUS creation context</returns>
     public TusCreationContext? CreateTusContext(Result<RequestContext> context, PipeReader reader, IHeaderDictionary responseHeaders, CancellationToken cancellationToken)
     {
-        var requestContext = context.Match(c => c, _ => null!);
-        if (requestContext is null)
-        {
-            return null;
-        }
+        throw new NotImplementedException();
+        // var requestContext = context.Match(c => c, _ => null!);
+        // if (requestContext is null)
+        // {
+        //     return null;
+        // }
 
-        var uploadSize = requestContext.RequestHeaders.ContentLength;
-        var info = requestContext.UploadFileInfo;
+        // var uploadSize = requestContext.RequestHeaders.ContentLength;
+        // var info = requestContext.UploadFileInfo;
 
-        return new TusCreationContext(
-            uploadSize > 0,
-            requestContext.PartialMode,
-            requestContext.PartialUrls,
-            info,
-            responseHeaders,
-            reader,
-            uploadStorageHandler,
-            uploadMetaHandler,
-            linkGenerator,
-            cancellationToken,
-            options,
-            logger
-        );
+        // return new TusCreationContext(
+        //     uploadSize > 0,
+        //     requestContext.PartialMode,
+        //     requestContext.PartialUrls,
+        //     info,
+        //     responseHeaders,
+        //     reader,
+        //     uploadStorageHandler,
+        //     uploadMetaHandler,
+        //     linkGenerator,
+        //     cancellationToken,
+        //     options,
+        //     logger
+        // );
     }
 }

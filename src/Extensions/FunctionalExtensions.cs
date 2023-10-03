@@ -13,22 +13,11 @@ internal static class FunctionalExtensions
     /// <param name="result">The result</param>
     /// <param name="successStatus">The success status</param>
     /// <returns>A TUS http response</returns>
-    public static TusHttpResponse GetTusHttpResponse(this Result<RequestContext> result, int successStatus = 200)
+    public static HttpError? GetHttpError(this Result<RequestContext> result, int successStatus = 200)
     {
-        return result.Match(
-            c => new TusHttpResponse
-            {
-                Headers = c.ResponseHeaders,
-                IsSuccess = true,
-                StatusCode = successStatus
-            },
-            e => new TusHttpResponse
-            {
-                IsSuccess = false,
-                Headers = e.Headers,
-                Message = e.Message,
-                StatusCode = e.StatusCode
-            }
+        return result.Match<HttpError?>(
+            _ => null,
+            e => e
         );
     }
 

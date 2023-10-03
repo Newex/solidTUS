@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Internal;
 using SolidTUS.Constants;
@@ -37,32 +38,30 @@ public class CommonRequestHandler
     /// <summary>
     /// Check if a <see cref="UploadFileInfo"/> resource has been created
     /// </summary>
-    /// <remarks>
-    /// Sets the <see cref="RequestContext.UploadFileInfo"/> if exists
-    /// </remarks>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public async ValueTask<Result<RequestContext>> CheckUploadFileInfoExistsAsync(RequestContext context)
+    public ValueTask<Result<RequestContext>> CheckUploadFileInfoExistsAsync(RequestContext context)
     {
-        UploadFileInfo? fileInfo;
-        if (context.PartialMode == PartialMode.Partial)
-        {
-            fileInfo = await uploadMetaHandler.GetPartialResourceAsync(context.FileID, context.CancellationToken);
-        }
-        else
-        {
-            fileInfo = await uploadMetaHandler.GetResourceAsync(context.FileID, context.CancellationToken);
-        }
+        // UploadFileInfo? fileInfo;
+        // if (context.PartialMode == PartialMode.Partial)
+        // {
+        //     fileInfo = await uploadMetaHandler.GetPartialResourceAsync(context.FileID, context.CancellationToken);
+        // }
+        // else
+        // {
+        //     fileInfo = await uploadMetaHandler.GetResourceAsync(context.FileID, context.CancellationToken);
+        // }
 
-        if (fileInfo is null)
-        {
-            return HttpError.NotFound("File resource does not exists").Wrap();
-        }
+        // if (fileInfo is null)
+        // {
+        //     return HttpError.NotFound("File resource does not exists").Wrap();
+        // }
 
-        var size = uploadStorageHandler.GetUploadSize(context.FileID, fileInfo);
-        fileInfo.ByteOffset = size ?? 0L;
-        context.UploadFileInfo = fileInfo;
-        return context.Wrap();
+        // var size = uploadStorageHandler.GetUploadSize(context.FileID, fileInfo);
+        // fileInfo.ByteOffset = size ?? 0L;
+        // context.UploadFileInfo = fileInfo;
+        // return context.Wrap();
+        throw new NotImplementedException();
     }
 
     /// <summary>
@@ -90,38 +89,14 @@ public class CommonRequestHandler
     }
 
     /// <summary>
-    /// Set the created date for the upload
-    /// </summary>
-    /// <param name="context">The request context</param>
-    /// <returns>A request context</returns>
-    public RequestContext SetCreatedDate(RequestContext context)
-    {
-        if (!context.UploadFileInfo.CreatedDate.HasValue)
-        {
-            context.UploadFileInfo.CreatedDate = clock.UtcNow;
-        }
-        return context;
-    }
-
-    /// <summary>
-    /// Set the last time this upload was updated
-    /// </summary>
-    /// <param name="context">The request context</param>
-    /// <returns>A request context</returns>
-    public RequestContext SetUpdatedDate(RequestContext context)
-    {
-        context.UploadFileInfo.LastUpdatedDate = clock.UtcNow;
-        return context;
-    }
-
-    /// <summary>
     /// Set the upload offset header
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A request context</returns>
     public static RequestContext SetUploadByteOffset(RequestContext context)
     {
-        context.ResponseHeaders.Add(TusHeaderNames.UploadOffset, context.UploadFileInfo.ByteOffset.ToString());
-        return context;
+        // context.ResponseHeaders.Add(TusHeaderNames.UploadOffset, context.UploadFileInfo.ByteOffset.ToString());
+        // return context;
+        throw new NotImplementedException();
     }
 }

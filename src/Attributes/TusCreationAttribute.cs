@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Constants;
-using SolidTUS.Contexts;
 using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.ProtocolFlows;
@@ -24,26 +23,12 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
     /// <summary>
     /// Instantiate a new <see cref="TusCreationAttribute"/> creation endpoint handler.
     /// </summary>
-    public TusCreationAttribute()
-    {
-    }
-
-    /// <summary>
-    /// Instantiate a new <see cref="TusCreationAttribute"/> creation endpoint handler.
-    /// </summary>
     /// <param name="template">The route template</param>
     public TusCreationAttribute([StringSyntax("Route")] string template)
     {
         ArgumentNullException.ThrowIfNull(template);
         Template = template;
     }
-
-    private TusCreationContext? tusContext;
-
-    /// <summary>
-    /// Get or set the name of the TUS context parameter
-    /// </summary>
-    public virtual string ContextParameterName { get; set; } = ParameterNames.TusCreationContextParameterName;
 
     /// <summary>
     /// Gets the supported http methods
@@ -61,11 +46,6 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
 
     /// <inheritdoc />
     public string? Name { get; set; } = EndpointNames.CreationEpoint;
-
-    /// <summary>
-    /// Get or set the reference for the upload endpoint.
-    /// </summary>
-    public string UploadNameEndpoint { get; set; } = EndpointNames.UploadEndpoint;
 
     /// <inheritdoc />
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -103,45 +83,24 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
             var creationFlow = http.RequestServices.GetService<CreationFlow>();
             if (creationFlow is null)
             {
-                response.StatusCode = 500;
-                return;
-            }
-
-            var cancel = http.RequestAborted;
-            var requestContext = RequestContext.Create(request, cancel);
-            requestContext = requestContext.Bind(creationFlow.StartResourceCreation);
-            var creationResponse = requestContext.GetTusHttpResponse();
-            if (!creationResponse.IsSuccess)
-            {
-                response.AddTusHeaders(creationResponse);
-                context.Result = new ObjectResult(creationResponse.Message)
+                context.Result = new ObjectResult("Internal server error")
                 {
-                    StatusCode = creationResponse.StatusCode
+                    StatusCode = 500
                 };
                 return;
             }
 
-            tusContext = creationFlow.CreateTusContext(
-                requestContext,
-                request.BodyReader,
-                response.Headers,
-                cancel
-            );
-            context.ActionArguments[ContextParameterName] = tusContext;
-
-            // Callback before sending headers add all TUS headers
-            context.HttpContext.Response.OnStarting(state =>
+            var requestContext = RequestContext.Create(request);
+            requestContext = requestContext.Bind(creationFlow.PreResourceCreation);
+            var error = requestContext.GetHttpError();
+            if (error is not null)
             {
-                var ctx = (ActionExecutingContext)state;
-
-                if (creationFlow is not null)
+                context.Result = new ObjectResult(error.Value.Message)
                 {
-                    var tusResponse = requestContext.GetTusHttpResponse(201);
-                    ctx.HttpContext.Response.AddTusHeaders(tusResponse);
-                }
-
-                return Task.CompletedTask;
-            }, context);
+                    StatusCode = error.Value.StatusCode
+                };
+                return;
+            }
         }
 
         await next();
@@ -165,7 +124,5 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
         }, context);
 
         await next();
-
-        // Response probably already sent here
     }
 }

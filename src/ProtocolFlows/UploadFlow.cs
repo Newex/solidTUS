@@ -65,7 +65,7 @@ public class UploadFlow
             .Map(HeadRequestHandler.SetUploadOffsetHeader)
             .Map(HeadRequestHandler.SetUploadLengthOrDeferred)
             .Map(HeadRequestHandler.SetMetadataHeader)
-            .Bind(ConcatenationRequestHandler.SetIfUploadIsPartial)
+            .Bind(ConcatenationRequestHandler.SetPartialMode)
             .Map(ConcatenationRequestHandler.SetUploadConcatFinalUrls)
             .BindAsync(expirationRequestHandler.CheckExpirationAsync);
 
@@ -83,7 +83,7 @@ public class UploadFlow
         context.FileID = fileId;
         var requestContext = await PatchRequestHandler.CheckContentType(context)
             .Bind(PatchRequestHandler.CheckUploadOffset)
-            .Bind(ConcatenationRequestHandler.SetIfUploadIsPartial)
+            .Bind(ConcatenationRequestHandler.SetPartialMode)
             .BindAsync(async c => await common.CheckUploadFileInfoExistsAsync(c));
 
         requestContext = await requestContext

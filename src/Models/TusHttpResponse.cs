@@ -18,11 +18,6 @@ public record TusHttpResponse
     public int StatusCode { get; set; }
 
     /// <summary>
-    /// Determines if the response was successfull
-    /// </summary>
-    public bool IsSuccess { get; set; }
-
-    /// <summary>
     /// Get or set the response message
     /// </summary>
     public string? Message { get; set; }

@@ -144,7 +144,7 @@ public class UploadRequestValidationTests
         var request = RequestContext.Create(http, CancellationToken.None);
 
         // Act
-        var start = request.Bind(creation.StartResourceCreation);
+        var start = request.Bind(creation.PreResourceCreation);
         var info = start.Match<PartialMode?>(c => c.PartialMode, _ => null);
 
         // Assert

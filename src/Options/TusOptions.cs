@@ -16,7 +16,7 @@ public record TusOptions
     /// <remarks>
     /// Default validator returns true on any input
     /// </remarks>
-    public Func<IDictionary<string, string>, bool> MetadataValidator { get; set; } = (_) => true;
+    public Func<IReadOnlyDictionary<string, string>, bool> MetadataValidator { get; set; } = (_) => true;
 
     /// <summary>
     /// Get or set if the parallel / partial uploads should require to conform to the metadata validator specifications.

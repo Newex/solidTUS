@@ -17,7 +17,7 @@ namespace SolidTUS.ProtocolHandlers;
 public class PostRequestHandler
 {
     private readonly bool validatePartial;
-    private readonly Func<IDictionary<string, string>, bool> metadataValidator;
+    private readonly Func<IReadOnlyDictionary<string, string>, bool> metadataValidator;
     private readonly long? maxSize;
 
     /// <summary>
@@ -110,8 +110,7 @@ public class PostRequestHandler
         }
 
         var metadata = MetadataParser.ParseFast(rawMetadata!);
-        context.UploadFileInfo.Metadata = metadata.AsReadOnly();
-        context.UploadFileInfo.RawMetadata = rawMetadata;
+        context.Metadata = metadata.AsReadOnly();
         return context;
     }
 
@@ -125,7 +124,8 @@ public class PostRequestHandler
         var isPartial = context.PartialMode == PartialMode.Partial;
         if (validatePartial || !isPartial)
         {
-            var isValid = metadataValidator(context.UploadFileInfo.Metadata);
+            var metadata = context.Metadata ?? new Dictionary<string, string>();
+            var isValid = metadataValidator(metadata);
             return isValid ? context.Wrap() : HttpError.BadRequest("Invalid Upload-Metadata").Wrap();
         }
 
@@ -140,42 +140,18 @@ public class PostRequestHandler
     /// <returns>Either an error or a request context</returns>
     public static RequestContext SetNewMetadata(RequestContext context, (StringValues, Dictionary<string, string>) metadata)
     {
-        var uploadInfo = context.UploadFileInfo;
-        var update = uploadInfo with
-        {
-            RawMetadata = metadata.Item1,
-            Metadata = metadata.Item2.AsReadOnly()
-        };
+        // var uploadInfo = context.UploadFileInfo;
+        // var update = uploadInfo with
+        // {
+        //     RawMetadata = metadata.Item1,
+        //     Metadata = metadata.Item2.AsReadOnly()
+        // };
 
-        return context with
-        {
-            UploadFileInfo = update
-        };
-    }
-
-    /// <summary>
-    /// Set the total file size for the upload
-    /// </summary>
-    /// <param name="context">The request context</param>
-    /// <returns>An updated context with file size</returns>
-    public static RequestContext SetFileSize(RequestContext context)
-    {
-        var info = context.UploadFileInfo;
-        var hasLength = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadLength], out var size);
-        if (!hasLength)
-        {
-            return context;
-        }
-
-        var update = info with
-        {
-            FileSize = size
-        };
-
-        return context with
-        {
-            UploadFileInfo = update
-        };
+        // return context with
+        // {
+        //     UploadFileInfo = update
+        // };
+        throw new NotImplementedException();
     }
 
     /// <summary>
