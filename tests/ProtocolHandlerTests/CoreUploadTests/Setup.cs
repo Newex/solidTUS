@@ -37,20 +37,26 @@ public static class Setup
         );
     }
 
-    public static TusCreationContext TusCreationContext(bool withUpload,
-                                                        PipeReader reader,
-                                                        long bytesWritten = 0L,
-                                                        string? url = null,
-                                                        UploadFileInfo? fileInfo = null,
-                                                        Action<string>? onCreated = null,
-                                                        Action<long>? onUpload = null,
-                                                        IUploadStorageHandler? uploadStorageHandler = null,
-                                                        IUploadMetaHandler? uploadMetaHandler = null,
-                                                        CancellationToken? cancellationToken = null)
+    public static TusCreationContext TusCreationContext(
+        bool withUpload = false,
+        long bytesWritten = 0L,
+        PipeReader? reader = null,
+        PartialMode partialMode = PartialMode.None,
+        List<string>? urls = null,
+        string? url = null,
+        UploadFileInfo? fileInfo = null,
+        Action<string>? onCreated = null,
+        Action<long>? onUpload = null,
+        IUploadStorageHandler? uploadStorageHandler = null,
+        IUploadMetaHandler? uploadMetaHandler = null,
+        CancellationToken? cancellationToken = null)
     {
+
+        reader ??= new Pipe().Reader;
         var fakeFileInfo = fileInfo ?? Fakes.RandomEntities.UploadFileInfo();
         var createCallback = onCreated ?? ((s) => { });
         var uploadCallback = onUpload ?? ((l) => { });
+        urls ??= new List<string>();
         var storageHandler = uploadStorageHandler ?? MockHandlers.UploadStorageHandler(currentSize: fakeFileInfo.ByteOffset, bytesWritten: bytesWritten);
         var metaHandler = uploadMetaHandler ?? MockHandlers.UploadMetaHandler(fakeFileInfo);
         var linkGenerator = MockOthers.LinkGenerator(url);
@@ -60,8 +66,8 @@ public static class Setup
         return new TusCreationContext(
             withUpload,
 
-            PartialMode.None,
-            new List<string>(),
+            partialMode,
+            urls,
 
             fakeFileInfo,
             createCallback,

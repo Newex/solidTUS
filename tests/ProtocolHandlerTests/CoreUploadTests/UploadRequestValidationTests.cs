@@ -98,7 +98,7 @@ public class UploadRequestValidationTests
         using var memory = new MemoryStream(array);
         var reader = PipeReader.Create(memory);
         var handler = Setup.TusCreationContext(withUpload: true,
-                                               reader,
+                                               reader: reader,
                                                bytesWritten: fileSize,
                                                url: "/path/to/upload",
                                                fileInfo: file);
@@ -149,5 +149,39 @@ public class UploadRequestValidationTests
 
         // Assert
         info.Should().NotBeNull().And.Be(PartialMode.Partial);
+    }
+
+    [Fact]
+    public async Task Should_only_call_callback_once_for_partial_upload()
+    {
+        // Arrange
+        var file = RandomEntities.UploadFileInfo() with
+        {
+            FileSize = 10,
+            ByteOffset = 0,
+            IsPartial = true,
+        };
+        var times = 0;
+        void Created(string _)
+        {
+            times++;
+        }
+        var sut = Setup.TusCreationContext(
+            url: "/file_123",
+            onCreated: Created,
+            partialMode: PartialMode.Partial,
+            fileInfo: file
+        );
+        var parallel = sut
+            .SetupParallelUploads("/{id")
+            .OnMergeHandler((_) => true)
+            .Build();
+        sut.ApplyParallelUploadsConfiguration(parallel);
+
+        // Act
+        await sut.StartCreationAsync("file_123");
+
+        // Assert
+        times.Should().Be(1);
     }
 }
