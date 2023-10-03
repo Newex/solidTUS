@@ -118,7 +118,7 @@ public class UploadRequestValidationTests
     }
 
     [Fact]
-    public void PartialUpload_should_return_with_location()
+    public void PartialUpload_should_set_mode_to_Partial()
     {
         var storageHandler = MockHandlers.UploadStorageHandler();
         var metaHandler = MockHandlers.UploadMetaHandler();
