@@ -99,20 +99,19 @@ public class ExpirationRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A request context with expiration headers</returns>
-    /// <exception cref="UnreachableException">Thrown if expiration strategy is not in the enumeration</exception>
-    public ResponseContext SetExpiration(ResponseContext context)
+    public void SetExpiration(ResponseContext context)
     {
         if (context.UploadFileInfo is null
             || context.UploadFileInfo.ExpirationStrategy == ExpirationStrategy.Never
             || expirationStrategy == ExpirationStrategy.Never
             && context.UploadFileInfo.ExpirationStrategy is null)
         {
-            return context;
+            return;
         }
 
         if (context.UploadFileInfo.ExpirationDate is null)
         {
-            return context;
+            return;
         }
 
         // Convert the end date to RFC 7231
@@ -120,7 +119,6 @@ public class ExpirationRequestHandler
 
         // Overwrite if exists
         context.ResponseHeaders[TusHeaderNames.Expiration] = time;
-        return context;
     }
 
     /// <summary>
