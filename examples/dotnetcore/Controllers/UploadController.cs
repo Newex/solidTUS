@@ -25,7 +25,7 @@ public class UploadController : ControllerBase
     }
 
     [TusCreation]
-    public async Task<ActionResult> CreateFile([FromServices] TusCreationContext context)
+    public async Task<ActionResult> CreateFile([FromServices] TusCreationContextOLD context)
     {
         // Read Metadata
         var filename = context.UploadFileInfo.Metadata["filename"];

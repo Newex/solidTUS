@@ -10,7 +10,7 @@ namespace SolidTUS.Extensions;
 /// Parallel upload builder
 /// </summary>
 /// <remarks>
-/// Remember to provide this final instance to <see cref="TusCreationContext.ApplyParallelUploadsConfiguration(ParallelUploadConfig)"/>
+/// Remember to provide this final instance to <see cref="TusCreationContextOLD.ApplyParallelUploadsConfiguration(ParallelUploadConfig)"/>
 /// </remarks>
 public sealed class ParallelUploadBuilder
 {

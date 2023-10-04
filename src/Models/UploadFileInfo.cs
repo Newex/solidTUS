@@ -21,7 +21,8 @@ public record UploadFileInfo
     /// Get the partial id
     /// </summary>
     [JsonInclude]
-    public string PartialId { get; internal set; } = string.Empty;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PartialId { get; internal set; }
 
     /// <summary>
     /// Get the bytes that have been uploaded so-far
@@ -60,7 +61,8 @@ public record UploadFileInfo
     /// </summary>
     [JsonReadOnlyDictionary]
     [JsonInclude]
-    public ReadOnlyDictionary<string, string> Metadata { get; internal set; } = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>());
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyDictionary<string, string>? Metadata { get; internal set; }
 
     /// <summary>
     /// Get the original raw metadata

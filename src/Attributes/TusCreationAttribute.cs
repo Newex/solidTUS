@@ -101,9 +101,38 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
                 };
                 return;
             }
+
+            var ctx = requestContext.GetValueOrDefault();
+            context.HttpContext.Items[RequestContext.Name] = ctx;
         }
 
         await next();
+
+        // =========================================
+        // ========== After action method ========== 
+        // =========================================
+
+        if (isPost)
+        {
+            if (context.HttpContext.Items[HttpContextExtensions.CreationResultName] is not UploadFileInfo uploadFile)
+            {
+                // TODO: What to do, if no result?
+                // Maybe check if there should be result then create error
+                return;
+            }
+
+            var creationFlow = http.RequestServices.GetService<CreationFlow>();
+            if (creationFlow is null)
+            {
+                context.Result = new ObjectResult("Internal server error")
+                {
+                    StatusCode = 500
+                };
+                return;
+            }
+
+            var requestContext = RequestContext.Create(request);
+        }
     }
 
     /// <inheritdoc />

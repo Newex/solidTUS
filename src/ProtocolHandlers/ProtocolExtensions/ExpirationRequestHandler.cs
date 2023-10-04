@@ -131,6 +131,30 @@ public class ExpirationRequestHandler
         return context;
     }
 
+    public static DateTimeOffset CalculateExpiration(ExpirationStrategy strategy, DateTimeOffset current, DateTimeOffset created, DateTimeOffset? updated, TimeSpan interval)
+    {
+        static DateTimeOffset Sliding(DateTimeOffset c, DateTimeOffset? u, TimeSpan i)
+            => u is not null ? u.Value.Add(i) : c.Add(i);
+        static DateTimeOffset Absolute(DateTimeOffset c, TimeSpan i)
+            => c.Add(i);
+        static DateTimeOffset SlideAfterAbsolute(DateTimeOffset n, DateTimeOffset c, DateTimeOffset? u, TimeSpan i)
+        {
+            var abs = Absolute(c, i);
+            var past = n > abs;
+            return past ? Sliding(c, u, i) : abs;
+        }
+
+        var end = strategy switch
+        {
+            ExpirationStrategy.SlidingExpiration => Sliding(created, updated, interval),
+            ExpirationStrategy.AbsoluteExpiration => Absolute(created, interval),
+            ExpirationStrategy.SlideAfterAbsoluteExpiration => SlideAfterAbsolute(current, created, updated, interval),
+            _ => throw new UnreachableException()
+        };
+
+        return end;
+    }
+
     private DateTimeOffset Sliding(DateTimeOffset from, UploadFileInfo info)
     {
         var interval = info.Interval ?? slidingInterval;

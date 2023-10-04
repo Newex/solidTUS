@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-
 using SolidTUS.Constants;
 using SolidTUS.Contexts;
 using SolidTUS.Extensions;
@@ -66,16 +64,13 @@ public class ChecksumRequestHandler
             return HttpError.BadRequest("Checksum not supported").Wrap();
         }
 
-        var result = context with
+        context.ChecksumContext = new ChecksumContext
         {
-            ChecksumContext = new ChecksumContext
-            {
-                AlgorithmName = checksum.Value.AlgorithmName,
-                Checksum = checksum.Value.Cipher,
-                Validator = validator
-            }
+            AlgorithmName = checksum.Value.AlgorithmName,
+            Checksum = checksum.Value.Cipher,
+            Validator = validator
         };
 
-        return result.Wrap();
+        return context.Wrap();
     }
 }

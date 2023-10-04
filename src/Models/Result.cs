@@ -148,4 +148,13 @@ public readonly record struct Result<R>
             false => new Result<T>(error!.Value)
         };
     }
+
+    /// <summary>
+    /// Get value or default
+    /// </summary>
+    /// <returns>The value or default</returns>
+    public R? GetValueOrDefault()
+    {
+        return !error.HasValue ? success : default;
+    }
 }

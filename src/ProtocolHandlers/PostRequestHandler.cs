@@ -89,8 +89,6 @@ public class PostRequestHandler
                 error.Headers.Add(TusHeaderNames.MaxSize, maxSize.Value.ToString());
                 return error.Wrap();
             }
-
-            context.ResponseHeaders.Add(TusHeaderNames.MaxSize, maxSize.Value.ToString());
         }
 
         return context.Wrap();
@@ -111,6 +109,7 @@ public class PostRequestHandler
 
         var metadata = MetadataParser.ParseFast(rawMetadata!);
         context.Metadata = metadata.AsReadOnly();
+        context.RawMetadata = rawMetadata;
         return context;
     }
 
@@ -152,6 +151,23 @@ public class PostRequestHandler
         //     UploadFileInfo = update
         // };
         throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Set the total file size for the upload
+    /// </summary>
+    /// <param name="context">The request context</param>
+    /// <returns>An updated context with file size</returns>
+    public static RequestContext SetFileSize(RequestContext context)
+    {
+        var hasLength = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadLength], out var size);
+        if (!hasLength)
+        {
+            return context;
+        }
+
+        context.FileSize = size;
+        return context;
     }
 
     /// <summary>

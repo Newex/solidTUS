@@ -144,7 +144,7 @@ public sealed class TusBuilder
                 new ExcludeBindingMetadataProvider(typeof(TusUploadContext))
             );
             options.ModelMetadataDetailsProviders.Add(
-                new ExcludeBindingMetadataProvider(typeof(TusCreationContext))
+                new ExcludeBindingMetadataProvider(typeof(TusCreationContextOLD))
             );
         });
 
@@ -152,6 +152,8 @@ public sealed class TusBuilder
         builder.services.AddScoped<IChecksumValidator, MD5ChecksumValidator>();
 
         builder.services.TryAddScoped<ILinkGeneratorWrapper, LinkGeneratorWrapper>();
+        builder.services.TryAddScoped<TusCreationContext>();
+        builder.services.TryAddScoped<ResourceCreationHandler>();
         return builder;
     }
 }

@@ -45,10 +45,10 @@ public record TusOptions
     /// <remarks>
     /// Only used if <see cref="Models.ExpirationStrategy"/> is set to <see cref="ExpirationStrategy.SlidingExpiration"/> or <see cref="ExpirationStrategy.SlideAfterAbsoluteExpiration"/>.
     /// <para>
-    /// The default interval is 10 minutes.
+    /// The default interval is 1 day.
     /// </para>
     /// </remarks>
-    public TimeSpan SlidingInterval { get; set; } = TimeSpan.FromMinutes(10);
+    public TimeSpan SlidingInterval { get; set; } = TimeSpan.FromDays(1);
 
     /// <summary>
     /// Get or set the global absolute interval.

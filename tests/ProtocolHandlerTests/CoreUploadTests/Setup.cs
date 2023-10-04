@@ -40,7 +40,7 @@ public static class Setup
         );
     }
 
-    public static TusCreationContext TusCreationContext(
+    public static TusCreationContextOLD TusCreationContext(
         bool withUpload = false,
         long bytesWritten = 0L,
         PipeReader? reader = null,
@@ -62,7 +62,7 @@ public static class Setup
         var cancel = cancellationToken ?? CancellationToken.None;
         var ioptions = Microsoft.Extensions.Options.Options.Create(new TusOptions());
 
-        return new TusCreationContext(
+        return new TusCreationContextOLD(
             withUpload,
             partialMode,
             urls,

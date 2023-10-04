@@ -1,0 +1,152 @@
+using System;
+using System.Diagnostics;
+using System.IO.Pipelines;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Internal;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+using SolidTUS.Contexts;
+using SolidTUS.Models;
+using SolidTUS.Options;
+using SolidTUS.ProtocolHandlers.ProtocolExtensions;
+
+namespace SolidTUS.Handlers;
+
+/// <summary>
+/// Resource creation handler
+/// </summary>
+public class ResourceCreationHandler
+{
+    private TusCreationContext? userOptions;
+    private RequestContext? requestContext;
+    private PipeReader? reader;
+
+    private readonly TusOptions globalOptions;
+    private readonly IUploadMetaHandler uploadMetaHandler;
+    private readonly IUploadStorageHandler uploadStorageHandler;
+    private readonly ISystemClock clock;
+    private readonly ILogger<ResourceCreationHandler> logger;
+
+    /// <summary>
+    /// Instantiate a new object of <see cref="ResourceCreationHandler"/>
+    /// </summary>
+    /// <param name="clock">The clock provider</param>
+    /// <param name="uploadMetaHandler">The upload meta handler</param>
+    /// <param name="uploadStorageHandler">The upload storage handler</param>
+    /// <param name="options">The TUS options</param>
+    /// <param name="logger">The optional logger</param>
+    public ResourceCreationHandler(
+        ISystemClock clock,
+        IUploadMetaHandler uploadMetaHandler,
+        IUploadStorageHandler uploadStorageHandler,
+        IOptions<TusOptions> options,
+        ILogger<ResourceCreationHandler>? logger = null
+    )
+    {
+        this.clock = clock;
+        globalOptions = options.Value;
+        this.uploadMetaHandler = uploadMetaHandler;
+        this.uploadStorageHandler = uploadStorageHandler;
+        this.logger = logger ?? NullLogger<ResourceCreationHandler>.Instance;
+    }
+
+    /// <summary>
+    /// Set required details from the user and the request
+    /// </summary>
+    /// <param name="tusContext">The user tus options</param>
+    /// <param name="requestContext">The request context</param>
+    public void SetDetails(TusCreationContext tusContext, RequestContext requestContext)
+    {
+        userOptions = tusContext;
+        this.requestContext = requestContext;
+    }
+
+    /// <summary>
+    /// Set the body stream
+    /// </summary>
+    /// <param name="reader">The pipe reader for the body stream</param>
+    public void SetPipeReader(PipeReader reader)
+    {
+        this.reader = reader;
+    }
+
+    /// <summary>
+    /// Create resource of either a partial file or a whole file
+    /// </summary>
+    /// <param name="hasUpload">True if request contains upload data otherwise false</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <returns>An upload file info or null</returns>
+    public async Task<UploadFileInfo?> CreateResourceAsync(bool hasUpload, CancellationToken cancellationToken)
+    {
+        if (userOptions is null || requestContext is null || userOptions.FileId is null)
+        {
+            throw new UnreachableException();
+        }
+
+        var now = clock.UtcNow;
+        var isPartial = requestContext.PartialMode == PartialMode.Partial;
+        var strategy = userOptions.ExpirationStrategy ?? globalOptions.ExpirationStrategy;
+        var interval = userOptions.Interval
+            ?? (strategy == ExpirationStrategy.AbsoluteExpiration
+                ? globalOptions.AbsoluteInterval
+                : globalOptions.SlidingInterval);
+        var uploadInfo = new UploadFileInfo
+        {
+            FileId = userOptions.FileId,
+            CreatedDate = now,
+            ByteOffset = 0L,
+            FileSize = requestContext.FileSize,
+            Metadata = requestContext.Metadata,
+            RawMetadata = requestContext.RawMetadata,
+            ExpirationStrategy = strategy,
+            Interval = interval,
+            IsPartial = isPartial,
+            ConcatHeaderFinal = null,
+            ExpirationDate = userOptions.ExpirationStrategy is not null
+                ? ExpirationRequestHandler.CalculateExpiration(userOptions.ExpirationStrategy.Value, now, now, null, userOptions.Interval.GetValueOrDefault())
+                : null,
+            LastUpdatedDate = null,
+            PartialId = isPartial ? (userOptions.TusParallelContext?.PartialId ?? userOptions.FileId) : null,
+            OnDiskFilename = userOptions.Filename ?? userOptions.FileId,
+        };
+
+        bool create = await uploadMetaHandler.CreateResourceAsync(uploadInfo, cancellationToken);
+        if (create)
+        {
+            if (!hasUpload)
+            {
+                if (userOptions.ResourceCreatedCallback is not null)
+                {
+                    await userOptions.ResourceCreatedCallback(uploadInfo);
+                }
+                return uploadInfo;
+            }
+
+
+            if (reader is null)
+            {
+                throw new InvalidOperationException("Missing body stream to retrieve upload in Creation-With-Upload");
+            }
+
+            await uploadStorageHandler.OnPartialUploadAsync(reader, uploadInfo, requestContext.ChecksumContext, cancellationToken);
+            if (uploadInfo.Done)
+            {
+                if (userOptions.ResourceCreatedCallback is not null)
+                {
+                    await userOptions.ResourceCreatedCallback(uploadInfo);
+                }
+
+                if (userOptions.UploadFinishedCallback is not null)
+                {
+                    await userOptions.UploadFinishedCallback(uploadInfo);
+                }
+
+                return uploadInfo;
+            }
+        }
+
+        return null;
+    }
+}

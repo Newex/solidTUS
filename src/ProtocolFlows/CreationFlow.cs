@@ -22,6 +22,7 @@ public class CreationFlow
 {
     private readonly CommonRequestHandler common;
     private readonly PostRequestHandler post;
+    private readonly ChecksumRequestHandler checksum;
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
     private readonly ILinkGeneratorWrapper linkGenerator;
@@ -33,6 +34,7 @@ public class CreationFlow
     /// </summary>
     /// <param name="common">The common request handler</param>
     /// <param name="post">The post request handler</param>
+    /// <param name="checksum">The checksum request handler</param>
     /// <param name="uploadStorageHandler">The upload storage handler</param>
     /// <param name="uploadMetaHandler">The upload meta handler</param>
     /// <param name="linkGenerator"></param>
@@ -41,6 +43,7 @@ public class CreationFlow
     public CreationFlow(
         CommonRequestHandler common,
         PostRequestHandler post,
+        ChecksumRequestHandler checksum,
         IUploadStorageHandler uploadStorageHandler,
         IUploadMetaHandler uploadMetaHandler,
         ILinkGeneratorWrapper linkGenerator,
@@ -50,6 +53,7 @@ public class CreationFlow
     {
         this.common = common;
         this.post = post;
+        this.checksum = checksum;
         this.uploadStorageHandler = uploadStorageHandler;
         this.uploadMetaHandler = uploadMetaHandler;
         this.linkGenerator = linkGenerator;
@@ -68,10 +72,12 @@ public class CreationFlow
             .CheckUploadLengthOrDeferred(context)
             .Bind(ConcatenationRequestHandler.SetPartialMode)
             .Bind(ConcatenationRequestHandler.CheckPartialFinalFormat)
+            .Map(PostRequestHandler.SetFileSize)
             .Bind(post.CheckMaximumSize)
             .Map(PostRequestHandler.ParseMetadata)
             .Bind(post.ValidateMetadata)
-            .Bind(PostRequestHandler.CheckIsValidUpload);
+            .Bind(PostRequestHandler.CheckIsValidUpload)
+            .Bind(checksum.SetChecksum);
 
         return requestContext;
     }
@@ -80,12 +86,13 @@ public class CreationFlow
     /// TODO on after creation
     /// </summary>
     /// <exception cref="NotImplementedException"></exception>
-    public void TODO_Post()
+    public void PostResourceCreation(UploadFileInfo uploadFileInfo, IHeaderDictionary responseHeaders)
     {
         // Set the following
         // 1. Set Upload-Offset header to the size of uploaded bytes
         // 2. Set created date for the file (SolidTus metadata)
         // 3. Set the Tus-Resumable header = 1.0.0
+        // 4. Set max size header for response
 
         throw new NotImplementedException();
     }
@@ -98,7 +105,7 @@ public class CreationFlow
     /// <param name="responseHeaders">The response headers</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>A TUS creation context</returns>
-    public TusCreationContext? CreateTusContext(Result<RequestContext> context, PipeReader reader, IHeaderDictionary responseHeaders, CancellationToken cancellationToken)
+    public TusCreationContextOLD? CreateTusContext(Result<RequestContext> context, PipeReader reader, IHeaderDictionary responseHeaders, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
         // var requestContext = context.Match(c => c, _ => null!);

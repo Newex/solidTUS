@@ -26,13 +26,13 @@ public class UploadController : ControllerBase
     }
 
     [TusCreation("/api/upload")]
-    public async Task<ActionResult> CreateFile([FromServices] TusCreationContext context)
+    public async Task<ActionResult> CreateFile([FromServices] TusCreationContextOLD context)
     {
         if (!context.UploadFileInfo.IsPartial)
         {
             // Read Metadata
-            var filename = context.UploadFileInfo.Metadata["name"];
-            var mime = context.UploadFileInfo.Metadata["type"];
+            var filename = context.UploadFileInfo.Metadata?["name"];
+            var mime = context.UploadFileInfo.Metadata?["type"];
         }
 
         // Construct some unique file id
@@ -50,6 +50,8 @@ public class UploadController : ControllerBase
             .Build();
 
         context.ApplyParallelUploadsConfiguration(parallel);
+        var ctx = HttpContext.TusCreation(id);
+        await HttpContext.StartCreationAsync(ctx);
 
 
         // Accept creating upload and redirect to TusUpload
@@ -59,13 +61,6 @@ public class UploadController : ControllerBase
         return Ok();
     }
 
-    [TusParallel("/part/{partialId}/{hello}")]
-    public async Task<ActionResult> ParallelUploads(string partialId, string hello, [FromServices] TusUploadContext context)
-    {
-        await context.StartAppendDataAsync(partialId);
-        return NoContent();
-    }
-
     [TusUpload("{fileId}")]
     [RequestSizeLimit(5_000_000_000)]
     public async Task<ActionResult> UploadFile(string fileId, [FromServices] TusUploadContext context)
@@ -73,7 +68,7 @@ public class UploadController : ControllerBase
         // Set callback before awaiting upload, otherwise the callback won't be called
         context.OnUploadFinished(async (file) =>
         {
-            var filename = file.Metadata["name"];
+            var filename = file.Metadata?["name"];
             Console.WriteLine($"Uploaded file {filename} with file size {file.FileSize}");
             await Task.CompletedTask;
         });

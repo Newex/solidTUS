@@ -37,7 +37,7 @@ public record RequestContext
     /// <summary>
     /// The checksum context
     /// </summary>
-    public ChecksumContext? ChecksumContext { get; init; }
+    public ChecksumContext? ChecksumContext { get; internal set; }
 
     /// <summary>
     /// Get the partial mode
@@ -50,6 +50,16 @@ public record RequestContext
     public IReadOnlyDictionary<string, string>? Metadata { get; internal set; }
 
     /// <summary>
+    /// The raw metadata string
+    /// </summary>
+    public string? RawMetadata { get; internal set; }
+
+    /// <summary>
+    /// The file size of current upload
+    /// </summary>
+    public long? FileSize { get; internal set; }
+
+    /// <summary>
     /// Create new <see cref="RequestContext"/> if request is supported by the server otherwise <see cref="HttpError"/>
     /// </summary>
     /// <param name="request">The request</param>
@@ -59,4 +69,9 @@ public record RequestContext
         var context = new RequestContext(request.Method, request.Headers);
         return CommonRequestHandler.CheckTusVersion(context);
     }
+
+    /// <summary>
+    /// The name as stored inside items
+    /// </summary>
+    public const string Name = "__SolidTusRequestContext__";
 }
