@@ -134,9 +134,13 @@ public class ResourceCreationHandler
             Interval = interval,
             IsPartial = isPartial,
             ConcatHeaderFinal = null,
-            ExpirationDate = userOptions.ExpirationStrategy is not null
-                ? ExpirationRequestHandler.CalculateExpiration(userOptions.ExpirationStrategy.Value, now, now, null, userOptions.Interval.GetValueOrDefault())
-                : null,
+            ExpirationDate = ExpirationRequestHandler.CalculateExpiration(
+                strategy,
+                now,
+                now,
+                null,
+                userOptions.Interval ?? globalOptions.AbsoluteInterval,
+                userOptions.Interval ?? globalOptions.SlidingInterval),
             LastUpdatedDate = null,
             PartialId = isPartial ? (userOptions.TusParallelContext?.PartialId ?? userOptions.FileId) : null,
             OnDiskFilename = userOptions.Filename ?? userOptions.FileId,

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Options;
 using SolidTUS.Constants;
+using SolidTUS.Contexts;
 using SolidTUS.Extensions;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
@@ -94,92 +95,92 @@ public class ExpirationRequestHandler
     }
 
     /// <summary>
-    /// Set the expiration header if TUS options is set
+    /// Set the expiration header if resource has expiration date
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A request context with expiration headers</returns>
     /// <exception cref="UnreachableException">Thrown if expiration strategy is not in the enumeration</exception>
-    public RequestContext SetExpiration(RequestContext context)
+    public ResponseContext SetExpiration(ResponseContext context)
     {
-        if (context.UploadFileInfo.ExpirationStrategy == ExpirationStrategy.Never
+        if (context.UploadFileInfo is null
+            || context.UploadFileInfo.ExpirationStrategy == ExpirationStrategy.Never
             || expirationStrategy == ExpirationStrategy.Never
             && context.UploadFileInfo.ExpirationStrategy is null)
         {
-            // No expiration
             return context;
         }
 
-        // Assume we have accepted the incoming upload = within the expiration time.
-        // Assume CreatedDate is set.
-        var now = clock.UtcNow;
-        var strategy = context.UploadFileInfo.ExpirationStrategy ?? expirationStrategy;
-        var end = strategy switch
+        if (context.UploadFileInfo.ExpirationDate is null)
         {
-            ExpirationStrategy.SlidingExpiration => Sliding(now, context.UploadFileInfo),
-            ExpirationStrategy.AbsoluteExpiration => Absolute(context.UploadFileInfo),
-            ExpirationStrategy.SlideAfterAbsoluteExpiration => SlideAfterAbsolute(now, context.UploadFileInfo),
-            _ => throw new UnreachableException()
-        };
-
-        context.UploadFileInfo.ExpirationDate = end;
+            return context;
+        }
 
         // Convert the end date to RFC 7231
-        var time = ToRFC7231(end);
+        var time = ToRFC7231(context.UploadFileInfo.ExpirationDate.Value);
 
         // Overwrite if exists
         context.ResponseHeaders[TusHeaderNames.Expiration] = time;
         return context;
     }
 
-    public static DateTimeOffset CalculateExpiration(ExpirationStrategy strategy, DateTimeOffset current, DateTimeOffset created, DateTimeOffset? updated, TimeSpan interval)
+    /// <summary>
+    /// Calculate the end date if it exists otherwise if not then it will be null
+    /// </summary>
+    /// <param name="strategy">The expiration strategy</param>
+    /// <param name="current">The current time</param>
+    /// <param name="created">The created time</param>
+    /// <param name="updated">The updated time</param>
+    /// <param name="absoluteInterval">The interval for absolute</param>
+    /// <param name="slidingInterval">The interval for sliding</param>
+    /// <returns>A datetime offset or null</returns>
+    /// <exception cref="UnreachableException">Thrown if missing strategy enum</exception>
+    public static DateTimeOffset? CalculateExpiration(
+        ExpirationStrategy strategy,
+        DateTimeOffset current,
+        DateTimeOffset created,
+        DateTimeOffset? updated,
+        TimeSpan absoluteInterval,
+        TimeSpan slidingInterval)
     {
-        static DateTimeOffset Sliding(DateTimeOffset c, DateTimeOffset? u, TimeSpan i)
-            => u is not null ? u.Value.Add(i) : c.Add(i);
-        static DateTimeOffset Absolute(DateTimeOffset c, TimeSpan i)
-            => c.Add(i);
-        static DateTimeOffset SlideAfterAbsolute(DateTimeOffset n, DateTimeOffset c, DateTimeOffset? u, TimeSpan i)
+        DateTimeOffset? end = strategy switch
         {
-            var abs = Absolute(c, i);
-            var past = n > abs;
-            return past ? Sliding(c, u, i) : abs;
-        }
-
-        var end = strategy switch
-        {
-            ExpirationStrategy.SlidingExpiration => Sliding(created, updated, interval),
-            ExpirationStrategy.AbsoluteExpiration => Absolute(created, interval),
-            ExpirationStrategy.SlideAfterAbsoluteExpiration => SlideAfterAbsolute(current, created, updated, interval),
+            ExpirationStrategy.Never => null,
+            ExpirationStrategy.SlidingExpiration => Sliding(created, updated, slidingInterval),
+            ExpirationStrategy.AbsoluteExpiration => Absolute(created, absoluteInterval),
+            ExpirationStrategy.SlideAfterAbsoluteExpiration => SlideAfterAbsolute(current, created, updated, absoluteInterval, slidingInterval),
             _ => throw new UnreachableException()
         };
 
         return end;
     }
 
-    private DateTimeOffset Sliding(DateTimeOffset from, UploadFileInfo info)
+    private static DateTimeOffset Sliding(DateTimeOffset created, DateTimeOffset? updated, TimeSpan interval)
     {
-        var interval = info.Interval ?? slidingInterval;
-        return from.Add(interval);
+        if (updated is not null)
+        {
+            return updated.Value.Add(interval);
+        }
+
+        return created.Add(interval);
     }
 
-    private DateTimeOffset Absolute(UploadFileInfo info)
+    private static DateTimeOffset Absolute(DateTimeOffset created, TimeSpan interval)
     {
-        var interval = info.Interval ?? absoluteInterval;
-        var deadline = info.CreatedDate?.Add(interval);
-        return deadline.GetValueOrDefault();
+        return created.Add(interval);
     }
 
-    private DateTimeOffset SlideAfterAbsolute(DateTimeOffset from, UploadFileInfo info)
+    private static DateTimeOffset SlideAfterAbsolute(DateTimeOffset now, DateTimeOffset created, DateTimeOffset? updated, TimeSpan absolute, TimeSpan slide)
     {
-        var absoluteDeadline = info.CreatedDate?.Add(absoluteInterval);
-        var isPastDeadline = from > absoluteDeadline;
+        var absoluteDeadline = Absolute(created, absolute);
+        var isPastDeadline = now > absoluteDeadline;
 
         if (isPastDeadline)
         {
             // We slide
-            return Sliding(from, info);
+            return Sliding(created, updated, slide);
         }
 
-        return Absolute(info);
+        return Absolute(created, absolute);
     }
 
     private static string ToRFC7231(DateTimeOffset time)
