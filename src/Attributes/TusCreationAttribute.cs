@@ -107,42 +107,46 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
             context.HttpContext.Items[RequestContext.Name] = ctx;
         }
 
-        await next();
-
-        // =========================================
-        // ========== After action method ========== 
-        // =========================================
-
-        if (isPost)
+        response.OnStarting(state =>
         {
-            if (context.HttpContext.Items[HttpContextExtensions.CreationResultName] is not ResponseContext responseContext)
+            var ctx = (ActionExecutingContext)state;
+            if (isPost)
             {
-                // TODO: What to do, if no result?
-                // Maybe check if there should be result then create error
-                return;
+                if (ctx.HttpContext.Items[HttpContextExtensions.CreationResultName] is not Result<ResponseContext> responseContext)
+                {
+                    ctx.Result = new ObjectResult("Internal server error")
+                    {
+                        StatusCode = 500
+                    };
+                    return Task.CompletedTask;
+                }
+
+                var creationFlow = http.RequestServices.GetService<CreationFlow>();
+                if (creationFlow is null)
+                {
+                    ctx.Result = new ObjectResult("Internal server error")
+                    {
+                        StatusCode = 500
+                    };
+                    return Task.CompletedTask;
+                }
+
+                var responseResult = responseContext.Map(creationFlow.PostResourceCreation);
+                var error = responseResult.GetHttpError();
+                if (error is not null)
+                {
+                    ctx.Result = new ObjectResult(error.Value.Message)
+                    {
+                        StatusCode = error.Value.StatusCode
+                    };
+                    return Task.CompletedTask;
+                }
             }
 
-            var creationFlow = http.RequestServices.GetService<CreationFlow>();
-            if (creationFlow is null)
-            {
-                context.Result = new ObjectResult("Internal server error")
-                {
-                    StatusCode = 500
-                };
-                return;
-            }
+            return Task.CompletedTask;
+        }, context);
 
-            var responseResult = creationFlow.PostResourceCreation(responseContext);
-            var error = responseResult.GetHttpError();
-            if (error is not null)
-            {
-                context.Result = new ObjectResult(error.Value.Message)
-                {
-                    StatusCode = error.Value.StatusCode
-                };
-                return;
-            }
-        }
+        await next();
     }
 
     /// <inheritdoc />

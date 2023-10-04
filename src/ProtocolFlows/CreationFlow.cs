@@ -86,15 +86,14 @@ public class CreationFlow
     /// TODO on after creation
     /// </summary>
     /// <exception cref="NotImplementedException"></exception>
-    public Result<ResponseContext> PostResourceCreation(ResponseContext responseContext)
+    public ResponseContext PostResourceCreation(ResponseContext responseContext)
     {
         // Set the following
-        // 1. Set Upload-Offset header to the size of uploaded bytes
-        // 2. Set created date for the file (SolidTus metadata)
-        // 3. Set the Tus-Resumable header = 1.0.0
-        // 4. Set max size header for response
+        CommonRequestHandler.SetUploadByteOffset(responseContext);
+        CommonRequestHandler.SetTusResumableHeader(responseContext);
+        post.SetMaximumFileSize(responseContext);
 
-        throw new NotImplementedException();
+        return responseContext;
     }
 
     /// <summary>
