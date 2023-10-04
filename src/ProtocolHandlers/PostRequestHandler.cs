@@ -133,28 +133,6 @@ public class PostRequestHandler
     }
 
     /// <summary>
-    /// Set the metadata into the contexts UploadFileInfo
-    /// </summary>
-    /// <param name="context">The request context</param>
-    /// <param name="metadata">The tuple of raw and parsed metadata</param>
-    /// <returns>Either an error or a request context</returns>
-    public static RequestContext SetNewMetadata(RequestContext context, (StringValues, Dictionary<string, string>) metadata)
-    {
-        // var uploadInfo = context.UploadFileInfo;
-        // var update = uploadInfo with
-        // {
-        //     RawMetadata = metadata.Item1,
-        //     Metadata = metadata.Item2.AsReadOnly()
-        // };
-
-        // return context with
-        // {
-        //     UploadFileInfo = update
-        // };
-        throw new NotImplementedException();
-    }
-
-    /// <summary>
     /// Set the total file size for the upload
     /// </summary>
     /// <param name="context">The request context</param>
@@ -194,5 +172,17 @@ public class PostRequestHandler
         }
 
         return context.Wrap();
+    }
+
+    /// <summary>
+    /// Set the maximum file size header if present
+    /// </summary>
+    /// <param name="context">The response context</param>
+    public void SetMaximumFileSize(ResponseContext context)
+    {
+        if (maxSize.HasValue)
+        {
+            context.ResponseHeaders.Add(TusHeaderNames.MaxSize, maxSize.Value.ToString());
+        }
     }
 }

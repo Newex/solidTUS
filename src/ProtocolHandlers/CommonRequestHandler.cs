@@ -92,12 +92,22 @@ public class CommonRequestHandler
     /// <summary>
     /// Set the upload offset header
     /// </summary>
-    /// <param name="context">The request context</param>
+    /// <param name="context">The response context</param>
     /// <returns>A request context</returns>
-    public static RequestContext SetUploadByteOffset(RequestContext context)
+    public static void SetUploadByteOffset(ResponseContext context)
     {
-        // context.ResponseHeaders.Add(TusHeaderNames.UploadOffset, context.UploadFileInfo.ByteOffset.ToString());
-        // return context;
-        throw new NotImplementedException();
+        if (context.UploadFileInfo is not null)
+        {
+            context.ResponseHeaders.Add(TusHeaderNames.UploadOffset, context.UploadFileInfo?.ByteOffset.ToString());
+        }
+    }
+
+    /// <summary>
+    /// Set the tus resumable response header
+    /// </summary>
+    /// <param name="context">The response context</param>
+    public static void SetTusResumableHeader(ResponseContext context)
+    {
+        context.ResponseHeaders.Add(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion);
     }
 }
