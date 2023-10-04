@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
-using SolidTUS.Contexts;
+using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;
 
-namespace SolidTUS.Models;
+namespace SolidTUS.Contexts;
 
 /// <summary>
 /// Request context
