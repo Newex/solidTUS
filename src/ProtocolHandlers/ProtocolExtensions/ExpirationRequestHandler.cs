@@ -54,44 +54,45 @@ public class ExpirationRequestHandler
     /// <exception cref="UnreachableException">Thrown if missing strategy enumeration</exception>
     public async Task<Result<RequestContext>> CheckExpirationAsync(RequestContext context)
     {
-        var info = context.UploadFileInfo;
-        if (info.Done)
-        {
-            // File uploaded - can only expire unfinished uploads
-            return context.Wrap();
-        }
+        throw new NotImplementedException();
+        // var info = context.UploadFileInfo;
+        // if (info.Done)
+        // {
+        //     // File uploaded - can only expire unfinished uploads
+        //     return context.Wrap();
+        // }
 
-        var strategy = info.ExpirationStrategy ?? expirationStrategy;
-        var lastTime = info.LastUpdatedDate ?? info.CreatedDate;
-        if (lastTime is null)
-        {
-            // Could not find updated date or created date
-            return HttpError.InternalServerError().Request();
-        }
+        // var strategy = info.ExpirationStrategy ?? expirationStrategy;
+        // var lastTime = info.LastUpdatedDate ?? info.CreatedDate;
+        // if (lastTime is null)
+        // {
+        //     // Could not find updated date or created date
+        //     return HttpError.InternalServerError().Request();
+        // }
 
-        DateTimeOffset? deadline = strategy switch
-        {
-            ExpirationStrategy.Never => null,
-            ExpirationStrategy.SlidingExpiration => Sliding(lastTime.Value, info),
-            ExpirationStrategy.AbsoluteExpiration => Absolute(info),
-            ExpirationStrategy.SlideAfterAbsoluteExpiration => SlideAfterAbsolute(lastTime.Value, info),
-            _ => throw new UnreachableException()
-        };
+        // DateTimeOffset? deadline = strategy switch
+        // {
+        //     ExpirationStrategy.Never => null,
+        //     ExpirationStrategy.SlidingExpiration => Sliding(lastTime.Value, info),
+        //     ExpirationStrategy.AbsoluteExpiration => Absolute(info),
+        //     ExpirationStrategy.SlideAfterAbsoluteExpiration => SlideAfterAbsolute(lastTime.Value, info),
+        //     _ => throw new UnreachableException()
+        // };
 
-        if (deadline is null)
-        {
-            return context.Wrap();
-        }
+        // if (deadline is null)
+        // {
+        //     return context.Wrap();
+        // }
 
-        var now = clock.UtcNow;
-        var expired = now > deadline.Value;
-        if (expired && !allowExpiredUploads)
-        {
-            await expiredUploadHandler.ExpiredUploadAsync(info, context.CancellationToken);
-            return HttpError.Gone("Upload expired").Request();
-        }
+        // var now = clock.UtcNow;
+        // var expired = now > deadline.Value;
+        // if (expired && !allowExpiredUploads)
+        // {
+        //     await expiredUploadHandler.ExpiredUploadAsync(info, context.CancellationToken);
+        //     return HttpError.Gone("Upload expired").Request();
+        // }
 
-        return context.Wrap();
+        // return context.Wrap();
     }
 
     /// <summary>
