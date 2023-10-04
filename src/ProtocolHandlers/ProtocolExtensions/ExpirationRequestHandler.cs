@@ -65,7 +65,7 @@ public class ExpirationRequestHandler
         if (lastTime is null)
         {
             // Could not find updated date or created date
-            return HttpError.InternalServerError().Wrap();
+            return HttpError.InternalServerError().Request();
         }
 
         DateTimeOffset? deadline = strategy switch
@@ -87,7 +87,7 @@ public class ExpirationRequestHandler
         if (expired && !allowExpiredUploads)
         {
             await expiredUploadHandler.ExpiredUploadAsync(info, context.CancellationToken);
-            return HttpError.Gone("Upload expired").Wrap();
+            return HttpError.Gone("Upload expired").Request();
         }
 
         return context.Wrap();

@@ -83,7 +83,7 @@ public class CommonRequestHandler
             var error = HttpError.PreconditionFailed();
 
             error.Headers.Add(TusHeaderNames.Version, TusHeaderValues.TusServerVersions);
-            return error.Wrap();
+            return error.Request();
         }
 
         return context.Wrap();

@@ -59,7 +59,7 @@ public class ConcatenationRequestHandler
 
             if (!isFinal && !isPartial)
             {
-                return HttpError.BadRequest("Upload-Concat must either be partial or final").Wrap();
+                return HttpError.BadRequest("Upload-Concat must either be partial or final").Request();
             }
 
             return context.Wrap();
@@ -85,7 +85,7 @@ public class ConcatenationRequestHandler
         var list = header[(header.IndexOf(";") + 1)..];
         if (list.Length == 0)
         {
-            return HttpError.BadRequest("Must provide a list of files to concatenate").Wrap();
+            return HttpError.BadRequest("Must provide a list of files to concatenate").Request();
         }
 
         return context.Wrap();

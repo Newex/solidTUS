@@ -64,11 +64,13 @@ public static class HttpContextExtensions
 
         resource.SetDetails(creationContext, request);
         resource.SetPipeReader(context.Request.BodyReader);
+        resource.SetResponseHeaders(context.Response.Headers);
+
         var hasLength = long.TryParse(context.Request.Headers[HeaderNames.ContentLength], out var contentLength);
         var isUpload = hasLength && contentLength > 0;
         var cancel = context.RequestAborted;
 
-        UploadFileInfo? uploadInfo = request.PartialMode switch
+        var response = request.PartialMode switch
         {
             PartialMode.None => await resource.CreateResourceAsync(isUpload, cancel),
             PartialMode.Partial => await resource.CreateResourceAsync(isUpload, cancel),
@@ -77,10 +79,7 @@ public static class HttpContextExtensions
         };
 
 
-        if (uploadInfo is not null)
-        {
-            context.Items[CreationResultName] = uploadInfo;
-        }
+        context.Items[CreationResultName] = response;
     }
 
     /// <summary>

@@ -12,9 +12,8 @@ internal static class FunctionalExtensions
     /// Get the result from an either http error or a request context as a response
     /// </summary>
     /// <param name="result">The result</param>
-    /// <param name="successStatus">The success status</param>
     /// <returns>A TUS http response</returns>
-    public static HttpError? GetHttpError(this Result<RequestContext> result, int successStatus = 200)
+    public static HttpError? GetHttpError<T>(this Result<T> result)
     {
         return result.Match<HttpError?>(
             _ => null,
@@ -38,8 +37,18 @@ internal static class FunctionalExtensions
     /// </summary>
     /// <param name="error">The error value</param>
     /// <returns>An error result</returns>
-    public static Result<RequestContext> Wrap(this HttpError error)
+    public static Result<RequestContext> Request(this HttpError error)
     {
         return Result<RequestContext>.Error(error);
+    }
+
+    /// <summary>
+    /// Return an error for the response context
+    /// </summary>
+    /// <param name="error">The error value</param>
+    /// <returns>An error result</returns>
+    public static Result<ResponseContext> Response(this HttpError error)
+    {
+        return Result<ResponseContext>.Error(error);
     }
 }

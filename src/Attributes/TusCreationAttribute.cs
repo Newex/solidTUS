@@ -115,7 +115,7 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
 
         if (isPost)
         {
-            if (context.HttpContext.Items[HttpContextExtensions.CreationResultName] is not UploadFileInfo uploadFile)
+            if (context.HttpContext.Items[HttpContextExtensions.CreationResultName] is not ResponseContext responseContext)
             {
                 // TODO: What to do, if no result?
                 // Maybe check if there should be result then create error
@@ -132,7 +132,16 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
                 return;
             }
 
-            var requestContext = RequestContext.Create(request);
+            var responseResult = creationFlow.PostResourceCreation(responseContext);
+            var error = responseResult.GetHttpError();
+            if (error is not null)
+            {
+                context.Result = new ObjectResult(error.Value.Message)
+                {
+                    StatusCode = error.Value.StatusCode
+                };
+                return;
+            }
         }
     }
 

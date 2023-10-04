@@ -3,11 +3,14 @@ using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using SolidTUS.Contexts;
+using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
@@ -19,6 +22,7 @@ namespace SolidTUS.Handlers;
 /// </summary>
 public class ResourceCreationHandler
 {
+    private IHeaderDictionary? responseHeaders;
     private TusCreationContext? userOptions;
     private RequestContext? requestContext;
     private PipeReader? reader;
@@ -73,17 +77,43 @@ public class ResourceCreationHandler
     }
 
     /// <summary>
+    /// Set the response headers
+    /// </summary>
+    /// <param name="responseHeaders">The response headers</param>
+    public void SetResponseHeaders(IHeaderDictionary responseHeaders)
+    {
+        this.responseHeaders = responseHeaders;
+    }
+
+    /// <summary>
     /// Create resource of either a partial file or a whole file
     /// </summary>
     /// <param name="hasUpload">True if request contains upload data otherwise false</param>
     /// <param name="cancellationToken">The cancellation token</param>
-    /// <returns>An upload file info or null</returns>
-    public async Task<UploadFileInfo?> CreateResourceAsync(bool hasUpload, CancellationToken cancellationToken)
+    /// <returns>A response context or an error</returns>
+    public async Task<Result<ResponseContext>> CreateResourceAsync(bool hasUpload, CancellationToken cancellationToken)
     {
-        if (userOptions is null || requestContext is null || userOptions.FileId is null)
+        if (userOptions is null
+            || requestContext is null
+            || responseHeaders is null)
         {
             throw new UnreachableException();
         }
+        var response = new ResponseContext(responseHeaders);
+
+        if (userOptions.FileId is null)
+        {
+            logger.LogError("Must provide file id for the resource");
+            return HttpError.InternalServerError().Response();
+        }
+
+        var uploadUrl = userOptions.UploadUrl;
+        if (uploadUrl is null)
+        {
+            logger.LogError("Must have an upload endpoint to upload the resource");
+            return HttpError.InternalServerError().Response();
+        }
+        response.LocationUrl = uploadUrl;
 
         var now = clock.UtcNow;
         var isPartial = requestContext.PartialMode == PartialMode.Partial;
@@ -115,13 +145,15 @@ public class ResourceCreationHandler
         bool create = await uploadMetaHandler.CreateResourceAsync(uploadInfo, cancellationToken);
         if (create)
         {
+            response.UploadFileInfo = uploadInfo;
             if (!hasUpload)
             {
                 if (userOptions.ResourceCreatedCallback is not null)
                 {
                     await userOptions.ResourceCreatedCallback(uploadInfo);
                 }
-                return uploadInfo;
+                logger.LogInformation("Created resource {@UploadFileInfo}", uploadInfo);
+                return response.Wrap();
             }
 
 
@@ -143,10 +175,11 @@ public class ResourceCreationHandler
                     await userOptions.UploadFinishedCallback(uploadInfo);
                 }
 
-                return uploadInfo;
+                logger.LogInformation("Created resource with upload data {@UploadFileInfo}", uploadInfo);
+                return response.Wrap();
             }
         }
 
-        return null;
+        return HttpError.InternalServerError().Response();
     }
 }

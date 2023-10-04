@@ -46,13 +46,13 @@ public class PostRequestHandler
 
         if (!(hasDefer ^ hasLength))
         {
-            return HttpError.BadRequest("Must have either Upload-Length or Upload-Defer-Length header and not both").Wrap();
+            return HttpError.BadRequest("Must have either Upload-Length or Upload-Defer-Length header and not both").Request();
         }
 
         var isDefer = int.TryParse(context.RequestHeaders[TusHeaderNames.UploadDeferLength], out var defer);
         if (isDefer && defer != 1)
         {
-            return HttpError.BadRequest("Invalid Upload-Defer-Length header").Wrap();
+            return HttpError.BadRequest("Invalid Upload-Defer-Length header").Request();
         }
         else if (isDefer)
         {
@@ -62,7 +62,7 @@ public class PostRequestHandler
         var isLength = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadLength], out var length);
         if (!isLength || length <= 0)
         {
-            return HttpError.BadRequest("Invalid Upload-Length header").Wrap();
+            return HttpError.BadRequest("Invalid Upload-Length header").Request();
         }
 
         return context.Wrap();
@@ -78,7 +78,7 @@ public class PostRequestHandler
         var hasHeader = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadLength], out var size);
         if (!hasHeader)
         {
-            return HttpError.BadRequest("Missing Upload-Length header").Wrap();
+            return HttpError.BadRequest("Missing Upload-Length header").Request();
         }
 
         if (maxSize is not null)
@@ -88,7 +88,7 @@ public class PostRequestHandler
             {
                 var error = HttpError.EntityTooLarge("File upload is bigger than server restrictions");
                 error.Headers.Add(TusHeaderNames.MaxSize, maxSize.Value.ToString());
-                return error.Wrap();
+                return error.Request();
             }
         }
 
@@ -126,7 +126,7 @@ public class PostRequestHandler
         {
             var metadata = context.Metadata ?? new Dictionary<string, string>();
             var isValid = metadataValidator(metadata);
-            return isValid ? context.Wrap() : HttpError.BadRequest("Invalid Upload-Metadata").Wrap();
+            return isValid ? context.Wrap() : HttpError.BadRequest("Invalid Upload-Metadata").Request();
         }
 
         return context.Wrap();
@@ -190,7 +190,7 @@ public class PostRequestHandler
         var isValid = string.Equals(contentType, TusHeaderValues.PatchContentType, StringComparison.OrdinalIgnoreCase);
         if (!isValid)
         {
-            return HttpError.BadRequest("Must include proper Content-Type header value: application/offset+octet-stream").Wrap();
+            return HttpError.BadRequest("Must include proper Content-Type header value: application/offset+octet-stream").Request();
         }
 
         return context.Wrap();

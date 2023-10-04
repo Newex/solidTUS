@@ -34,14 +34,14 @@ public class PatchRequestHandler
         var hasGivenFileSize = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadLength], out var size);
         if (!hasGivenFileSize)
         {
-            return HttpError.BadRequest("Missing Upload-Length header").Wrap();
+            return HttpError.BadRequest("Missing Upload-Length header").Request();
         }
 
         // The given file size must be non zero
         var isValid = size > 0;
         if (!isValid)
         {
-            return HttpError.BadRequest("Upload-Length header must have a non-negative value").Wrap();
+            return HttpError.BadRequest("Upload-Length header must have a non-negative value").Request();
         }
 
         return context.Wrap();
@@ -57,7 +57,7 @@ public class PatchRequestHandler
         var supportMedia = context.RequestHeaders[HeaderNames.ContentType].Equals(TusHeaderValues.PatchContentType);
         if (!supportMedia)
         {
-            return HttpError.UnsupportedMediaType().Wrap();
+            return HttpError.UnsupportedMediaType().Request();
         }
 
         return context.Wrap();
@@ -73,12 +73,12 @@ public class PatchRequestHandler
         var hasUploadOffset = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadOffset], out var uploadOffset);
         if (!hasUploadOffset)
         {
-            return HttpError.BadRequest("Missing Upload-Offset header").Wrap();
+            return HttpError.BadRequest("Missing Upload-Offset header").Request();
         }
 
         if (uploadOffset < 0)
         {
-            return HttpError.BadRequest("Upload-Offset must have a non-negative value").Wrap();
+            return HttpError.BadRequest("Upload-Offset must have a non-negative value").Request();
         }
 
         return context.Wrap();
@@ -96,13 +96,13 @@ public class PatchRequestHandler
 
         if (!hasUploadOffset)
         {
-            return HttpError.BadRequest("Missing Upload-Offset header").Wrap();
+            return HttpError.BadRequest("Missing Upload-Offset header").Request();
         }
 
         var isValid = fileInfo.ByteOffset == uploadOffset;
         if (!isValid)
         {
-            return HttpError.Conflict("Conflicting file byte offset").Wrap();
+            return HttpError.Conflict("Conflicting file byte offset").Request();
         }
 
         return context.Wrap();
@@ -121,13 +121,13 @@ public class PatchRequestHandler
         var hasHeaders = hasUploadOffset && uploadSize.HasValue && fileSize.HasValue;
         if (!hasHeaders)
         {
-            return HttpError.BadRequest("Missing either Upload-Length header or Content-Length header").Wrap();
+            return HttpError.BadRequest("Missing either Upload-Length header or Content-Length header").Request();
         }
 
         var isValid = uploadSize + uploadOffset <= fileSize;
         if (!isValid)
         {
-            return HttpError.BadRequest("Data will exceed the specified file size").Wrap();
+            return HttpError.BadRequest("Data will exceed the specified file size").Request();
         }
 
         return context.Wrap();

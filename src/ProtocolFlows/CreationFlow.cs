@@ -86,7 +86,7 @@ public class CreationFlow
     /// TODO on after creation
     /// </summary>
     /// <exception cref="NotImplementedException"></exception>
-    public void PostResourceCreation(UploadFileInfo uploadFileInfo, IHeaderDictionary responseHeaders)
+    public Result<ResponseContext> PostResourceCreation(ResponseContext responseContext)
     {
         // Set the following
         // 1. Set Upload-Offset header to the size of uploaded bytes
