@@ -83,9 +83,8 @@ public class CreationFlow
     }
 
     /// <summary>
-    /// TODO on after creation
+    /// Post resource creation set response headers
     /// </summary>
-    /// <exception cref="NotImplementedException"></exception>
     public ResponseContext PostResourceCreation(ResponseContext responseContext)
     {
         // Set the following
