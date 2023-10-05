@@ -56,6 +56,9 @@ public sealed record TusParallelContextBuilder
     /// <summary>
     /// If the current request is a parallel upload set the id as partial id
     /// </summary>
+    /// <remarks>
+    /// If not set the file id will be used as partial id.
+    /// </remarks>
     /// <param name="partialId">The partial id</param>
     /// <returns>A parallel context</returns>
     public TusParallelContextBuilder SetPartialId(string partialId)
