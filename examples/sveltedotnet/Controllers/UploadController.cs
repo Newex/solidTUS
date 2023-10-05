@@ -32,12 +32,12 @@ public class UploadController : ControllerBase
     [RequestSizeLimit(5_000_000_000)]
     public async Task<ActionResult> CreateFile()
     {
-        if (HttpContext.TusMetadata() is not null)
+        var metadata = HttpContext.TusMetadata();
+        if (metadata is not null)
         {
             // Read Metadata
-            var metadata = HttpContext.TusMetadata();
-            var filename = metadata?["name"];
-            var mime = metadata?["type"];
+            var filename = metadata["name"];
+            var mime = metadata["type"];
         }
 
         // Construct some unique file id
