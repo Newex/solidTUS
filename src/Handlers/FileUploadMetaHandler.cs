@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -108,24 +107,6 @@ public class FileUploadMetaHandler : IUploadMetaHandler
     }
 
     /// <inheritdoc />
-    public async Task<UploadFileInfo?> GetPartialResourceAsync(string partialId, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var file = MetadataPartialFilenamePath(partialId);
-
-            // Read and deserialize the metadata file
-            var fileInfoText = await File.ReadAllTextAsync(file, cancellationToken);
-            return JsonSerializer.Deserialize<UploadFileInfo>(fileInfoText);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Could not retrieve partial upload file info for partial id: {PartialID}", partialId);
-            return null;
-        }
-    }
-
-    /// <inheritdoc />
     public async IAsyncEnumerable<UploadFileInfo> GetAllResourcesAsync()
     {
         var filenames = Directory.GetFiles(directoryPath, "*.metadata.json", SearchOption.AllDirectories);
@@ -188,7 +169,13 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         var exists = File.Exists(filename);
         if (!exists)
         {
-            return null;
+            // Try partial
+            filename = MetadataPartialFilenamePath(fileId);
+            exists = File.Exists(filename);
+            if (!exists)
+            {
+                return null;
+            }
         }
 
         try
@@ -203,7 +190,14 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         }
     }
 
-    private string MetadataFullFilenamePath(string fileId) => Path.Combine(directoryPath, $"{fileId}.metadata.json");
+    private string MetadataFullFilenamePath(string fileId)
+    {
+        var temp = fileId.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries);
+        var sanitized = string.Join("_", temp);
+        var filename = sanitized + ".metadata.json";
+        var path = Path.Combine(directoryPath, filename);
+        return path;
+    }
 
     private string MetadataPartialFilenamePath(string partialId)
     {

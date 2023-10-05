@@ -225,7 +225,7 @@ public class ResourceCreationHandler
                 return HttpError.NotFound("Partial resource not found").Response();
             }
 
-            var info = await uploadMetaHandler.GetPartialResourceAsync(partialId, cancellationToken);
+            var info = await uploadMetaHandler.GetResourceAsync(partialId, cancellationToken);
             if (info is null)
             {
                 logger.LogError("Could not find partial resource with id {PartialId} for merging", partialId);
@@ -236,6 +236,12 @@ public class ResourceCreationHandler
             {
                 logger.LogError("Partial resource {PartialId} has not yet finished uploading, cannot merge unfinished uploads", partialId);
                 return HttpError.BadRequest("Cannot merge partial files that have not finished uploading").Response();
+            }
+
+            if (!info.IsPartial)
+            {
+                logger.LogError("Cannot merge non-partial files {@File}", info);
+                return HttpError.BadRequest("Cannot merge non-partial files").Response();
             }
 
             infos.Add(info);
