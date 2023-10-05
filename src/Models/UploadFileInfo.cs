@@ -21,7 +21,7 @@ public record UploadFileInfo
     /// Get the bytes that have been uploaded so-far
     /// </summary>
     [JsonInclude]
-    public long ByteOffset { get; internal set; }
+    public long ByteOffset { get; private set; }
 
     /// <summary>
     /// Get the total upload file size
