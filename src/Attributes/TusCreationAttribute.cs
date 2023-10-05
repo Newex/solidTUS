@@ -73,8 +73,7 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
                 return;
             }
 
-            var discoveryResponse = optionsHandler.ServerFeatureAnnouncements();
-            response.AddTusHeaders(discoveryResponse);
+            optionsHandler.ServerFeatureAnnouncements(response.Headers);
             response.StatusCode = 204;
             return;
         }

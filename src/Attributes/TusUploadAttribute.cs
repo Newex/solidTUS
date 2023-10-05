@@ -25,31 +25,12 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
     /// <summary>
     /// Instantiate a new <see cref="TusUploadAttribute"/> upload endpoint handler
     /// </summary>
-    public TusUploadAttribute()
-    {
-    }
-
-    /// <summary>
-    /// Instantiate a new <see cref="TusUploadAttribute"/> upload endpoint handler
-    /// </summary>
     /// <param name="template">The route template</param>
     public TusUploadAttribute([StringSyntax("Route")] string template)
     {
         ArgumentNullException.ThrowIfNull(template);
         Template = template;
     }
-
-    private TusUploadContext? tusContext;
-
-    /// <summary>
-    /// Get or set the name of the file ID parameter
-    /// </summary>
-    public virtual string FileIdParameterName { get; set; } = ParameterNames.FileIdParameterName;
-
-    /// <summary>
-    /// Get or set the name of the TUS context parameter
-    /// </summary>
-    public virtual string ContextParameterName { get; set; } = ParameterNames.TusUploadContextParameterName;
 
     /// <summary>
     /// Gets the supported http metods
