@@ -1,7 +1,10 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
+
 using SolidTUS.Attributes;
 using SolidTUS.Contexts;
 using SolidTUS.Extensions;
@@ -26,36 +29,29 @@ public class UploadController : ControllerBase
     }
 
     [TusCreation("/api/upload")]
-    public async Task<ActionResult> CreateFile([FromServices] TusCreationContextOLD context)
+    public async Task<ActionResult> CreateFile()
     {
-        if (!context.UploadFileInfo.IsPartial)
+        if (HttpContext.TusMetadata() is not null)
         {
             // Read Metadata
-            var filename = context.UploadFileInfo.Metadata?["name"];
-            var mime = context.UploadFileInfo.Metadata?["type"];
+            var metadata = HttpContext.TusMetadata();
+            var filename = metadata?["name"];
+            var mime = metadata?["type"];
         }
 
         // Construct some unique file id
         var id = Guid.NewGuid().ToString("N");
         var partialId = id[..8];
 
-        context.SetUploadRouteValues(new { fileId = id });
-
-        var parallel = context
-            .SetupParallelUploads("/part/{partialId}/{hello}")
-            .SetParallelIdParameterNameInTemplate("partialId")
+        var configuration = HttpContext
+            .TusCreation(id)
+            .WithParallelUploads()
             .SetPartialId(partialId)
-            .SetRouteValues(new { partialId, hello = "World" })
-            .OnMergeHandler((files) => files.Count > 1)
-            .Build();
-
-        context.ApplyParallelUploadsConfiguration(parallel);
-        var ctx = HttpContext.TusCreation(id);
-        await HttpContext.StartCreationAsync(ctx);
-
+            .Done();
 
         // Accept creating upload and redirect to TusUpload
-        await context.StartCreationAsync(id);
+        var ctx = configuration.Build("{fileId}", ("fileId", id));
+        await HttpContext.StartCreationAsync(ctx);
 
         // Converts a success to 201 created
         return Ok();

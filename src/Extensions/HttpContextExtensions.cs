@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
+using SolidTUS.Builders;
 using SolidTUS.Contexts;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
@@ -21,15 +23,9 @@ public static class HttpContextExtensions
     /// <param name="fileId">The file id</param>
     /// <returns>A tus creation context</returns>
     /// <exception cref="InvalidOperationException">Thrown if missing tus creation context service</exception>
-    public static TusCreationContext TusCreation(this HttpContext context, string fileId)
+    public static TusCreationContextBuilder TusCreation(this HttpContext context, string fileId)
     {
-        if (context.RequestServices.GetService(typeof(TusCreationContext)) is not TusCreationContext creation)
-        {
-            throw new UnreachableException();
-        }
-
-        creation.FileId = fileId;
-        return creation;
+        return new(fileId);
     }
 
     /// <summary>
@@ -47,11 +43,6 @@ public static class HttpContextExtensions
     /// <returns>An awaitable task</returns>
     public static async Task StartCreationAsync(this HttpContext context, TusCreationContext creationContext)
     {
-        if (string.IsNullOrWhiteSpace(creationContext.UploadUrl))
-        {
-            throw new InvalidOperationException("Must provide an upload url to the TusUpload endpoint");
-        }
-
         if (context.RequestServices.GetService(typeof(ResourceCreationHandler)) is not ResourceCreationHandler resource)
         {
             throw new UnreachableException();
@@ -59,7 +50,7 @@ public static class HttpContextExtensions
 
         if (context.Items[RequestContext.Name] is not RequestContext request)
         {
-            throw new UnreachableException();
+            throw new InvalidOperationException("Must have TusCreation attribute to start accepting tus uploads");
         }
 
         resource.SetDetails(creationContext, request);
@@ -74,12 +65,26 @@ public static class HttpContextExtensions
         {
             PartialMode.None => await resource.CreateResourceAsync(isUpload, cancel),
             PartialMode.Partial => await resource.CreateResourceAsync(isUpload, cancel),
-            PartialMode.Final => throw new NotImplementedException(),
+            PartialMode.Final => await resource.MergeFilesAsync(cancel),
             _ => throw new NotImplementedException(),
         };
 
-
         context.Items[CreationResultName] = response;
+    }
+
+    /// <summary>
+    /// Get tus metadata if there are any
+    /// </summary>
+    /// <param name="context">The http context</param>
+    /// <returns>A tus metadata dictionary</returns>
+    public static IReadOnlyDictionary<string, string>? TusMetadata(this HttpContext context)
+    {
+        if (context.Items[RequestContext.Name] is not RequestContext request)
+        {
+            throw new InvalidOperationException("Must have TusCreation or TusUpload attribute to access tus metadata");
+        }
+
+        return request.Metadata;
     }
 
     /// <summary>

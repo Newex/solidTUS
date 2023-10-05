@@ -60,6 +60,11 @@ public record RequestContext
     public long? FileSize { get; internal set; }
 
     /// <summary>
+    /// Get the urls for final upload-concat.
+    /// </summary>
+    public string[]? Urls { get; internal set; }
+
+    /// <summary>
     /// Create new <see cref="RequestContext"/> if request is supported by the server otherwise <see cref="HttpError"/>
     /// </summary>
     /// <param name="request">The request</param>

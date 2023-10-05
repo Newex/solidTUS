@@ -5,28 +5,26 @@ using System.Threading.Tasks;
 
 using SolidTUS.Models;
 
-namespace SolidTUS.Contexts;
+namespace SolidTUS.Builders;
 
 /// <summary>
 /// Parallel upload context for TUS
 /// </summary>
-public record TusParallelContext
+public sealed record TusParallelContextBuilder
 {
-    private readonly TusCreationContext creationContext;
+    private readonly TusCreationContextBuilder creationContext;
 
-    internal TusParallelContext(
-        string routeTemplate,
-        TusCreationContext creationContext
+    internal TusParallelContextBuilder(
+        TusCreationContextBuilder creationContext
     )
     {
-        RouteTemplate = routeTemplate;
         this.creationContext = creationContext;
     }
 
-    internal string RouteTemplate { get; }
     internal string? PartialId { get; set; }
     internal Func<IList<UploadFileInfo>, bool> AllowMergeCallback { get; set; } = _ => true;
     internal Func<UploadFileInfo, IList<UploadFileInfo>, Task>? MergeCallback { get; set; }
+    internal Func<IList<UploadFileInfo>, string>? FinalMergedIdCallback { get; set; }
 
     /// <summary>
     /// Allow or reject the merge of the files.
@@ -39,7 +37,7 @@ public record TusParallelContext
     /// </remarks>
     /// <param name="allow">Callback that on true allows merge otherwise rejects the merge request</param>
     /// <returns>A parallel context</returns>
-    public TusParallelContext AllowMerge(Func<IList<UploadFileInfo>, bool> allow)
+    public TusParallelContextBuilder AllowMerge(Func<IList<UploadFileInfo>, bool> allow)
     {
         AllowMergeCallback = allow;
         return this;
@@ -51,7 +49,7 @@ public record TusParallelContext
     /// </summary>
     /// <param name="merged">Merged list of files in order</param>
     /// <returns>A parallel context</returns>
-    public TusParallelContext OnMergedFiles(Func<UploadFileInfo, IList<UploadFileInfo>, Task> merged)
+    public TusParallelContextBuilder OnMergedFiles(Func<UploadFileInfo, IList<UploadFileInfo>, Task> merged)
     {
         MergeCallback = merged;
         return this;
@@ -62,7 +60,7 @@ public record TusParallelContext
     /// </summary>
     /// <param name="partialId">The partial id</param>
     /// <returns>A parallel context</returns>
-    public TusParallelContext SetPartialId(string partialId)
+    public TusParallelContextBuilder SetPartialId(string partialId)
     {
         PartialId = partialId;
         return this;
@@ -72,7 +70,7 @@ public record TusParallelContext
     /// Return to the tus creation context
     /// </summary>
     /// <returns>A tus creation context</returns>
-    public TusCreationContext Done()
+    public TusCreationContextBuilder Done()
     {
         return creationContext;
     }

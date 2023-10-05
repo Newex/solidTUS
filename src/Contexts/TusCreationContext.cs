@@ -1,136 +1,128 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using SolidTUS.Constants;
 using SolidTUS.Models;
-using SolidTUS.Options;
-using SolidTUS.Wrappers;
 
 namespace SolidTUS.Contexts;
 
 /// <summary>
 /// Creation context for TUS
 /// </summary>
-public record class TusCreationContext
+public sealed record class TusCreationContext
 {
-    private readonly ILinkGeneratorWrapper linkGenerator;
-
     /// <summary>
     /// Instantiate a new object of <see cref="TusCreationContext"/>
     /// </summary>
-    /// <param name="linkGenerator">The link generator</param>
-    public TusCreationContext(
-        ILinkGeneratorWrapper linkGenerator
+    /// <param name="fileId">The file id</param>
+    /// <param name="routeTemplate">The route template</param>
+    /// <param name="routeName">The route name</param>
+    /// <param name="fileIdParameter">The file id route parameter</param>
+    /// <param name="routeValues">The extra optional route values</param>
+    /// <param name="filename">The optional filename</param>
+    /// <param name="expirationStrategy">The expiration strategy</param>
+    /// <param name="interval">The expiration interval</param>
+    /// <param name="resourceCreatedCallback">The resource created callback</param>
+    /// <param name="uploadFinishedCallback">The upload finished callback when using Creation-With-Upload</param>
+    /// <param name="partialId">The partial id</param>
+    /// <param name="allowMergeCallback">The allow merge callback</param>
+    /// <param name="mergeCallback">The merge callback</param>
+    internal TusCreationContext(
+        string fileId,
+        string routeTemplate,
+        string routeName,
+        (string, object) fileIdParameter,
+        (string, object)[] routeValues,
+        string? filename,
+        ExpirationStrategy? expirationStrategy,
+        TimeSpan? interval,
+
+        Func<UploadFileInfo, Task>? resourceCreatedCallback,
+        Func<UploadFileInfo, Task>? uploadFinishedCallback,
+
+        string? partialId,
+
+        Func<IList<UploadFileInfo>, bool>? allowMergeCallback,
+        Func<UploadFileInfo, IList<UploadFileInfo>, Task>? mergeCallback
     )
     {
-        this.linkGenerator = linkGenerator;
-    }
-
-    internal string? UploadUrl { get; set; }
-    internal string? FileId { get; set; }
-    internal ExpirationStrategy? ExpirationStrategy { get; set; }
-    internal TimeSpan? Interval { get; set; }
-    internal string? Filename { get; set; }
-    internal Func<UploadFileInfo, Task>? UploadFinishedCallback { get; set; }
-    internal Func<UploadFileInfo, Task>? ResourceCreatedCallback { get; set; }
-    internal TusParallelContext? TusParallelContext { get; set; }
-
-    /// <summary>
-    /// Set the tus upload url endpoint
-    /// </summary>
-    /// <param name="url">The endpoint url</param>
-    /// <returns>A tus creation context</returns>
-    public TusCreationContext SetUploadUrl(string url)
-    {
-        UploadUrl = url;
-        return this;
-    }
-
-    /// <summary>
-    /// Set the tus upload url endpoint by route name and route values
-    /// </summary>
-    /// <remarks>
-    /// If no route name is provided the default route name will be used.
-    /// </remarks>
-    /// <param name="routeValues">The route values</param>
-    /// <param name="routeName">The route name</param>
-    /// <returns>A tus creation context</returns>
-    public TusCreationContext SetUploadUrl(object routeValues, string routeName = EndpointNames.UploadEndpoint)
-    {
-        UploadUrl = linkGenerator.GetPathByName(routeName, routeValues);
-        return this;
-    }
-
-    /// <summary>
-    /// Set the expiration strategy and the associated time span.
-    /// </summary>
-    /// <remarks>
-    /// If null, the global options will be used from <see cref="TusOptions"/>
-    /// </remarks>
-    /// <param name="strategy">The expiration strategy</param>
-    /// <param name="interval">The expiration interval</param>
-    /// <returns>A tus creation context</returns>
-    public TusCreationContext SetExpirationStrategy(ExpirationStrategy? strategy, TimeSpan? interval)
-    {
-        ExpirationStrategy = strategy;
-        Interval = interval;
-        return this;
-    }
-
-    /// <summary>
-    /// Set the filename of the upload, as it will be stored on disk on the server.
-    /// </summary>
-    /// <remarks>
-    /// There can be conflicts if the filename has the same name as anothe file on the server in the same directory.
-    /// </remarks>
-    /// <param name="filename">The unique filename</param>
-    /// <returns>A tus creation context</returns>
-    public TusCreationContext SetFilename(string filename)
-    {
+        FileId = fileId;
+        RouteTemplate = routeTemplate;
+        RouteName = routeName;
+        FileIdParameter = fileIdParameter;
+        RouteValues = routeValues;
         Filename = filename;
-        return this;
+        ExpirationStrategy = expirationStrategy;
+        Interval = interval;
+        ResourceCreatedCallback = resourceCreatedCallback;
+        UploadFinishedCallback = uploadFinishedCallback;
+        PartialId = partialId;
+        AllowMergeCallback = allowMergeCallback;
+        MergeCallback = mergeCallback;
     }
 
     /// <summary>
-    /// Set callback for when the tus request <c>Creation-With-Upload</c> has finished.
+    /// Get the file id
     /// </summary>
-    /// <param name="callback">The callback</param>
-    /// <returns>A tus creation context</returns>
-    public TusCreationContext OnCreateWithUploadFinished(Func<UploadFileInfo, Task> callback)
-    {
-        UploadFinishedCallback = callback;
-        return this;
-    }
+    public string FileId { get; }
 
     /// <summary>
-    /// Set the callback for when the tus request <c>Creation</c> has finished.
+    /// Get the route template
     /// </summary>
-    /// <param name="callback">The callback</param>
-    /// <returns>A tus creation context</returns>
-    public TusCreationContext OnResourceCreated(Func<UploadFileInfo, Task> callback)
-    {
-        ResourceCreatedCallback = callback;
-        return this;
-    }
+    public string RouteTemplate { get; }
 
     /// <summary>
-    /// Setup parallel uploads.
-    /// <para>
-    /// One (1) file will be split into parts from the client and send in pieces in parallel.
-    /// Each piece will be assembled server side.
-    /// </para>
+    /// Get the route name
     /// </summary>
-    /// <remarks>
-    /// This is support for the tus <c>Concatenation</c> extension protocol.
-    /// <para>
-    /// Disclaimer: There might not be any appreciable speed up using this.
-    /// </para>
-    /// </remarks>
-    /// <param name="uploadRouteTemplate">The template for the upload endpoint. Used to parse request urls to find the upload ids.</param>
-    /// <returns>A tus parallel context</returns>
-    public TusParallelContext WithParallelUploads(string uploadRouteTemplate)
-    {
-        var parallel = new TusParallelContext(uploadRouteTemplate, this);
-        TusParallelContext = parallel;
-        return parallel;
-    }
-}
+    public string RouteName { get; }
+
+    /// <summary>
+    /// Get the file id parameter
+    /// </summary>
+    public (string, object) FileIdParameter { get; }
+
+    /// <summary>
+    /// Get the route values
+    /// </summary>
+    public (string, object)[] RouteValues { get; }
+
+    /// <summary>
+    /// Get the filename
+    /// </summary>
+    public string? Filename { get; }
+
+    /// <summary>
+    /// Get the expiration strategy
+    /// </summary>
+    public ExpirationStrategy? ExpirationStrategy { get; }
+
+    /// <summary>
+    /// Get the interval for the expiration
+    /// </summary>
+    public TimeSpan? Interval { get; }
+
+    /// <summary>
+    /// Get the resource created callback
+    /// </summary>
+    public Func<UploadFileInfo, Task>? ResourceCreatedCallback { get; }
+
+    /// <summary>
+    /// Get the upload finished callback
+    /// </summary>
+    public Func<UploadFileInfo, Task>? UploadFinishedCallback { get; }
+
+    /// <summary>
+    /// Get the partial id
+    /// </summary>
+    public string? PartialId { get; }
+
+    /// <summary>
+    /// Get the allow merge callback
+    /// </summary>
+    public Func<IList<UploadFileInfo>, bool>? AllowMergeCallback { get; }
+
+    /// <summary>
+    /// Get the merge callback
+    /// </summary>
+    public Func<UploadFileInfo, IList<UploadFileInfo>, Task>? MergeCallback { get; }
+
+};

@@ -88,25 +88,9 @@ public class ConcatenationRequestHandler
             return HttpError.BadRequest("Must provide a list of files to concatenate").Request();
         }
 
+        var urls = list.Split(" ");
+        context.Urls = urls;
         return context.Wrap();
-    }
-
-    /// <summary>
-    /// Set the header for the <c>Upload-Concat</c> to the stored value from the metadata info file.
-    /// </summary>
-    /// <param name="context">The request context</param>
-    /// <returns>A request context</returns>
-    public static RequestContext SetUploadConcatFinalUrls(RequestContext context)
-    {
-        throw new NotImplementedException();
-        // if (context.PartialMode != PartialMode.Final)
-        // {
-        //     return context;
-        // }
-
-        // var final = context.UploadFileInfo.ConcatHeaderFinal;
-        // context.ResponseHeaders.Add(TusHeaderNames.UploadConcat, final);
-        // return context;
     }
 
     /// <summary>

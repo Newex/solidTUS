@@ -12,9 +12,8 @@ using SolidTUS.ProtocolFlows;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 using SolidTUS.Validators;
-using SolidTUS.Wrappers;
 
-namespace SolidTUS.Extensions;
+namespace SolidTUS.Builders;
 
 /// <summary>
 /// Tus service builder pattern
@@ -144,15 +143,13 @@ public sealed class TusBuilder
                 new ExcludeBindingMetadataProvider(typeof(TusUploadContext))
             );
             options.ModelMetadataDetailsProviders.Add(
-                new ExcludeBindingMetadataProvider(typeof(TusCreationContextOLD))
+                new ExcludeBindingMetadataProvider(typeof(TusCreationContext))
             );
         });
 
         builder.services.AddScoped<IChecksumValidator, SHA1ChecksumValidator>();
         builder.services.AddScoped<IChecksumValidator, MD5ChecksumValidator>();
 
-        builder.services.TryAddScoped<ILinkGeneratorWrapper, LinkGeneratorWrapper>();
-        builder.services.TryAddScoped<TusCreationContext>();
         builder.services.TryAddScoped<ResourceCreationHandler>();
         return builder;
     }
