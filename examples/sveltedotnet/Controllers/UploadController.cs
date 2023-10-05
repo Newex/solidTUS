@@ -29,6 +29,7 @@ public class UploadController : ControllerBase
     }
 
     [TusCreation("/api/upload")]
+    [RequestSizeLimit(5_000_000_000)]
     public async Task<ActionResult> CreateFile()
     {
         if (HttpContext.TusMetadata() is not null)
