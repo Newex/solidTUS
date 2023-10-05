@@ -8,7 +8,7 @@ namespace SolidTUS.Models;
 /// <summary>
 /// The input and output used during a tus request response
 /// </summary>
-internal record struct TusResult
+internal record TusResult
 {
     /// <summary>
     /// Instantiate a new <see cref="TusResult"/>
