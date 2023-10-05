@@ -48,20 +48,19 @@ public static class HttpContextExtensions
             throw new UnreachableException();
         }
 
-        if (context.Items[RequestContext.Name] is not RequestContext request)
+        if (context.Items[TusResult.Name] is not TusResult tusResult)
         {
             throw new InvalidOperationException("Must have TusCreation attribute to start accepting tus uploads");
         }
 
-        resource.SetDetails(creationContext, request);
+        resource.SetDetails(creationContext, tusResult);
         resource.SetPipeReader(context.Request.BodyReader);
-        resource.SetResponseHeaders(context.Response.Headers);
 
         var hasLength = long.TryParse(context.Request.Headers[HeaderNames.ContentLength], out var contentLength);
         var isUpload = hasLength && contentLength > 0;
         var cancel = context.RequestAborted;
 
-        var response = request.PartialMode switch
+        var response = tusResult.PartialMode switch
         {
             PartialMode.None => await resource.CreateResourceAsync(isUpload, cancel),
             PartialMode.Partial => await resource.CreateResourceAsync(isUpload, cancel),
@@ -79,7 +78,7 @@ public static class HttpContextExtensions
     /// <returns>A tus metadata dictionary</returns>
     public static IReadOnlyDictionary<string, string>? TusMetadata(this HttpContext context)
     {
-        if (context.Items[RequestContext.Name] is not RequestContext request)
+        if (context.Items[TusResult.Name] is not TusResult request)
         {
             throw new InvalidOperationException("Must have TusCreation or TusUpload attribute to access tus metadata");
         }

@@ -23,11 +23,10 @@ namespace SolidTUS.Handlers;
 /// <summary>
 /// Resource creation handler
 /// </summary>
-public class ResourceCreationHandler
+internal class ResourceCreationHandler
 {
-    private IHeaderDictionary? responseHeaders;
     private TusCreationContext? userOptions;
-    private RequestContext? requestContext;
+    private TusResult? tusResult;
     private PipeReader? reader;
 
     private readonly TusOptions globalOptions;
@@ -69,11 +68,11 @@ public class ResourceCreationHandler
     /// Set required details from the user and the request
     /// </summary>
     /// <param name="tusContext">The user tus options</param>
-    /// <param name="requestContext">The request context</param>
-    public void SetDetails(TusCreationContext tusContext, RequestContext requestContext)
+    /// <param name="tusResult">The request context</param>
+    public void SetDetails(TusCreationContext tusContext, TusResult tusResult)
     {
         userOptions = tusContext;
-        this.requestContext = requestContext;
+        this.tusResult = tusResult;
     }
 
     /// <summary>
@@ -86,29 +85,19 @@ public class ResourceCreationHandler
     }
 
     /// <summary>
-    /// Set the response headers
-    /// </summary>
-    /// <param name="responseHeaders">The response headers</param>
-    public void SetResponseHeaders(IHeaderDictionary responseHeaders)
-    {
-        this.responseHeaders = responseHeaders;
-    }
-
-    /// <summary>
     /// Create resource of either a partial file or a whole file
     /// </summary>
     /// <param name="hasUpload">True if request contains upload data otherwise false</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>A response context or an error</returns>
-    public async Task<Result<ResponseContext>> CreateResourceAsync(bool hasUpload, CancellationToken cancellationToken)
+    public async Task<Result<TusResult>> CreateResourceAsync(bool hasUpload, CancellationToken cancellationToken)
     {
         if (userOptions is null
-            || requestContext is null
-            || responseHeaders is null)
+            || tusResult is null
+           )
         {
             throw new UnreachableException();
         }
-        var response = new ResponseContext(responseHeaders);
 
         if (userOptions.FileId is null)
         {
@@ -122,10 +111,10 @@ public class ResourceCreationHandler
             logger.LogError("Must have an upload endpoint to upload the resource");
             return HttpError.InternalServerError().Response();
         }
-        response.LocationUrl = uploadUrl;
+        tusResult.LocationUrl = uploadUrl;
 
         var now = clock.UtcNow;
-        var isPartial = requestContext.PartialMode == PartialMode.Partial;
+        var isPartial = tusResult.PartialMode == PartialMode.Partial;
         var strategy = userOptions.ExpirationStrategy ?? globalOptions.ExpirationStrategy;
         var interval = userOptions.Interval
             ?? (strategy == ExpirationStrategy.AbsoluteExpiration
@@ -136,10 +125,9 @@ public class ResourceCreationHandler
         {
             FileId = fileId,
             CreatedDate = now,
-            ByteOffset = 0L,
-            FileSize = requestContext.FileSize,
-            Metadata = requestContext.Metadata,
-            RawMetadata = requestContext.RawMetadata,
+            FileSize = tusResult.FileSize,
+            Metadata = tusResult.Metadata,
+            RawMetadata = tusResult.RawMetadata,
             ExpirationStrategy = strategy,
             Interval = interval,
             IsPartial = isPartial,
@@ -158,7 +146,7 @@ public class ResourceCreationHandler
         bool create = await uploadMetaHandler.CreateResourceAsync(uploadInfo, cancellationToken);
         if (create)
         {
-            response.UploadFileInfo = uploadInfo;
+            tusResult.UploadFileInfo = uploadInfo;
             if (!hasUpload)
             {
                 if (userOptions.ResourceCreatedCallback is not null)
@@ -166,7 +154,7 @@ public class ResourceCreationHandler
                     await userOptions.ResourceCreatedCallback(uploadInfo);
                 }
                 logger.LogInformation("Created resource {@UploadFileInfo}", uploadInfo);
-                return response.Wrap();
+                return tusResult.Wrap();
             }
 
 
@@ -175,7 +163,7 @@ public class ResourceCreationHandler
                 throw new InvalidOperationException("Missing body stream to retrieve upload in Creation-With-Upload");
             }
 
-            await uploadStorageHandler.OnPartialUploadAsync(reader, uploadInfo, requestContext.ChecksumContext, cancellationToken);
+            await uploadStorageHandler.OnPartialUploadAsync(reader, uploadInfo, tusResult.ChecksumContext, cancellationToken);
             if (uploadInfo.Done)
             {
                 if (userOptions.ResourceCreatedCallback is not null)
@@ -189,7 +177,7 @@ public class ResourceCreationHandler
                 }
 
                 logger.LogInformation("Created resource with upload data {@UploadFileInfo}", uploadInfo);
-                return response.Wrap();
+                return tusResult.Wrap();
             }
         }
 
@@ -202,21 +190,20 @@ public class ResourceCreationHandler
     /// </summary>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>A response context or an error</returns>
-    public async Task<Result<ResponseContext>> MergeFilesAsync(CancellationToken cancellationToken)
+    public async Task<Result<TusResult>> MergeFilesAsync(CancellationToken cancellationToken)
     {
-        if (responseHeaders is null || userOptions is null)
+        if (userOptions is null)
         {
             throw new UnreachableException();
         }
-        var result = new ResponseContext(responseHeaders);
 
-        if (requestContext is null || requestContext.Urls is null)
+        if (tusResult is null || tusResult.Urls is null)
         {
             throw new UnreachableException();
         }
 
         var infos = new List<UploadFileInfo>();
-        foreach (var url in requestContext.Urls)
+        foreach (var url in tusResult.Urls)
         {
             var partialId = ConcatenationRequestHandler.GetTemplateValue(url, userOptions.RouteTemplate, userOptions.FileIdParameter.Item1);
             if (partialId is null)
@@ -263,8 +250,7 @@ public class ResourceCreationHandler
         var finalInfo = new UploadFileInfo
         {
             FileId = userOptions.FileId,
-            ByteOffset = 0L,
-            ConcatHeaderFinal = requestContext.RequestHeaders[TusHeaderNames.UploadConcat],
+            ConcatHeaderFinal = tusResult.RequestHeaders[TusHeaderNames.UploadConcat],
             CreatedDate = now,
             ExpirationDate = null, // Uploaded file should not expire
             ExpirationStrategy = ExpirationStrategy.Never,
@@ -272,9 +258,9 @@ public class ResourceCreationHandler
             Interval = null,
             IsPartial = false, // This is a complete merged file
             LastUpdatedDate = null,
-            Metadata = requestContext.Metadata,
+            Metadata = tusResult.Metadata,
             OnDiskFilename = userOptions.Filename ?? userOptions.FileId,
-            RawMetadata = requestContext.RawMetadata
+            RawMetadata = tusResult.RawMetadata
         };
 
         var merged = await uploadStorageHandler.MergePartialFilesAsync(finalInfo, infos, cancellationToken);
@@ -286,11 +272,11 @@ public class ResourceCreationHandler
         if (merged is not null)
         {
             logger.LogInformation("Merged files into {@FinalInfo} with the {@PartialInfos}", merged, infos);
-            result.UploadFileInfo = merged;
+            tusResult.UploadFileInfo = merged;
 
             // Create url to new file
-            result.LocationUrl = linkGenerator.GetPathToUploadWithWhenKey(userOptions.FileIdParameter.Item1, userOptions.FileIdParameter.Item2, userOptions.RouteName);
-            return result.Wrap();
+            tusResult.LocationUrl = linkGenerator.GetPathToUploadWithWhenKey(userOptions.FileIdParameter.Item1, userOptions.FileIdParameter.Item2, userOptions.RouteName);
+            return tusResult.Wrap();
         }
 
         logger.LogError("Error occurred could not merge {@PartialFiles}", infos);
