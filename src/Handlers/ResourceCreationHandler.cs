@@ -193,6 +193,7 @@ public class ResourceCreationHandler
             }
         }
 
+        logger.LogError("Could not create upload resource {@UploadInfo}", uploadInfo);
         return HttpError.InternalServerError().Response();
     }
 
@@ -220,17 +221,20 @@ public class ResourceCreationHandler
             var partialId = ConcatenationRequestHandler.GetTemplateValue(url, userOptions.RouteTemplate, userOptions.FileIdParameter.Item1);
             if (partialId is null)
             {
+                logger.LogError("Could not find partial resource with url {PartialUrl} for merging", url);
                 return HttpError.NotFound("Partial resource not found").Response();
             }
 
             var info = await uploadMetaHandler.GetPartialResourceAsync(partialId, cancellationToken);
             if (info is null)
             {
+                logger.LogError("Could not find partial resource with id {PartialId} for merging", partialId);
                 return HttpError.InternalServerError().Response();
             }
 
             if (!info.Done)
             {
+                logger.LogError("Partial resource {PartialId} has not yet finished uploading, cannot merge unfinished uploads", partialId);
                 return HttpError.BadRequest("Cannot merge partial files that have not finished uploading").Response();
             }
 
@@ -274,10 +278,18 @@ public class ResourceCreationHandler
             await userOptions.MergeCallback(finalInfo, infos);
         }
 
-        result.UploadFileInfo = merged;
+        if (merged is not null)
+        {
+            logger.LogInformation("Merged files into {@FinalInfo} with the {@PartialInfos}", merged, infos);
+            result.UploadFileInfo = merged;
 
-        // Create url to new file
-        result.LocationUrl = linkGenerator.GetPathToUploadWithWhenKey(userOptions.FileIdParameter.Item1, userOptions.FileIdParameter.Item2, userOptions.RouteName);
-        return result.Wrap();
+            // Create url to new file
+            result.LocationUrl = linkGenerator.GetPathToUploadWithWhenKey(userOptions.FileIdParameter.Item1, userOptions.FileIdParameter.Item2, userOptions.RouteName);
+            return result.Wrap();
+        }
+
+        logger.LogError("Error occurred could not merge {@PartialFiles}", infos);
+        return HttpError.InternalServerError().Response();
     }
+
 }
