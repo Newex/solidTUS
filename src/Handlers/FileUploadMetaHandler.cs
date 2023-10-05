@@ -93,7 +93,7 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         }
         else
         {
-            path = MetadataPartialFilenamePath(info.PartialId);
+            path = MetadataPartialFilenamePath(info.FileId);
         }
         var exists = File.Exists(path);
         if (!exists)
@@ -167,7 +167,7 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var filename = MetadataPartialFilenamePath(fileInfo.PartialId);
+            var filename = MetadataPartialFilenamePath(fileInfo.FileId);
             var sysInfo = new FileInfo(filename);
             sysInfo.Directory?.Create();
             var content = JsonSerializer.Serialize(fileInfo);

@@ -18,13 +18,6 @@ public record UploadFileInfo
     public string FileId { get; internal set; } = string.Empty;
 
     /// <summary>
-    /// Get the partial id
-    /// </summary>
-    [JsonInclude]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? PartialId { get; internal set; }
-
-    /// <summary>
     /// Get the bytes that have been uploaded so-far
     /// </summary>
     [JsonInclude]

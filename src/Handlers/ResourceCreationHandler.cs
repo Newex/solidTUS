@@ -131,9 +131,10 @@ public class ResourceCreationHandler
             ?? (strategy == ExpirationStrategy.AbsoluteExpiration
                 ? globalOptions.AbsoluteInterval
                 : globalOptions.SlidingInterval);
+        var fileId = isPartial ? (userOptions.PartialId ?? userOptions.FileId) : userOptions.FileId;
         var uploadInfo = new UploadFileInfo
         {
-            FileId = userOptions.FileId,
+            FileId = fileId,
             CreatedDate = now,
             ByteOffset = 0L,
             FileSize = requestContext.FileSize,
@@ -151,7 +152,6 @@ public class ResourceCreationHandler
                 userOptions.Interval ?? globalOptions.AbsoluteInterval,
                 userOptions.Interval ?? globalOptions.SlidingInterval),
             LastUpdatedDate = null,
-            PartialId = isPartial ? (userOptions.PartialId ?? userOptions.FileId) : null,
             OnDiskFilename = userOptions.Filename ?? userOptions.FileId,
         };
 
@@ -268,7 +268,6 @@ public class ResourceCreationHandler
             LastUpdatedDate = null,
             Metadata = requestContext.Metadata,
             OnDiskFilename = userOptions.Filename ?? userOptions.FileId,
-            PartialId = null,
             RawMetadata = requestContext.RawMetadata
         };
 
