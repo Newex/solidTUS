@@ -16,7 +16,7 @@ namespace SolidTUS.ProtocolHandlers.ProtocolExtensions;
 /// <summary>
 /// Expiration TUS extension request handler
 /// </summary>
-public class ExpirationRequestHandler
+internal class ExpirationRequestHandler
 {
     private readonly ExpirationStrategy expirationStrategy;
     private readonly TimeSpan slidingInterval;
@@ -51,7 +51,7 @@ public class ExpirationRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A request context with expiration headers</returns>
-    public void SetExpiration(ResponseContext context)
+    public void SetExpiration(TusResult context)
     {
         if (context.UploadFileInfo is null
             || context.UploadFileInfo.ExpirationStrategy == ExpirationStrategy.Never

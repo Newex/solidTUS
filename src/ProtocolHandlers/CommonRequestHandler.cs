@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Internal;
 using SolidTUS.Constants;
@@ -13,7 +14,7 @@ namespace SolidTUS.ProtocolHandlers;
 /// <summary>
 /// General TUS request handler
 /// </summary>
-public class CommonRequestHandler
+internal class CommonRequestHandler
 {
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
@@ -40,29 +41,20 @@ public class CommonRequestHandler
     /// Check if a <see cref="UploadFileInfo"/> resource has been created
     /// </summary>
     /// <param name="context">The request context</param>
+    /// <param name="fileId">The file id</param>
+    /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Either an error or a request context</returns>
-    public ValueTask<Result<RequestContext>> CheckUploadFileInfoExistsAsync(RequestContext context)
+    public async ValueTask<Result<TusResult>> CheckUploadFileInfoExistsAsync(TusResult context, string fileId, CancellationToken cancellationToken)
     {
-        // UploadFileInfo? fileInfo;
-        // if (context.PartialMode == PartialMode.Partial)
-        // {
-        //     fileInfo = await uploadMetaHandler.GetPartialResourceAsync(context.FileID, context.CancellationToken);
-        // }
-        // else
-        // {
-        //     fileInfo = await uploadMetaHandler.GetResourceAsync(context.FileID, context.CancellationToken);
-        // }
+        var fileInfo = await uploadMetaHandler.GetResourceAsync(fileId, cancellationToken);
 
-        // if (fileInfo is null)
-        // {
-        //     return HttpError.NotFound("File resource does not exists").Wrap();
-        // }
+        if (fileInfo is null)
+        {
+            return HttpError.NotFound("File resource does not exists").Response();
+        }
 
-        // var size = uploadStorageHandler.GetUploadSize(context.FileID, fileInfo);
-        // fileInfo.ByteOffset = size ?? 0L;
-        // context.UploadFileInfo = fileInfo;
-        // return context.Wrap();
-        throw new NotImplementedException();
+        context.UploadFileInfo = fileInfo;
+        return context.Wrap();
     }
 
     /// <summary>
@@ -70,7 +62,7 @@ public class CommonRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an http error or a request context</returns>
-    public static Result<RequestContext> CheckTusVersion(RequestContext context)
+    public static Result<TusResult> CheckTusVersion(TusResult context)
     {
         if (context.Method == "OPTIONS")
         {
@@ -94,7 +86,7 @@ public class CommonRequestHandler
     /// </summary>
     /// <param name="context">The response context</param>
     /// <returns>A request context</returns>
-    public static void SetUploadByteOffset(ResponseContext context)
+    public static void SetUploadByteOffset(TusResult context)
     {
         if (context.UploadFileInfo is not null)
         {
@@ -106,7 +98,7 @@ public class CommonRequestHandler
     /// Set the tus resumable response header
     /// </summary>
     /// <param name="context">The response context</param>
-    public static void SetTusResumableHeader(ResponseContext context)
+    public static void SetTusResumableHeader(TusResult context)
     {
         context.ResponseHeaders.Add(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion);
     }

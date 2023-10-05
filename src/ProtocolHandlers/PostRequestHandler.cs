@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
-using SolidTUS.Contexts;
 using SolidTUS.Models;
 using SolidTUS.Options;
 using SolidTUS.Parsers;
+
 using static SolidTUS.Extensions.FunctionalExtensions;
 
 namespace SolidTUS.ProtocolHandlers;
@@ -15,7 +14,7 @@ namespace SolidTUS.ProtocolHandlers;
 /// <summary>
 /// TUS POST handler
 /// </summary>
-public class PostRequestHandler
+internal class PostRequestHandler
 {
     private readonly bool validatePartial;
     private readonly Func<IReadOnlyDictionary<string, string>, bool> metadataValidator;
@@ -39,7 +38,7 @@ public class PostRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public static Result<RequestContext> CheckUploadLengthOrDeferred(RequestContext context)
+    public static Result<TusResult> CheckUploadLengthOrDeferred(TusResult context)
     {
         var hasDefer = context.RequestHeaders.ContainsKey(TusHeaderNames.UploadDeferLength);
         var hasLength = context.RequestHeaders.ContainsKey(TusHeaderNames.UploadLength);
@@ -73,7 +72,7 @@ public class PostRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public Result<RequestContext> CheckMaximumSize(RequestContext context)
+    public Result<TusResult> CheckMaximumSize(TusResult context)
     {
         var hasHeader = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadLength], out var size);
         if (!hasHeader)
@@ -100,7 +99,7 @@ public class PostRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A tuple containing the raw string metadata and the parsed metadata</returns>
-    public static RequestContext ParseMetadata(RequestContext context)
+    public static TusResult ParseMetadata(TusResult context)
     {
         var rawMetadata = context.RequestHeaders[TusHeaderNames.UploadMetadata];
         if (rawMetadata.Count == 0)
@@ -119,7 +118,7 @@ public class PostRequestHandler
     /// </summary>
     /// <param name="context">THe request context</param>
     /// <returns>Either an error or a request context</returns>
-    public Result<RequestContext> ValidateMetadata(RequestContext context)
+    public Result<TusResult> ValidateMetadata(TusResult context)
     {
         var isPartial = context.PartialMode == PartialMode.Partial;
         if (validatePartial || !isPartial)
@@ -137,7 +136,7 @@ public class PostRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>An updated context with file size</returns>
-    public static RequestContext SetFileSize(RequestContext context)
+    public static TusResult SetFileSize(TusResult context)
     {
         var hasLength = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadLength], out var size);
         if (!hasLength)
@@ -154,7 +153,7 @@ public class PostRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public static Result<RequestContext> CheckIsValidUpload(RequestContext context)
+    public static Result<TusResult> CheckIsValidUpload(TusResult context)
     {
         var hasContentLength = long.TryParse(context.RequestHeaders[HeaderNames.ContentLength], out var contentLength);
         var isUpload = hasContentLength && contentLength > 0;
@@ -178,7 +177,7 @@ public class PostRequestHandler
     /// Set the maximum file size header if present
     /// </summary>
     /// <param name="context">The response context</param>
-    public void SetMaximumFileSize(ResponseContext context)
+    public void SetMaximumFileSize(TusResult context)
     {
         if (maxSize.HasValue)
         {

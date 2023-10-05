@@ -13,7 +13,7 @@ namespace SolidTUS.ProtocolHandlers.ProtocolExtensions;
 /// <summary>
 /// Concatenation request handler
 /// </summary>
-public class ConcatenationRequestHandler
+internal class ConcatenationRequestHandler
 {
     private readonly IUploadMetaHandler uploadMetaHandler;
     private readonly long? maxSize;
@@ -33,11 +33,11 @@ public class ConcatenationRequestHandler
     }
 
     /// <summary>
-    /// Set the <see cref="RequestContext.PartialMode"/>
+    /// Set the <see cref="TusResult.PartialMode"/>
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A request context</returns>
-    public static Result<RequestContext> SetPartialMode(RequestContext context)
+    public static Result<TusResult> SetPartialMode(TusResult context)
     {
         var concat = context.RequestHeaders[TusHeaderNames.UploadConcat].ToString();
 
@@ -74,7 +74,7 @@ public class ConcatenationRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A request context or an error</returns>
-    public static Result<RequestContext> CheckPartialFinalFormat(RequestContext context)
+    public static Result<TusResult> CheckPartialFinalFormat(TusResult context)
     {
         if (context.PartialMode != PartialMode.Final)
         {

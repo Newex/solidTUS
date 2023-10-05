@@ -8,7 +8,7 @@ namespace SolidTUS.ProtocolFlows;
 /// <summary>
 /// Creation flow
 /// </summary>
-public class CreationFlow
+internal class CreationFlow
 {
     private readonly PostRequestHandler post;
     private readonly ChecksumRequestHandler checksum;
@@ -36,7 +36,7 @@ public class CreationFlow
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public Result<RequestContext> PreResourceCreation(RequestContext context)
+    public Result<TusResult> PreResourceCreation(TusResult context)
     {
         var requestContext = PostRequestHandler
             .CheckUploadLengthOrDeferred(context)
@@ -55,7 +55,7 @@ public class CreationFlow
     /// <summary>
     /// Post resource creation set response headers
     /// </summary>
-    public ResponseContext PostResourceCreation(ResponseContext responseContext)
+    public TusResult PostResourceCreation(TusResult responseContext)
     {
         // Set the following
         CommonRequestHandler.SetUploadByteOffset(responseContext);

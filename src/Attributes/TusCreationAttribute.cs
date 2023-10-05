@@ -7,11 +7,11 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Constants;
-using SolidTUS.Contexts;
 using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.ProtocolFlows;
 using SolidTUS.ProtocolHandlers;
+
 using static Microsoft.AspNetCore.Http.HttpMethods;
 
 namespace SolidTUS.Attributes;
@@ -90,9 +90,9 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
                 return;
             }
 
-            var requestContext = RequestContext.Create(request);
-            requestContext = requestContext.Bind(creationFlow.PreResourceCreation);
-            var error = requestContext.GetHttpError();
+            var result = TusResult.Create(request, response);
+            result = result.Bind(creationFlow.PreResourceCreation);
+            var error = result.GetHttpError();
             if (error is not null)
             {
                 context.Result = new ObjectResult(error.Value.Message)
@@ -102,8 +102,8 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
                 return;
             }
 
-            var ctx = requestContext.GetValueOrDefault();
-            context.HttpContext.Items[RequestContext.Name] = ctx;
+            var ctx = result.GetValueOrDefault();
+            context.HttpContext.Items[TusResult.Name] = ctx;
         }
 
         response.OnStarting(state =>
@@ -111,7 +111,7 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
             var ctx = (ActionExecutingContext)state;
             if (isPost)
             {
-                if (ctx.HttpContext.Items[HttpContextExtensions.CreationResultName] is not Result<ResponseContext> responseContext)
+                if (ctx.HttpContext.Items[HttpContextExtensions.CreationResultName] is not Result<TusResult> preCreation)
                 {
                     ctx.Result = new ObjectResult("Internal server error")
                     {
@@ -130,8 +130,8 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
                     return Task.CompletedTask;
                 }
 
-                var responseResult = responseContext.Map(creationFlow.PostResourceCreation);
-                var error = responseResult.GetHttpError();
+                var postCreation = preCreation.Map(creationFlow.PostResourceCreation);
+                var error = postCreation.GetHttpError();
                 if (error is not null)
                 {
                     ctx.Result = new ObjectResult(error.Value.Message)
