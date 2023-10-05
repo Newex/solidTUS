@@ -35,12 +35,9 @@ public sealed record class TusCreationContext
         string? filename,
         ExpirationStrategy? expirationStrategy,
         TimeSpan? interval,
-
         Func<UploadFileInfo, Task>? resourceCreatedCallback,
         Func<UploadFileInfo, Task>? uploadFinishedCallback,
-
         string? partialId,
-
         Func<IList<UploadFileInfo>, bool>? allowMergeCallback,
         Func<UploadFileInfo, IList<UploadFileInfo>, Task>? mergeCallback
     )

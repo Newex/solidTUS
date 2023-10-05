@@ -1,8 +1,6 @@
 using System;
 using System.Threading.Tasks;
-
 using SolidTUS.Constants;
-
 using SolidTUS.Contexts;
 using SolidTUS.Models;
 using SolidTUS.Options;
@@ -124,7 +122,7 @@ public sealed class TusCreationContextBuilder
     /// <param name="routeValues">The extra optional route values</param>
     /// <returns></returns>
     /// <exception cref="NotImplementedException"></exception>
-    public TusCreationContext Build(string routeTemplate, (string ParameterName, object ParameterValue) routeValue, params (string, object)[] routeValues)
+    public TusCreationContext Build(string routeTemplate, (string, object) routeValue, params (string, object)[] routeValues)
     {
         return new TusCreationContext(
             fileId,

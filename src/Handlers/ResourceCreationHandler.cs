@@ -217,7 +217,7 @@ public class ResourceCreationHandler
         var infos = new List<UploadFileInfo>();
         foreach (var url in requestContext.Urls)
         {
-            var partialId = ConcatenationRequestHandler.GetTemplateValue(url, userOptions.RouteTemplate, userOptions.PartialId ?? ParameterNames.ParallelPartialIdParameterName);
+            var partialId = ConcatenationRequestHandler.GetTemplateValue(url, userOptions.RouteTemplate, userOptions.FileIdParameter.Item1);
             if (partialId is null)
             {
                 return HttpError.NotFound("Partial resource not found").Response();
