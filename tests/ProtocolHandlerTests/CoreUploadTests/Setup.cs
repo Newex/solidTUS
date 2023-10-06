@@ -17,7 +17,7 @@ using SolidTUS.Validators;
 
 namespace SolidTUS.Tests.ProtocolHandlerTests.CoreUploadTests;
 
-public static class Setup
+internal static class Setup
 {
     public static UploadFlow UploadFlow(IUploadMetaHandler? uploadMetaHandler = null, UploadFileInfo? file = null, TusOptions? options = null)
     {
@@ -37,43 +37,6 @@ public static class Setup
             expiration,
             storageHandler,
             upload
-        );
-    }
-
-    public static TusCreationContextOLD TusCreationContext(
-        bool withUpload = false,
-        long bytesWritten = 0L,
-        PipeReader? reader = null,
-        PartialMode partialMode = PartialMode.None,
-        List<string>? urls = null,
-        string? url = null,
-        UploadFileInfo? fileInfo = null,
-        IUploadStorageHandler? uploadStorageHandler = null,
-        IUploadMetaHandler? uploadMetaHandler = null,
-        CancellationToken? cancellationToken = null)
-    {
-
-        reader ??= new Pipe().Reader;
-        var fakeFileInfo = fileInfo ?? Fakes.RandomEntities.UploadFileInfo();
-        urls ??= new List<string>();
-        var storageHandler = uploadStorageHandler ?? MockHandlers.UploadStorageHandler(currentSize: fakeFileInfo.ByteOffset, bytesWritten: bytesWritten);
-        var metaHandler = uploadMetaHandler ?? MockHandlers.UploadMetaHandler(fakeFileInfo);
-        var linkGenerator = MockOthers.LinkGenerator(url);
-        var cancel = cancellationToken ?? CancellationToken.None;
-        var ioptions = Microsoft.Extensions.Options.Options.Create(new TusOptions());
-
-        return new TusCreationContextOLD(
-            withUpload,
-            partialMode,
-            urls,
-            fakeFileInfo,
-            new HeaderDictionary(),
-            reader,
-            storageHandler,
-            metaHandler,
-            linkGenerator,
-            cancel,
-            ioptions
         );
     }
 }

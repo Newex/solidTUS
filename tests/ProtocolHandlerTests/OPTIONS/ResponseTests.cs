@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
+
+using Microsoft.AspNetCore.Http;
+
 using SolidTUS.Constants;
 using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers;
@@ -18,10 +21,11 @@ public class ResponseTests
         var options = MSOptions.Create(new TusOptions());
         var validators = new List<IChecksumValidator>();
         var handler = new OptionsRequestHandler(options, validators);
+        var headers = new HeaderDictionary();
 
         // Act
-        var response = handler.ServerFeatureAnnouncements();
-        var result = response.Headers.ContainsKey(TusHeaderNames.Resumable);
+        handler.ServerFeatureAnnouncements(headers);
+        var result = headers.ContainsKey(TusHeaderNames.Resumable);
 
         // Assert
         Assert.True(result);
@@ -37,10 +41,11 @@ public class ResponseTests
         });
         var validators = new List<IChecksumValidator>();
         var handler = new OptionsRequestHandler(options, validators);
+        var headers = new HeaderDictionary();
 
         // Act
-        var response = handler.ServerFeatureAnnouncements();
-        var result = response.Headers.ContainsKey(TusHeaderNames.MaxSize);
+        handler.ServerFeatureAnnouncements(headers);
+        var result = headers.ContainsKey(TusHeaderNames.MaxSize);
 
         // Assert
         Assert.False(result);
@@ -56,10 +61,11 @@ public class ResponseTests
         });
         var validators = new List<IChecksumValidator>();
         var handler = new OptionsRequestHandler(options, validators);
+        var headers = new HeaderDictionary();
 
         // Act
-        var response = handler.ServerFeatureAnnouncements();
-        var result = response.Headers.ContainsKey(TusHeaderNames.MaxSize);
+        handler.ServerFeatureAnnouncements(headers);
+        var result = headers.ContainsKey(TusHeaderNames.MaxSize);
 
         // Assert
         Assert.True(result);
@@ -72,10 +78,11 @@ public class ResponseTests
         var options = MSOptions.Create(new TusOptions());
         var validators = new List<IChecksumValidator>();
         var handler = new OptionsRequestHandler(options, validators);
+        var headers = new HeaderDictionary();
 
         // Act
-        var response = handler.ServerFeatureAnnouncements();
-        var hasExtensions = response.Headers.TryGetValue(TusHeaderNames.Extension, out var extensions);
+        handler.ServerFeatureAnnouncements(headers);
+        var hasExtensions = headers.TryGetValue(TusHeaderNames.Extension, out var extensions);
         var result = extensions
             .ToString()
             .Split(",")

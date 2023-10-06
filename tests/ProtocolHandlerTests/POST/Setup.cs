@@ -5,9 +5,9 @@ using SolidTUS.Tests.Mocks;
 
 namespace SolidTUS.Tests.ProtocolHandlerTests.POST;
 
-public static class Setup
+internal static class Setup
 {
-    public static Result<RequestContext> CreateRequest(bool resumable = true, params (string, string)[] header)
+    public static Result<TusResult> CreateRequest(bool resumable = true, params (string, string)[] header)
     {
         var http = MockHttps.HttpRequest("POST",
             header
@@ -18,6 +18,6 @@ public static class Setup
             http.Headers.Add(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion);
         }
 
-        return RequestContext.Create(http, CancellationToken.None);
+        return TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
     }
 }

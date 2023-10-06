@@ -17,7 +17,8 @@ public class CommonRequestTests
         // Arrange
         var http = MockHttps.HttpRequest("GET",
             (TusHeaderNames.Resumable, "1.0.0"));
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        
 
         // Act
         var response = request.Bind(c => CommonRequestHandler.CheckTusVersion(c));
@@ -33,7 +34,7 @@ public class CommonRequestTests
         // Arrange
         var http = MockHttps.HttpRequest("SOME-HTTP-METHOD",
             (TusHeaderNames.Resumable, "0.2.2"));
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
 
         // Act
         var response = request.Bind(c => CommonRequestHandler.CheckTusVersion(c));
@@ -50,7 +51,7 @@ public class CommonRequestTests
         var http = MockHttps.HttpRequest("OPTIONS",
             (TusHeaderNames.Resumable, "0.2.2")
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
 
         // Act
         var response = request.Bind(c => CommonRequestHandler.CheckTusVersion(c));
@@ -68,11 +69,11 @@ public class CommonRequestTests
         var http = MockHttps.HttpRequest("SOME_HTTP_METHOD",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
         var handler = Setup.CommonRequestHandler(file);
 
         // Act
-        var response = await request.BindAsync(async c => await handler.CheckUploadFileInfoExistsAsync(c));
+        var response = await request.BindAsync(async c => await handler.SetUploadFileInfoAsync(c, file.FileId, CancellationToken.None));
         var result = response.IsSuccess();
 
         // Assert
@@ -86,11 +87,11 @@ public class CommonRequestTests
         var http = MockHttps.HttpRequest("SOME_HTTP_METHOD",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
         var handler = Setup.CommonRequestHandler();
 
         // Act
-        var response = await request.BindAsync(async c => await handler.CheckUploadFileInfoExistsAsync(c));
+        var response = await request.BindAsync(async c => await handler.SetUploadFileInfoAsync(c, "nothing", CancellationToken.None));
         var result = response.StatusCode();
 
         // Assert

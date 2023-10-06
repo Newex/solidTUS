@@ -20,7 +20,7 @@ public class CheckRequestTests
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (HeaderNames.ContentType, "wrong_content_type")
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
 
         // Act
         var response = request.Bind(c => PatchRequestHandler.CheckContentType(c));
@@ -38,7 +38,7 @@ public class CheckRequestTests
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (HeaderNames.ContentType, TusHeaderValues.PatchContentType)
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
 
         // Act
         var response = request.Bind(c => PatchRequestHandler.CheckContentType(c));
@@ -56,7 +56,7 @@ public class CheckRequestTests
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             ("No-Upload-Offset", "Missing")
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
 
         // Act
         var response = request.Bind(c => PatchRequestHandler.CheckUploadOffset(c));
@@ -74,7 +74,7 @@ public class CheckRequestTests
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadOffset, "Missing")
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
 
         // Act
         var response = request.Bind(c => PatchRequestHandler.CheckUploadOffset(c));
@@ -92,7 +92,7 @@ public class CheckRequestTests
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadOffset, "300")
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
 
         // Act
         var response = request.Bind(c => PatchRequestHandler.CheckUploadOffset(c));
@@ -108,13 +108,13 @@ public class CheckRequestTests
         // Arrange
         var fileInfo = RandomEntities.UploadFileInfo() with
         {
-            ByteOffset = 20
         };
+        fileInfo.AddBytes(20);
         var http = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadOffset, "30")
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
 
         // Act
         var response = request.Bind(c => PatchRequestHandler.CheckConsistentByteOffset(c with
@@ -133,13 +133,13 @@ public class CheckRequestTests
         // Arrange
         var fileInfo = RandomEntities.UploadFileInfo() with
         {
-            ByteOffset = 100
         };
+        fileInfo.AddBytes(100);
         var http = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadOffset, "100")
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
 
         // Act
         var response = request.Bind(c => PatchRequestHandler.CheckConsistentByteOffset(c with
@@ -165,7 +165,7 @@ public class CheckRequestTests
         {
             FileSize = 200
         };
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
 
         // Act
         var response = request.Bind(c => PatchRequestHandler.CheckUploadExceedsFileSize(c with
@@ -191,7 +191,7 @@ public class CheckRequestTests
         {
             FileSize = 200
         };
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
 
         // Act
         var response = request.Bind(c => PatchRequestHandler.CheckUploadExceedsFileSize(c with
@@ -212,7 +212,7 @@ public class CheckRequestTests
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadOffset, (-20L).ToString())
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
 
         // Act
         var response = request.Bind(c => PatchRequestHandler.CheckUploadOffset(c));
@@ -230,7 +230,7 @@ public class CheckRequestTests
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadOffset, 20L.ToString())
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
 
         // Act
         var response = request.Bind(c => PatchRequestHandler.CheckUploadOffset(c));
@@ -248,7 +248,7 @@ public class CheckRequestTests
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadOffset, 0L.ToString())
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
 
         // Act
         var response = request.Bind(c => PatchRequestHandler.CheckUploadOffset(c));
@@ -271,7 +271,7 @@ public class CheckRequestTests
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadLength, 200L.ToString())
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
         var handler = new PatchRequestHandler();
 
         // Act

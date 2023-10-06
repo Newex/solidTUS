@@ -21,7 +21,7 @@ public class PreUploadChecksumRequestTests
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadChecksum, $"sha1 {cipher}")
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
 
         // Act
         var response = request.Map(c => ChecksumRequestHandler.ParseChecksum(c));
@@ -39,7 +39,7 @@ public class PreUploadChecksumRequestTests
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadChecksum, "sha1 nonBase64EncodedChecksum-")
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
 
         // Act
         var response = request.Map(c => ChecksumRequestHandler.ParseChecksum(c));

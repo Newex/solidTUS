@@ -4,7 +4,7 @@ using SolidTUS.ProtocolHandlers;
 
 namespace SolidTUS.Tests.ProtocolHandlerTests.COMMON;
 
-public static class Setup
+internal static class Setup
 {
     public static CommonRequestHandler CommonRequestHandler(UploadFileInfo? fileInfo = null)
     {

@@ -23,7 +23,7 @@ public static class MockOthers
     {
         var mock = new Mock<ILinkGeneratorWrapper>();
 
-        mock.Setup(x => x.GetPathByName(It.IsAny<string>(), It.IsAny<object?>()))
+        mock.Setup(x => x.GetPathByName(It.IsAny<string>(), It.IsAny<(string, object)>(), It.IsAny<(string, object)[]>()))
         .Returns(url);
 
         return mock.Object;
