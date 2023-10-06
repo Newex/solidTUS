@@ -37,18 +37,8 @@ internal static class FunctionalExtensions
     /// </summary>
     /// <param name="error">The error value</param>
     /// <returns>An error result</returns>
-    public static Result<RequestContext> Request(this HttpError error)
+    public static Result<TusResult> Wrap(this HttpError error)
     {
-        return Result<RequestContext>.Error(error);
-    }
-
-    /// <summary>
-    /// Return an error for the response context
-    /// </summary>
-    /// <param name="error">The error value</param>
-    /// <returns>An error result</returns>
-    public static Result<ResponseContext> Response(this HttpError error)
-    {
-        return Result<ResponseContext>.Error(error);
+        return Result<TusResult>.Error(error);
     }
 }

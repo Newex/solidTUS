@@ -6,6 +6,11 @@ namespace SolidTUS.Constants;
 public static class ParameterNames
 {
     /// <summary>
+    /// The fileId parameter name
+    /// </summary>
+    public const string FileIdParameterName = "fileId";
+
+    /// <summary>
     /// The context parameter name for the TusUploadContext
     /// </summary>
     public const string TusUploadContextParameterName = "context";

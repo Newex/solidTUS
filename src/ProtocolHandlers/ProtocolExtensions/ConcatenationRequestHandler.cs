@@ -59,7 +59,7 @@ internal class ConcatenationRequestHandler
 
             if (!isFinal && !isPartial)
             {
-                return HttpError.BadRequest("Upload-Concat must either be partial or final").Request();
+                return HttpError.BadRequest("Upload-Concat must either be partial or final").Wrap();
             }
 
             return context.Wrap();
@@ -70,11 +70,11 @@ internal class ConcatenationRequestHandler
     }
 
     /// <summary>
-    /// Check the partial urls if request is final
+    /// Check the partial urls if request is final and set them in the <see cref="TusResult"/>
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A request context or an error</returns>
-    public static Result<TusResult> CheckPartialFinalFormat(TusResult context)
+    public static Result<TusResult> SetPartialFinalUrls(TusResult context)
     {
         if (context.PartialMode != PartialMode.Final)
         {
@@ -85,7 +85,7 @@ internal class ConcatenationRequestHandler
         var list = header[(header.IndexOf(";") + 1)..];
         if (list.Length == 0)
         {
-            return HttpError.BadRequest("Must provide a list of files to concatenate").Request();
+            return HttpError.BadRequest("Must provide a list of files to concatenate").Wrap();
         }
 
         var urls = list.Split(" ");

@@ -1,15 +1,10 @@
 using System;
-using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
-
 using SolidTUS.Attributes;
-using SolidTUS.Contexts;
 using SolidTUS.Extensions;
 using SolidTUS.Handlers;
-using SolidTUS.Models;
 
 namespace ViteDotnet.Controllers;
 
@@ -60,18 +55,16 @@ public class UploadController : ControllerBase
 
     [TusUpload("{fileId}")]
     [RequestSizeLimit(5_000_000_000)]
-    public async Task<ActionResult> UploadFile(string fileId, [FromServices] TusUploadContext context)
+    public async Task<ActionResult> UploadFile(string fileId)
     {
-        // Set callback before awaiting upload, otherwise the callback won't be called
-        context.OnUploadFinished(async (file) =>
+        var ctxBuilder = HttpContext.TusUpload(fileId);
+        ctxBuilder.OnUploadFinished((info) =>
         {
-            var filename = file.Metadata?["name"];
-            Console.WriteLine($"Uploaded file {filename} with file size {file.FileSize}");
-            await Task.CompletedTask;
+            Console.WriteLine("Finished uploading: {0}", info.OnDiskFilename);
+            return Task.CompletedTask;
         });
-
-        context.SetExpirationStrategy(ExpirationStrategy.SlidingExpiration, TimeSpan.FromSeconds(30));
-        await context.StartAppendDataAsync(fileId);
+        var ctx = ctxBuilder.Build();
+        await HttpContext.StartAppendDataAsync(ctx);
 
         // Must always return 204 on upload success with no Body content
         return NoContent();

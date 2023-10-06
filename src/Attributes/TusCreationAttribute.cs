@@ -119,7 +119,7 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
                 var error = postAction.GetHttpError();
                 if (error is not null)
                 {
-                    context.Result = new ObjectResult(error.Value.Message)
+                    ctx.Result = new ObjectResult(error.Value.Message)
                     {
                         StatusCode = error.Value.StatusCode
                     };

@@ -102,14 +102,14 @@ internal class ResourceCreationHandler
         if (userOptions.FileId is null)
         {
             logger.LogError("Must provide file id for the resource");
-            return HttpError.InternalServerError().Response();
+            return HttpError.InternalServerError().Wrap();
         }
 
         var uploadUrl = linkGenerator.GetPathByName(userOptions.RouteName, userOptions.FileIdParameter, userOptions.RouteValues);
         if (uploadUrl is null)
         {
             logger.LogError("Must have an upload endpoint to upload the resource");
-            return HttpError.InternalServerError().Response();
+            return HttpError.InternalServerError().Wrap();
         }
         tusResult.LocationUrl = uploadUrl;
 
@@ -182,7 +182,7 @@ internal class ResourceCreationHandler
         }
 
         logger.LogError("Could not create upload resource {@UploadInfo}", uploadInfo);
-        return HttpError.InternalServerError().Response();
+        return HttpError.InternalServerError().Wrap();
     }
 
     /// <summary>
@@ -209,26 +209,26 @@ internal class ResourceCreationHandler
             if (partialId is null)
             {
                 logger.LogError("Could not find partial resource with url {PartialUrl} for merging", url);
-                return HttpError.NotFound("Partial resource not found").Response();
+                return HttpError.NotFound("Partial resource not found").Wrap();
             }
 
             var info = await uploadMetaHandler.GetResourceAsync(partialId, cancellationToken);
             if (info is null)
             {
                 logger.LogError("Could not find partial resource with id {PartialId} for merging", partialId);
-                return HttpError.InternalServerError().Response();
+                return HttpError.InternalServerError().Wrap();
             }
 
             if (!info.Done)
             {
                 logger.LogError("Partial resource {PartialId} has not yet finished uploading, cannot merge unfinished uploads", partialId);
-                return HttpError.BadRequest("Cannot merge partial files that have not finished uploading").Response();
+                return HttpError.BadRequest("Cannot merge partial files that have not finished uploading").Wrap();
             }
 
             if (!info.IsPartial)
             {
                 logger.LogError("Cannot merge non-partial files {@File}", info);
-                return HttpError.BadRequest("Cannot merge non-partial files").Response();
+                return HttpError.BadRequest("Cannot merge non-partial files").Wrap();
             }
 
             infos.Add(info);
@@ -243,7 +243,7 @@ internal class ResourceCreationHandler
         if (!allowed)
         {
             logger.LogInformation("Denied merge of {@Files}", infos);
-            return HttpError.Forbidden().Response();
+            return HttpError.Forbidden().Wrap();
         }
 
         var now = clock.UtcNow;
@@ -280,7 +280,7 @@ internal class ResourceCreationHandler
         }
 
         logger.LogError("Error occurred could not merge {@PartialFiles}", infos);
-        return HttpError.InternalServerError().Response();
+        return HttpError.InternalServerError().Wrap();
     }
 
 }

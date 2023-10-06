@@ -1,5 +1,6 @@
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
+using SolidTUS.Contexts;
 using SolidTUS.Models;
 
 namespace SolidTUS.ProtocolHandlers;
@@ -7,14 +8,14 @@ namespace SolidTUS.ProtocolHandlers;
 /// <summary>
 /// TUS HEAD request handler
 /// </summary>
-public static class HeadRequestHandler
+internal static class HeadRequestHandler
 {
     /// <summary>
     /// Set the response cache control header to no-store
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public static RequestContext SetResponseCacheControl(RequestContext context)
+    public static TusResult SetResponseCacheControl(TusResult context)
     {
         context.ResponseHeaders.Add(HeaderNames.CacheControl, "no-store");
         return context;
@@ -25,16 +26,16 @@ public static class HeadRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public static RequestContext SetUploadLengthOrDeferred(RequestContext context)
+    public static TusResult SetUploadLengthOrDeferred(TusResult context)
     {
-        var hasFileSize = context.UploadFileInfo.FileSize.HasValue;
+        var hasFileSize = context.FileSize.HasValue;
         if (!hasFileSize)
         {
             context.ResponseHeaders.Add(TusHeaderNames.UploadDeferLength, "1");
         }
         else
         {
-            context.ResponseHeaders.Add(TusHeaderNames.UploadLength, context.UploadFileInfo.FileSize!.Value.ToString());
+            context.ResponseHeaders.Add(TusHeaderNames.UploadLength, context.FileSize.GetValueOrDefault().ToString());
         }
 
         return context;
@@ -45,9 +46,9 @@ public static class HeadRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A request context</returns>
-    public static RequestContext SetMetadataHeader(RequestContext context)
+    public static TusResult SetMetadataHeader(TusResult context)
     {
-        context.ResponseHeaders.Add(TusHeaderNames.UploadMetadata, context.UploadFileInfo.RawMetadata);
+        context.ResponseHeaders.Add(TusHeaderNames.UploadMetadata, context.UploadFileInfo?.RawMetadata);
         return context;
     }
 
@@ -56,10 +57,10 @@ public static class HeadRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public static RequestContext SetUploadOffsetHeader(RequestContext context)
+    public static TusResult SetUploadOffsetHeader(TusResult context)
     {
         var file = context.UploadFileInfo;
-        var offset = file.ByteOffset.ToString();
+        var offset = file?.ByteOffset.ToString();
 
         context.ResponseHeaders.Add(TusHeaderNames.UploadOffset, offset);
         return context;

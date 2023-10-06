@@ -44,13 +44,13 @@ internal class CommonRequestHandler
     /// <param name="fileId">The file id</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Either an error or a request context</returns>
-    public async ValueTask<Result<TusResult>> CheckUploadFileInfoExistsAsync(TusResult context, string fileId, CancellationToken cancellationToken)
+    public async ValueTask<Result<TusResult>> SetUploadFileInfoAsync(TusResult context, string fileId, CancellationToken cancellationToken)
     {
         var fileInfo = await uploadMetaHandler.GetResourceAsync(fileId, cancellationToken);
 
         if (fileInfo is null)
         {
-            return HttpError.NotFound("File resource does not exists").Response();
+            return HttpError.NotFound("File resource does not exists").Wrap();
         }
 
         context.UploadFileInfo = fileInfo;
@@ -75,7 +75,7 @@ internal class CommonRequestHandler
             var error = HttpError.PreconditionFailed();
 
             error.Headers.Add(TusHeaderNames.Version, TusHeaderValues.TusServerVersions);
-            return error.Request();
+            return error.Wrap();
         }
 
         return context.Wrap();

@@ -55,13 +55,13 @@ internal class ChecksumRequestHandler
         var checksum = ParseChecksum(context);
         if (checksum is null)
         {
-            return HttpError.BadRequest("Invalid checksum request").Request();
+            return HttpError.BadRequest("Invalid checksum request").Wrap();
         }
 
         var validator = validators.SingleOrDefault(v => v.AlgorithmName.Equals(checksum.Value.AlgorithmName, StringComparison.OrdinalIgnoreCase));
         if (validator is null)
         {
-            return HttpError.BadRequest("Checksum not supported").Request();
+            return HttpError.BadRequest("Checksum not supported").Wrap();
         }
 
         context.ChecksumContext = new ChecksumContext

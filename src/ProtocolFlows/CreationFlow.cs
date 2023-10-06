@@ -41,7 +41,7 @@ internal class CreationFlow
         var requestContext = PostRequestHandler
             .CheckUploadLengthOrDeferred(context)
             .Bind(ConcatenationRequestHandler.SetPartialMode)
-            .Bind(ConcatenationRequestHandler.CheckPartialFinalFormat)
+            .Bind(ConcatenationRequestHandler.SetPartialFinalUrls)
             .Map(PostRequestHandler.SetFileSize)
             .Bind(post.CheckMaximumSize)
             .Map(PostRequestHandler.ParseMetadata)

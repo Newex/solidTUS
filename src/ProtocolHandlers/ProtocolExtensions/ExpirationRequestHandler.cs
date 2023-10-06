@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Globalization;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Options;
@@ -51,19 +52,19 @@ internal class ExpirationRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A request context with expiration headers</returns>
-    public void SetExpiration(TusResult context)
+    public TusResult SetExpiration(TusResult context)
     {
         if (context.UploadFileInfo is null
             || context.UploadFileInfo.ExpirationStrategy == ExpirationStrategy.Never
             || expirationStrategy == ExpirationStrategy.Never
             && context.UploadFileInfo.ExpirationStrategy is null)
         {
-            return;
+            return context;
         }
 
         if (context.UploadFileInfo.ExpirationDate is null)
         {
-            return;
+            return context;
         }
 
         // Convert the end date to RFC 7231
@@ -71,6 +72,23 @@ internal class ExpirationRequestHandler
 
         // Overwrite if exists
         context.ResponseHeaders[TusHeaderNames.Expiration] = time;
+        return context;
+    }
+
+    public async Task<Result<TusResult>> CheckExpirationAsync(TusResult context, CancellationToken cancellationToken)
+    {
+        if (context.UploadFileInfo?.ExpirationDate.HasValue ?? false)
+        {
+            var now = clock.UtcNow;
+            var expired = now > context.UploadFileInfo.ExpirationDate.Value;
+            if (expired)
+            {
+                await expiredUploadHandler.ExpiredUploadAsync(context.UploadFileInfo, cancellationToken);
+                return HttpError.Gone().Wrap();
+            }
+        }
+
+        return context.Wrap();
     }
 
     /// <summary>

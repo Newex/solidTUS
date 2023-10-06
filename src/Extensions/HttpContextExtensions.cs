@@ -87,7 +87,65 @@ public static class HttpContextExtensions
     }
 
     /// <summary>
+    /// Create new tus upload context builder
+    /// </summary>
+    /// <param name="context">The http context</param>
+    /// <param name="fileId">The file id</param>
+    /// <returns>A tus upload context builder</returns>
+    public static TusUploadContextBuilder TusUpload(this HttpContext context, string fileId)
+    {
+        return new(fileId);
+    }
+
+    /// <summary>
+    /// Start appending data from the client
+    /// </summary>
+    /// <param name="context">The http context</param>
+    /// <param name="uploadContext">The tus upload settings</param>
+    /// <returns>An awaitable task</returns>
+    /// <exception cref="InvalidOperationException">Thrown when missing TusUpload attribute</exception>
+    public static async Task StartAppendDataAsync(this HttpContext context, TusUploadContext uploadContext)
+    {
+        if (context.RequestServices.GetService(typeof(IUploadStorageHandler)) is not IUploadStorageHandler uploadStorageHandler)
+        {
+            throw new UnreachableException();
+        }
+
+        if (context.Items[TusResult.Name] is not TusResult tusResult)
+        {
+            throw new InvalidOperationException("Must have TusUpload attribute to start appending data from client");
+        }
+
+        var info = tusResult.UploadFileInfo;
+        if (info is null)
+        {
+            throw new InvalidOperationException("Missing upload info");
+        }
+
+        if (info.FileId != uploadContext.FileId)
+        {
+            throw new InvalidOperationException("File id does not match the file id given");
+        }
+
+        await uploadStorageHandler.OnPartialUploadAsync(context.Request.BodyReader, info, tusResult.ChecksumContext, context.RequestAborted);
+        if (info.Done)
+        {
+            if (uploadContext.UploadFinishedCallback is not null)
+            {
+                await uploadContext.UploadFinishedCallback(info);
+            }
+
+            context.Items[UploadResultName] = tusResult;
+        }
+    }
+
+    /// <summary>
     /// The result of the <see cref="StartCreationAsync(HttpContext, TusCreationContext)"/> stored in <see cref="HttpContext.Items"/>
     /// </summary>
     public const string CreationResultName = "__SolidTusCreationUploadInfo__";
+
+    /// <summary>
+    /// The result of the start appending data method
+    /// </summary>
+    public const string UploadResultName = "__SolidTusUploadResult__";
 }
