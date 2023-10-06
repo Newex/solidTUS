@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using SolidTUS.Attributes;
 using SolidTUS.Contexts;
+using SolidTUS.Extensions;
 using SolidTUS.Handlers;
 
 namespace ExampleSite.Controllers;
@@ -25,19 +26,28 @@ public class UploadController : ControllerBase
     }
 
     [TusCreation]
-    public async Task<ActionResult> CreateFile([FromServices] TusCreationContextOLD context)
+    [RequestSizeLimit(5_000_000_000)]
+    public async Task<ActionResult> CreateFile()
     {
-        // Read Metadata
-        var filename = context.UploadFileInfo.Metadata["filename"];
-        var mime = context.UploadFileInfo.Metadata["contentType"];
-
-        // Construct upload URL
         var id = Guid.NewGuid().ToString("N");
 
-        context.SetUploadRouteValues(new { fileId = id }, "CustomRouteNameUpload");
+        // Read Metadata
+        var metadata = HttpContext.TusMetadata();
+        if (metadata is not null)
+        {
+            var filename = metadata["filename"];
+            var mime = metadata["contentType"];
+            Console.WriteLine("Filename is: {0}\nMime-type is: {1}", filename, mime);
+        }
+
+        // Construct upload URL
+        var ctx = HttpContext
+            .TusCreation(id)
+            .SetRouteName("CustomRouteNameUpload")
+            .Build("{fileId}", ("fileId", id));
 
         // Start creation (IuploadStorageHandler.CreateResource())
-        await context.StartCreationAsync(id);
+        await HttpContext.StartCreationAsync(ctx);
 
         // Converts a success to 201 created
         return Ok();
@@ -45,14 +55,12 @@ public class UploadController : ControllerBase
 
     [TusUpload("{fileId}", Name = "CustomRouteNameUpload")]
     [RequestSizeLimit(5_000_000_000)]
-    public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadContext context)
+    public async Task<ActionResult> Upload(string fileId)
     {
-        // Starting append a.k.a. upload
-        // Can set path per file or use default from global configuration
-        await context.StartAppendDataAsync(fileId);
-
-        // context.OnUploadFinished(async _ => await Task.CompletedTask);
-        // context.TerminateUpload(fileId);
+        var ctx = HttpContext
+            .TusUpload(fileId)
+            .Build();
+        await HttpContext.StartAppendDataAsync(ctx);
 
         // Must always return 204 on upload success with no Body content
         return NoContent();
