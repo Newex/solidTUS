@@ -19,6 +19,7 @@ namespace SolidTUS.Attributes;
 /// <summary>
 /// Identifies an action that supports TUS resource creation
 /// </summary>
+[AttributeUsage(AttributeTargets.Method)]
 public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProvider, IRouteTemplateProvider
 {
     /// <summary>
@@ -69,8 +70,7 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
             var optionsHandler = http.RequestServices.GetService<OptionsRequestHandler>();
             if (optionsHandler is null)
             {
-                response.StatusCode = 500;
-                return;
+                throw new InvalidOperationException("Must register SolidTus on startup to use the functionalities");
             }
 
             optionsHandler.ServerFeatureAnnouncements(response.Headers);
@@ -83,11 +83,7 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
             var creationFlow = http.RequestServices.GetService<CreationFlow>();
             if (creationFlow is null)
             {
-                context.Result = new ObjectResult("Internal server error")
-                {
-                    StatusCode = 500
-                };
-                return;
+                throw new InvalidOperationException("Must register SolidTus on startup to use the functionalities");
             }
 
             var result = TusResult.Create(request, response);
@@ -111,11 +107,21 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
             var ctx = (ActionExecutingContext)state;
             if (isPost)
             {
-                if (ctx.HttpContext.Items[HttpContextExtensions.CreationResultName] is not Result<TusResult> preCreation)
+                if (ctx.HttpContext.Items[HttpContextExtensions.CreationResultName] is not Result<TusResult> postAction)
                 {
                     ctx.Result = new ObjectResult("Internal server error")
                     {
                         StatusCode = 500
+                    };
+                    return Task.CompletedTask;
+                }
+
+                var error = postAction.GetHttpError();
+                if (error is not null)
+                {
+                    context.Result = new ObjectResult(error.Value.Message)
+                    {
+                        StatusCode = error.Value.StatusCode
                     };
                     return Task.CompletedTask;
                 }
@@ -130,8 +136,8 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
                     return Task.CompletedTask;
                 }
 
-                var postCreation = preCreation.Map(creationFlow.PostResourceCreation);
-                var error = postCreation.GetHttpError();
+                var postCreation = postAction.Map(creationFlow.PostResourceCreation);
+                error = postCreation.GetHttpError();
                 if (error is not null)
                 {
                     ctx.Result = new ObjectResult(error.Value.Message)
