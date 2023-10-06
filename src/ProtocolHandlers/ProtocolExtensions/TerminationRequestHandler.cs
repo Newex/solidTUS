@@ -8,7 +8,7 @@ namespace SolidTUS.ProtocolHandlers.ProtocolExtensions;
 /// <summary>
 /// Termination request handler
 /// </summary>
-public class TerminationRequestHandler
+internal class TerminationRequestHandler
 {
     private readonly LinkGenerator linkGenerator;
 
@@ -32,7 +32,7 @@ public class TerminationRequestHandler
     /// <param name="routeValues">The route values for either</param>
     /// <returns>A request context result</returns>
     /// <exception cref="InvalidOperationException">Thrown if routes mismatch</exception>
-    public Result<RequestContext> ValidateRoute(RequestContext context, string? deleteRouteName, string? uploadRouteName, RouteValueDictionary routeValues)
+    public Result<TusResult> ValidateRoute(TusResult context, string? deleteRouteName, string? uploadRouteName, RouteValueDictionary routeValues)
     {
         if (deleteRouteName is null || uploadRouteName is null)
         {
