@@ -23,6 +23,13 @@ namespace SolidTUS.Attributes;
 public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProvider, IRouteTemplateProvider
 {
     /// <summary>
+    /// Instantiate a new object of <see cref="TusCreationAttribute"/>
+    /// </summary>
+    public TusCreationAttribute()
+    {
+    }
+
+    /// <summary>
     /// Instantiate a new <see cref="TusCreationAttribute"/> creation endpoint handler.
     /// </summary>
     /// <param name="template">The route template</param>
