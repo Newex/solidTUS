@@ -45,7 +45,7 @@ public class FileUploadMetaHandler : IUploadMetaHandler
             }
             else
             {
-                return Task.FromResult(WritePartialUploadFileInfo(fileInfo, cancellationToken));
+                return Task.FromResult(WritePartialUploadFileInfo(fileInfo));
             }
         }
         catch (Exception)
@@ -104,7 +104,7 @@ public class FileUploadMetaHandler : IUploadMetaHandler
             var path = Path.Combine(directoryPath, filename);
             if (File.Exists(path))
             {
-                return Task.FromResult(WritePartialUploadFileInfo(fileInfo, cancellationToken));
+                return Task.FromResult(WritePartialUploadFileInfo(fileInfo));
             }
             return Task.FromResult(false);
         }
@@ -173,11 +173,10 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         }
     }
 
-    private bool WritePartialUploadFileInfo(UploadFileInfo fileInfo, CancellationToken cancellationToken)
+    private bool WritePartialUploadFileInfo(UploadFileInfo fileInfo)
     {
         try
         {
-            cancellationToken.ThrowIfCancellationRequested();
             var filename = MetadataPartialFilename(fileInfo.FileId);
             var sysInfo = new FileInfo(filename);
             sysInfo.Directory?.Create();
