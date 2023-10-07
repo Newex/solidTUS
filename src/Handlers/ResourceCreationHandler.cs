@@ -104,7 +104,9 @@ internal class ResourceCreationHandler
             return HttpError.InternalServerError().Wrap();
         }
 
-        var uploadUrl = linkGenerator.GetPathByName(userOptions.RouteName, userOptions.FileIdParameter, userOptions.RouteValues);
+        var isPartial = tusResult.PartialMode == PartialMode.Partial;
+        var fileId = isPartial ? (userOptions.PartialId ?? userOptions.FileId) : userOptions.FileId;
+        var uploadUrl = linkGenerator.GetPathByName(userOptions.RouteName, (userOptions.FileIdParameterName, fileId), userOptions.RouteValues);
         if (uploadUrl is null)
         {
             logger.LogError("Must have an upload endpoint to upload the resource");
@@ -113,13 +115,11 @@ internal class ResourceCreationHandler
         tusResult.LocationUrl = uploadUrl;
 
         var now = clock.UtcNow;
-        var isPartial = tusResult.PartialMode == PartialMode.Partial;
         var strategy = userOptions.ExpirationStrategy ?? globalOptions.ExpirationStrategy;
         var interval = userOptions.Interval
             ?? (strategy == ExpirationStrategy.AbsoluteExpiration
                 ? globalOptions.AbsoluteInterval
                 : globalOptions.SlidingInterval);
-        var fileId = isPartial ? (userOptions.PartialId ?? userOptions.FileId) : userOptions.FileId;
         var uploadInfo = new UploadFileInfo
         {
             FileId = fileId,
@@ -204,7 +204,7 @@ internal class ResourceCreationHandler
         var infos = new List<UploadFileInfo>();
         foreach (var url in tusResult.Urls)
         {
-            var partialId = ConcatenationRequestHandler.GetTemplateValue(url, userOptions.RouteTemplate, userOptions.FileIdParameter.Item1);
+            var partialId = ConcatenationRequestHandler.GetTemplateValue(url, userOptions.RouteTemplate, userOptions.FileIdParameterName);
             if (partialId is null)
             {
                 logger.LogError("Could not find partial resource with url {PartialUrl} for merging", url);
@@ -274,7 +274,7 @@ internal class ResourceCreationHandler
             tusResult.UploadFileInfo = merged;
 
             // Create url to new file
-            tusResult.LocationUrl = linkGenerator.GetPathToUploadWithWhenKey(userOptions.FileIdParameter.Item1, userOptions.FileIdParameter.Item2, userOptions.RouteName);
+            tusResult.LocationUrl = linkGenerator.GetPathToUploadWithWhenKey(userOptions.FileIdParameterName, userOptions.FileId, userOptions.RouteName);
             return tusResult.Wrap();
         }
 

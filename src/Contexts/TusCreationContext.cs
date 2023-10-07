@@ -16,7 +16,7 @@ public sealed record class TusCreationContext
     /// <param name="fileId">The file id</param>
     /// <param name="routeTemplate">The route template</param>
     /// <param name="routeName">The route name</param>
-    /// <param name="fileIdParameter">The file id route parameter</param>
+    /// <param name="fileIdParameterName">The file id route parameter</param>
     /// <param name="routeValues">The extra optional route values</param>
     /// <param name="filename">The optional filename</param>
     /// <param name="expirationStrategy">The expiration strategy</param>
@@ -30,7 +30,7 @@ public sealed record class TusCreationContext
         string fileId,
         string routeTemplate,
         string routeName,
-        (string, object) fileIdParameter,
+        string fileIdParameterName,
         (string, object)[] routeValues,
         string? filename,
         ExpirationStrategy? expirationStrategy,
@@ -45,7 +45,7 @@ public sealed record class TusCreationContext
         FileId = fileId;
         RouteTemplate = routeTemplate;
         RouteName = routeName;
-        FileIdParameter = fileIdParameter;
+        FileIdParameterName = fileIdParameterName;
         RouteValues = routeValues;
         Filename = filename;
         ExpirationStrategy = expirationStrategy;
@@ -73,9 +73,9 @@ public sealed record class TusCreationContext
     public string RouteName { get; }
 
     /// <summary>
-    /// Get the file id parameter
+    /// Get the file id parameter name
     /// </summary>
-    public (string, object) FileIdParameter { get; }
+    public string FileIdParameterName { get; }
 
     /// <summary>
     /// Get the route values

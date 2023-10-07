@@ -44,7 +44,7 @@ public class UploadController : ControllerBase
         var ctx = HttpContext
             .TusCreation(id)
             .SetRouteName("CustomRouteNameUpload")
-            .Build("{fileId}", ("fileId", id));
+            .Build("{fileId}", "fileId");
 
         // Start creation (IuploadStorageHandler.CreateResource())
         await HttpContext.StartCreationAsync(ctx);

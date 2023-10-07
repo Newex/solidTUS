@@ -46,7 +46,7 @@ public class UploadController : ControllerBase
             .Done();
 
         // Accept creating upload and redirect to TusUpload
-        var ctx = configuration.Build("{fileId}", ("fileId", id));
+        var ctx = configuration.Build("{fileId}", "fileId");
         await HttpContext.StartCreationAsync(ctx);
 
         // Converts a success to 201 created
