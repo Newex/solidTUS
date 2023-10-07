@@ -28,13 +28,14 @@ internal static class HeadRequestHandler
     /// <returns>Either an error or a request context</returns>
     public static TusResult SetUploadLengthOrDeferred(TusResult context)
     {
-        var hasFileSize = context.FileSize.HasValue;
-        if (!hasFileSize)
+        var size = context.UploadFileInfo?.FileSize ?? context.FileSize;
+        if (!size.HasValue)
         {
             context.ResponseHeaders.Add(TusHeaderNames.UploadDeferLength, "1");
         }
         else
         {
+            context.FileSize = size;
             context.ResponseHeaders.Add(TusHeaderNames.UploadLength, context.FileSize.GetValueOrDefault().ToString());
         }
 

@@ -98,8 +98,9 @@ internal class CommonRequestHandler
     /// Set the tus resumable response header
     /// </summary>
     /// <param name="context">The response context</param>
-    public static void SetTusResumableHeader(TusResult context)
+    public static TusResult SetTusResumableHeader(TusResult context)
     {
         context.ResponseHeaders.Add(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion);
+        return context;
     }
 }

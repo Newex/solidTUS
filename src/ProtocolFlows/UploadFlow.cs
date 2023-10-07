@@ -58,6 +58,7 @@ internal class UploadFlow
         var requestContext = await common.SetUploadFileInfoAsync(context, fileId, cancellationToken);
 
         requestContext = requestContext
+            .Map(CommonRequestHandler.SetTusResumableHeader)
             .Map(HeadRequestHandler.SetUploadOffsetHeader)
             .Map(HeadRequestHandler.SetUploadLengthOrDeferred)
             .Map(HeadRequestHandler.SetMetadataHeader)
