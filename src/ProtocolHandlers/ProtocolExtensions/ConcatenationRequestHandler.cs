@@ -1,8 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Options;
 using SolidTUS.Constants;
-using SolidTUS.Contexts;
 using SolidTUS.Extensions;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
@@ -89,7 +89,14 @@ internal class ConcatenationRequestHandler
         }
 
         var urls = list.Split(" ");
-        context.Urls = urls;
+        var relativeUrls = new List<string>();
+        foreach (var url in urls)
+        {
+            var relative = new Uri(url, UriKind.RelativeOrAbsolute).AbsolutePath;
+            relativeUrls.Add(relative);
+        }
+
+        context.Urls = relativeUrls.ToArray();
         return context.Wrap();
     }
 
