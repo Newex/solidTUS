@@ -117,9 +117,10 @@ internal class ResourceCreationHandler
         var now = clock.UtcNow;
         var strategy = userOptions.ExpirationStrategy ?? globalOptions.ExpirationStrategy;
         var interval = userOptions.Interval
-            ?? (strategy == ExpirationStrategy.AbsoluteExpiration
-                ? globalOptions.AbsoluteInterval
-                : globalOptions.SlidingInterval);
+            ?? (strategy == ExpirationStrategy.Never ? null
+                : (strategy == ExpirationStrategy.AbsoluteExpiration
+                    ? globalOptions.AbsoluteInterval
+                    : globalOptions.SlidingInterval ));
         var uploadInfo = new UploadFileInfo
         {
             FileId = fileId,
