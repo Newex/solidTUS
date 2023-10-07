@@ -40,6 +40,12 @@ internal class PostRequestHandler
     /// <returns>Either an error or a request context</returns>
     public static Result<TusResult> CheckUploadLengthOrDeferred(TusResult context)
     {
+        if (context.PartialMode == PartialMode.Final)
+        {
+            // Do not check on final
+            return context.Wrap();
+        }
+
         var hasDefer = context.RequestHeaders.ContainsKey(TusHeaderNames.UploadDeferLength);
         var hasLength = context.RequestHeaders.ContainsKey(TusHeaderNames.UploadLength);
 
@@ -74,6 +80,11 @@ internal class PostRequestHandler
     /// <returns>Either an error or a request context</returns>
     public Result<TusResult> CheckMaximumSize(TusResult context)
     {
+        if (context.PartialMode == PartialMode.Final)
+        {
+            return context.Wrap();
+        }
+
         var hasHeader = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadLength], out var size);
         if (!hasHeader)
         {

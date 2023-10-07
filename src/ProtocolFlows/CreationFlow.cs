@@ -38,10 +38,9 @@ internal class CreationFlow
     /// <returns>Either an error or a request context</returns>
     public Result<TusResult> PreResourceCreation(TusResult context)
     {
-        var requestContext = PostRequestHandler
-            .CheckUploadLengthOrDeferred(context)
-            .Bind(ConcatenationRequestHandler.SetPartialMode)
+        var requestContext = ConcatenationRequestHandler.SetPartialMode(context)
             .Bind(ConcatenationRequestHandler.SetPartialFinalUrls)
+            .Bind(PostRequestHandler.CheckUploadLengthOrDeferred)
             .Map(PostRequestHandler.SetFileSize)
             .Bind(post.CheckMaximumSize)
             .Map(PostRequestHandler.ParseMetadata)
