@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Options;
 using SolidTUS.Constants;
-using SolidTUS.Contexts;
 using SolidTUS.Extensions;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
@@ -20,12 +19,8 @@ namespace SolidTUS.ProtocolHandlers.ProtocolExtensions;
 internal class ExpirationRequestHandler
 {
     private readonly ExpirationStrategy expirationStrategy;
-    private readonly TimeSpan slidingInterval;
-    private readonly TimeSpan absoluteInterval;
     private readonly ISystemClock clock;
     private readonly IExpiredUploadHandler expiredUploadHandler;
-
-    private readonly bool allowExpiredUploads;
 
     /// <summary>
     /// Instantiate a new <see cref="ExpirationRequestHandler"/>
@@ -40,9 +35,6 @@ internal class ExpirationRequestHandler
     )
     {
         expirationStrategy = options.Value.ExpirationStrategy;
-        slidingInterval = options.Value.SlidingInterval;
-        absoluteInterval = options.Value.AbsoluteInterval;
-        allowExpiredUploads = options.Value.AllowExpiredUploadsToContinue;
         this.clock = clock;
         this.expiredUploadHandler = expiredUploadHandler;
     }
