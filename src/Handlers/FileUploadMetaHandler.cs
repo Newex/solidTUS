@@ -58,42 +58,71 @@ public class FileUploadMetaHandler : IUploadMetaHandler
     /// <inheritdoc />
     public Task<UploadFileInfo?> GetResourceAsync(string fileId, CancellationToken cancellationToken)
     {
-        var fileInfo = ReadUploadFileInfo(fileId);
-        return Task.FromResult(fileInfo);
+        var filename = MetadataFullFilename(fileId);
+        var path = Path.Combine(directoryPath, filename);
+        var exists = File.Exists(path);
+        if (!exists)
+        {
+            // Try partial
+            filename = MetadataPartialFilename(fileId);
+            path = Path.Combine(directoryPath, filename);
+            exists = File.Exists(path);
+            if (!exists)
+            {
+                return Task.FromResult<UploadFileInfo?>(null);
+            }
+        }
+
+        try
+        {
+            var fileInfoTxt = File.ReadAllText(path);
+            var fileInfo = JsonSerializer.Deserialize<UploadFileInfo>(fileInfoTxt);
+            return Task.FromResult(fileInfo);
+        }
+        catch (JsonException)
+        {
+            return Task.FromResult<UploadFileInfo?>(null);
+        }
     }
 
     /// <inheritdoc />
     public Task<bool> UpdateResourceAsync(UploadFileInfo fileInfo, CancellationToken cancellationToken)
     {
-        var filepath = MetadataFullFilenamePath(fileInfo.FileId);
-        var exists = File.Exists(filepath);
-        if (!exists)
-        {
-            return Task.FromResult(false);
-        }
-
         if (!fileInfo.IsPartial)
         {
-            return Task.FromResult(WriteUploadFileInfo(fileInfo));
+            var filename = MetadataFullFilename(fileInfo.FileId);
+            var path = Path.Combine(directoryPath, filename);
+            if (File.Exists(path))
+            {
+                return Task.FromResult(WriteUploadFileInfo(fileInfo));
+            }
+            return Task.FromResult(false);
         }
         else
         {
-            return Task.FromResult(WritePartialUploadFileInfo(fileInfo, cancellationToken));
+            var filename = MetadataPartialFilename(fileInfo.FileId);
+            var path = Path.Combine(directoryPath, filename);
+            if (File.Exists(path))
+            {
+                return Task.FromResult(WritePartialUploadFileInfo(fileInfo, cancellationToken));
+            }
+            return Task.FromResult(false);
         }
     }
 
     /// <inheritdoc />
     public Task<bool> DeleteUploadFileInfoAsync(UploadFileInfo info, CancellationToken cancellationToken)
     {
-        string? path;
+        string? filename;
         if (!info.IsPartial)
         {
-            path = MetadataFullFilenamePath(info.FileId);
+            filename = MetadataFullFilename(info.FileId);
         }
         else
         {
-            path = MetadataPartialFilenamePath(info.FileId);
+            filename = MetadataPartialFilename(info.FileId);
         }
+        var path = Path.Combine(directoryPath, filename);
         var exists = File.Exists(path);
         if (!exists)
         {
@@ -131,9 +160,10 @@ public class FileUploadMetaHandler : IUploadMetaHandler
     {
         try
         {
-            var filename = MetadataFullFilenamePath(fileInfo.FileId);
+            var filename = MetadataFullFilename(fileInfo.FileId);
+            var path = Path.Combine(directoryPath, filename);
             var content = JsonSerializer.Serialize(fileInfo);
-            File.WriteAllText(filename, content);
+            File.WriteAllText(path, content);
             return true;
         }
         catch(Exception ex)
@@ -148,11 +178,12 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var filename = MetadataPartialFilenamePath(fileInfo.FileId);
+            var filename = MetadataPartialFilename(fileInfo.FileId);
             var sysInfo = new FileInfo(filename);
             sysInfo.Directory?.Create();
+            var path = Path.Combine(directoryPath, filename);
             var content = JsonSerializer.Serialize(fileInfo);
-            File.WriteAllText(filename, content);
+            File.WriteAllText(path, content);
             return true;
         }
         catch (Exception ex)
@@ -163,48 +194,19 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         return false;
     }
 
-    private UploadFileInfo? ReadUploadFileInfo(string fileId)
-    {
-        var filename = MetadataFullFilenamePath(fileId);
-        var exists = File.Exists(filename);
-        if (!exists)
-        {
-            // Try partial
-            filename = MetadataPartialFilenamePath(fileId);
-            exists = File.Exists(filename);
-            if (!exists)
-            {
-                return null;
-            }
-        }
-
-        try
-        {
-            var fileInfoTxt = File.ReadAllText(filename);
-            var fileInfo = JsonSerializer.Deserialize<UploadFileInfo>(fileInfoTxt);
-            return fileInfo;
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-    }
-
-    private string MetadataFullFilenamePath(string fileId)
+    private string MetadataFullFilename(string fileId)
     {
         var temp = fileId.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries);
         var sanitized = string.Join("_", temp);
         var filename = sanitized + ".metadata.json";
-        var path = Path.Combine(directoryPath, filename);
-        return path;
+        return filename;
     }
 
-    private string MetadataPartialFilenamePath(string partialId)
+    private string MetadataPartialFilename(string partialId)
     {
         var temp = partialId.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries);
         var sanitized = string.Join("_", temp);
         var filename = sanitized + ".chunk.metadata.json";
-        var path = Path.Combine(directoryPath, filename);
-        return path;
+        return filename;
     }
 }

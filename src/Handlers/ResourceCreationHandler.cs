@@ -5,7 +5,6 @@ using System.IO.Pipelines;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -140,7 +139,7 @@ internal class ResourceCreationHandler
                 userOptions.Interval ?? globalOptions.AbsoluteInterval,
                 userOptions.Interval ?? globalOptions.SlidingInterval),
             LastUpdatedDate = null,
-            OnDiskFilename = userOptions.Filename ?? userOptions.FileId,
+            OnDiskFilename = userOptions.Filename ?? fileId,
         };
 
         bool create = await uploadMetaHandler.CreateResourceAsync(uploadInfo, cancellationToken);

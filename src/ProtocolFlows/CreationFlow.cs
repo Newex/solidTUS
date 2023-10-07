@@ -62,6 +62,7 @@ internal class CreationFlow
         CommonRequestHandler.SetTusResumableHeader(responseContext);
         post.SetMaximumFileSize(responseContext);
         expiration.SetExpiration(responseContext);
+        PostRequestHandler.SetCreationLocation(responseContext);
 
         return responseContext;
     }

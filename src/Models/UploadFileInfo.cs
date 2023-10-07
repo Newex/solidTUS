@@ -52,7 +52,6 @@ public record UploadFileInfo
     /// <summary>
     /// Get the parsed TUS metadata
     /// </summary>
-    [JsonReadOnlyDictionary]
     [JsonInclude]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyDictionary<string, string>? Metadata { get; internal set; }
@@ -65,7 +64,7 @@ public record UploadFileInfo
     public string? RawMetadata { get; internal set; }
 
     /// <summary>
-    /// Get the filename as it is on the disk
+    /// Get the filename of the uploaded file as it is on the disk
     /// </summary>
     /// <remarks>
     /// This filename is different from the given actual filename.

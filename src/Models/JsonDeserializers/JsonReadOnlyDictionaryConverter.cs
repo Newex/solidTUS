@@ -20,7 +20,7 @@ public class JsonReadOnlyDictionaryConverter: JsonConverterFactory
     public override bool CanConvert(Type typeToConvert)
     {
         return typeToConvert.GetInterfaces()
-                    .Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>))
+                    .Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ReadOnlyDictionary<,>))
                     && (!typeToConvert.IsGenericType || typeToConvert.GetGenericTypeDefinition() == typeof(ReadOnlyDictionary<,>) ||
                     typeof(ReadOnlyDictionary<,>).IsSubclassOfRawGeneric(typeToConvert));
     }

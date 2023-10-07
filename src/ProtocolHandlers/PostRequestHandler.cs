@@ -173,6 +173,18 @@ internal class PostRequestHandler
         return context.Wrap();
     }
 
+    public static TusResult SetCreationLocation(TusResult context)
+    {
+        var hasLocation = context.LocationUrl is not null;
+        if (!hasLocation)
+        {
+            return context;
+        }
+
+        context.ResponseHeaders.Add(HeaderNames.Location, context.LocationUrl);
+        return context;
+    }
+
     /// <summary>
     /// Set the maximum file size header if present
     /// </summary>

@@ -1,3 +1,5 @@
+using System;
+
 using Microsoft.AspNetCore.Routing;
 
 using SolidTUS.Constants;
@@ -53,6 +55,7 @@ public class LinkGeneratorWrapper : ILinkGeneratorWrapper
             routeValueDictionary.TryAdd(key, value);
         }
 
+        routeValueDictionary.TryAdd(fileIdRouteValue.Item1, fileIdRouteValue.Item2);
         return linkGenerator.GetPathByName(routeName, routeValueDictionary);
     }
 
