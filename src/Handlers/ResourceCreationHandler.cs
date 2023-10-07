@@ -192,6 +192,9 @@ internal class ResourceCreationHandler
     /// <returns>A response context or an error</returns>
     public async Task<Result<TusResult>> MergeFilesAsync(CancellationToken cancellationToken)
     {
+        // TODO:
+        // - Delete partial files - TusOptions -> default true
+        // - Create final info file
         if (userOptions is null)
         {
             throw new UnreachableException();
