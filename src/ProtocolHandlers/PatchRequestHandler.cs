@@ -27,6 +27,7 @@ internal class PatchRequestHandler
         var hasSize = context.UploadFileInfo?.FileSize.HasValue ?? false;
         if (hasSize)
         {
+            context.FileSize = context.UploadFileInfo!.FileSize!.Value;
             return context.Wrap();
         }
 
