@@ -73,6 +73,7 @@ function onTusProgress(bytesUploaded, bytesTotal) {
 
 function onTusSuccess() {
     downloadLink.innerHTML = '<a href="' + upload.url + '">Download ' + upload.file.name + '</a>';
+    console.log(upload);
     enableUpload();
 }
 

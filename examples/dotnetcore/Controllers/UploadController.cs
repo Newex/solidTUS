@@ -1,10 +1,10 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using SolidTUS.Attributes;
-using SolidTUS.Contexts;
 using SolidTUS.Extensions;
 using SolidTUS.Handlers;
 
@@ -24,6 +24,25 @@ public class UploadController : ControllerBase
         this.uploadStorageHandler = uploadStorageHandler;
         this.uploadMetaHandler = uploadMetaHandler;
     }
+
+    [HttpGet("{fileId}")]
+    public async Task<IActionResult> Download(string fileId, CancellationToken cancellationToken)
+    {
+        var info = await uploadMetaHandler.GetResourceAsync(fileId, cancellationToken);
+        if (info is null)
+        {
+            return NotFound();
+        }
+
+        var stream = System.IO.File.OpenRead(info.OnDiskFilename);
+        if (stream is null)
+        {
+            return NotFound();
+        }
+
+        return File(stream, info.Metadata?["contentType"] ?? "application/octet-stream", info.Metadata?["filename"]);
+    }
+
 
     [TusCreation]
     [RequestSizeLimit(5_000_000_000)]
@@ -92,6 +111,7 @@ public class UploadController : ControllerBase
 
         // Delete info and file respond 204
         await uploadStorageHandler.DeleteFileAsync(info, cancellationToken);
+        await uploadMetaHandler.DeleteUploadFileInfoAsync(info, cancellationToken);
         return NoContent();
     }
 }
