@@ -1,5 +1,3 @@
-using System;
-using System.Threading;
 using SolidTUS.Constants;
 using SolidTUS.Models;
 using SolidTUS.Parsers;
@@ -17,33 +15,35 @@ public class PreUploadChecksumRequestTests
     {
         // Arrange
         var cipher = Base64Converters.Encode("checksumOfUploadChunk");
-        var http = MockHttps.HttpRequest("PATCH",
+        var request = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadChecksum, $"sha1 {cipher}")
         );
-        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        var response = MockHttps.HttpResponse();
+        var context = TusResult.Create(request, response);
 
         // Act
-        var response = request.Map(c => ChecksumRequestHandler.ParseChecksum(c));
-        var result = response.IsSuccess();
+        var checksum = context.Map(ChecksumRequestHandler.ParseChecksum);
+        var result = checksum.IsSuccess();
 
         // Assert
-        Assert.True(result);
+        result.Should().BeTrue();
     }
 
     [Fact]
     public void Invalid_base64_encoded_checksum_does_not_parse()
     {
         // Arrange
-        var http = MockHttps.HttpRequest("PATCH",
+        var request = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadChecksum, "sha1 nonBase64EncodedChecksum-")
         );
-        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        var response = MockHttps.HttpResponse();
+        var context = TusResult.Create(request, response);
 
         // Act
-        var response = request.Map(c => ChecksumRequestHandler.ParseChecksum(c));
-        var result = response.IsSuccess();
+        var checksum = context.Map(ChecksumRequestHandler.ParseChecksum);
+        var result = checksum.IsSuccess();
 
         // Assert
         Assert.False(result);
