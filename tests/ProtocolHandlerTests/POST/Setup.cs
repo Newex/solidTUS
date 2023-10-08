@@ -1,4 +1,3 @@
-using System.Threading;
 using SolidTUS.Constants;
 using SolidTUS.Models;
 using SolidTUS.Tests.Mocks;
@@ -18,6 +17,7 @@ internal static class Setup
             http.Headers.Add(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion);
         }
 
-        return TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        var response = MockHttps.HttpResponse();
+        return TusResult.Create(http, response);
     }
 }
