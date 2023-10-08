@@ -131,25 +131,24 @@ public class CheckRequestTests
     public void Request_with_matching_byte_offset_returns_success()
     {
         // Arrange
-        var fileInfo = RandomEntities.UploadFileInfo() with
-        {
-        };
+        var fileInfo = new UploadFileInfo();
         fileInfo.AddBytes(100);
-        var http = MockHttps.HttpRequest("PATCH",
+        var request = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadOffset, "100")
         );
-        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        var response = MockHttps.HttpResponse();
+        var context = TusResult.Create(request, response);
 
         // Act
-        var response = request.Bind(c => PatchRequestHandler.CheckConsistentByteOffset(c with
+        var check = context.Bind(c => PatchRequestHandler.CheckConsistentByteOffset(c with
         {
             UploadFileInfo = fileInfo
         }));
-        var result = response.IsSuccess();
+        var result = check.IsSuccess();
 
         // Assert
-        Assert.True(result);
+        result.Should().BeTrue();
     }
 
     [Fact]
