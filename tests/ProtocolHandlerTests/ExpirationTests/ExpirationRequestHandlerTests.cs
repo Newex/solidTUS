@@ -133,38 +133,36 @@ public class ExpirationTests
     public async Task Expired_upload_should_return_410_Gone()
     {
         // Arrange
-        var http = MockHttps.HttpRequest("PATCH",
+        var request = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
+        var response = MockHttps.HttpResponse();
 
         // 1st of June 2020 is a Monday
         var lastWeek = new DateTimeOffset(2020, 06, 01, 12, 00, 00, TimeSpan.FromHours(0));
-        var today = lastWeek.AddDays(7);
+        var today = lastWeek.AddDays(6);
+        var yesterday = lastWeek.AddDays(5);
 
-        var request = TusResult
-            .Create(http.HttpContext.Request, http.HttpContext.Response)
+        var expiration = TusResult
+            .Create(request, response)
             .Map(c => c with
             {
                 UploadFileInfo = new()
                 {
-                    CreatedDate = lastWeek
+                    ExpirationDate = yesterday
                 }
             });
         var clock = MockOthers.Clock(today);
-        var globalOptions = MSOptions.Create(new TusOptions
-        {
-            AbsoluteInterval = TimeSpan.FromDays(5),
-            ExpirationStrategy = ExpirationStrategy.AbsoluteExpiration
-        });
+        var globalOptions = MSOptions.Create(new TusOptions());
         var expiredHandler = MockHandlers.ExpiredUploadHandler();
         var handler = new ExpirationRequestHandler(clock, expiredHandler, globalOptions);
 
         // Act
-        var response = await request.BindAsync(async c => await handler.CheckExpirationAsync(c, CancellationToken.None));
-        var status = response.GetValueOrDefault();
+        var hasExpired = await expiration.BindAsync(async c => await handler.CheckExpirationAsync(c, CancellationToken.None));
+        var result = hasExpired.GetHttpError();
 
         // Assert
-        // status.Should().Be(410);
+        result.Should().NotBeNull().And.Match<HttpError>(x => x.StatusCode == 410);
     }
 
     [Fact]
