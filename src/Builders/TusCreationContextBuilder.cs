@@ -21,7 +21,6 @@ public sealed class TusCreationContextBuilder
     private Func<UploadFileInfo, Task>? ResourceCreatedCallback { get; set; }
     private TusParallelContextBuilder? TusParallelContext { get; set; }
     private string? RouteName { get; set; }
-    private (string, string)[]? RouteValues { get; set; }
 
     internal TusCreationContextBuilder(
         string fileId
