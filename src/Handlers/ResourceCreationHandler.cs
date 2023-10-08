@@ -115,7 +115,7 @@ internal class ResourceCreationHandler
         tusResult.LocationUrl = uploadUrl;
 
         var now = clock.UtcNow;
-        var strategy = userOptions.ExpirationStrategy ?? globalOptions.ExpirationStrategy;
+        var strategy = userOptions.ExpirationStrategy;
         var interval = userOptions.Interval
             ?? (strategy == ExpirationStrategy.Never ? null
                 : (strategy == ExpirationStrategy.AbsoluteExpiration
@@ -133,7 +133,7 @@ internal class ResourceCreationHandler
             IsPartial = isPartial,
             ConcatHeaderFinal = null,
             ExpirationDate = ExpirationRequestHandler.CalculateExpiration(
-                strategy,
+                strategy ?? globalOptions.ExpirationStrategy,
                 now,
                 now,
                 null,
