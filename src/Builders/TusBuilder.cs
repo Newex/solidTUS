@@ -152,6 +152,7 @@ public sealed class TusBuilder
         builder.services.AddScoped<IChecksumValidator, MD5ChecksumValidator>();
 
         builder.services.TryAddScoped<ResourceCreationHandler>();
+        builder.services.TryAddScoped<UploadHandler>();
         builder.services.TryAddScoped<ILinkGeneratorWrapper, LinkGeneratorWrapper>();
         return builder;
     }

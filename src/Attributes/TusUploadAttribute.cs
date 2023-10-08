@@ -132,7 +132,7 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
                     return Task.CompletedTask;
                 }
 
-                if (ctx.HttpContext.Items[HttpContextExtensions.UploadResultName] is not TusResult postAction)
+                if (ctx.HttpContext.Items[HttpContextExtensions.UploadResultName] is not Result<TusResult> postAction)
                 {
                     ctx.Result = new ObjectResult("Internal server error")
                     {
@@ -141,7 +141,17 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
                     return Task.CompletedTask;
                 }
 
-                uploadFlow.PostUpload(postAction);
+                var error = postAction.GetHttpError();
+                if (error is not null)
+                {
+                    ctx.Result = new ObjectResult(error.Value.Message)
+                    {
+                        StatusCode = error.Value.StatusCode
+                    };
+                    return Task.CompletedTask;
+                }
+
+                postAction.Map(uploadFlow.PostUpload);
                 return Task.CompletedTask;
             }, context);
         }

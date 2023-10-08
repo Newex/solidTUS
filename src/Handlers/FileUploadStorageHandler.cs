@@ -19,23 +19,19 @@ namespace SolidTUS.Handlers;
 public class FileUploadStorageHandler : IUploadStorageHandler
 {
     private readonly ISystemClock clock;
-    private readonly IUploadMetaHandler uploadMetaHandler;
     private readonly string directory;
 
     /// <summary>
     /// Instantiate a new <see cref="FileUploadStorageHandler"/>
     /// </summary>
     /// <param name="clock">The system clock provider</param>
-    /// <param name="uploadMetaHandler">The metadata file handler</param>
     /// <param name="options"></param>
     public FileUploadStorageHandler(
         ISystemClock clock,
-        IUploadMetaHandler uploadMetaHandler,
         IOptions<FileStorageOptions> options
     )
     {
         this.clock = clock;
-        this.uploadMetaHandler = uploadMetaHandler;
         directory = options.Value.DirectoryPath;
     }
 
@@ -113,7 +109,6 @@ public class FileUploadStorageHandler : IUploadStorageHandler
             {
                 uploadInfo.AddBytes(written);
                 uploadInfo.LastUpdatedDate = clock.UtcNow;
-                await uploadMetaHandler.UpdateResourceAsync(uploadInfo, cancellationToken);
             }
         }
 
@@ -135,11 +130,11 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     }
 
     /// <inheritdoc />
-    public async Task DeleteFileAsync(UploadFileInfo uploadFileInfo, CancellationToken cancellationToken)
+    public Task DeleteFileAsync(UploadFileInfo uploadFileInfo, CancellationToken cancellationToken)
     {
-        await uploadMetaHandler.DeleteUploadFileInfoAsync(uploadFileInfo, cancellationToken);
         var file = Path.Combine(directory, uploadFileInfo.OnDiskFilename);
         File.Delete(file);
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

@@ -8,6 +8,7 @@ using SolidTUS.Builders;
 using SolidTUS.Contexts;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
+using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 
 namespace SolidTUS.Extensions;
 
@@ -106,7 +107,7 @@ public static class HttpContextExtensions
     /// <exception cref="InvalidOperationException">Thrown when missing TusUpload attribute</exception>
     public static async Task StartAppendDataAsync(this HttpContext context, TusUploadContext uploadContext)
     {
-        if (context.RequestServices.GetService(typeof(IUploadStorageHandler)) is not IUploadStorageHandler uploadStorageHandler)
+        if (context.RequestServices.GetService(typeof(UploadHandler)) is not UploadHandler uploadHandler)
         {
             throw new UnreachableException();
         }
@@ -116,27 +117,8 @@ public static class HttpContextExtensions
             throw new InvalidOperationException("Must have TusUpload attribute to start appending data from client");
         }
 
-        var info = tusResult.UploadFileInfo;
-        if (info is null)
-        {
-            throw new InvalidOperationException("Missing upload info");
-        }
-
-        if (info.FileId != uploadContext.FileId)
-        {
-            throw new InvalidOperationException("File id does not match the file id given");
-        }
-
-        await uploadStorageHandler.OnPartialUploadAsync(context.Request.BodyReader, info, tusResult.ChecksumContext, context.RequestAborted);
-        if (info.Done)
-        {
-            if (uploadContext.UploadFinishedCallback is not null)
-            {
-                await uploadContext.UploadFinishedCallback(info);
-            }
-
-            context.Items[UploadResultName] = tusResult;
-        }
+        var result = await uploadHandler.HandleUploadAsync(context.Request.BodyReader, uploadContext, tusResult, context.RequestAborted);
+        context.Items[UploadResultName] = result;
     }
 
     /// <summary>
