@@ -18,6 +18,7 @@ namespace SolidTUS.Attributes;
 /// <summary>
 /// Marks the TUS-termination action. The route MUST match the route to the TUS-upload endpoint.
 /// </summary>
+[AttributeUsage(AttributeTargets.Method)]
 public class TusDeleteAttribute : ActionFilterAttribute, IActionHttpMethodProvider, IRouteTemplateProvider
 {
     /// <summary>

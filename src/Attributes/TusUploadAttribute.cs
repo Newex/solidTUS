@@ -19,6 +19,7 @@ namespace SolidTUS.Attributes;
 /// <summary>
 /// Identifies an action that supports TUS uploads. Must have a file ID parameter and TusContext parameter.
 /// </summary>
+[AttributeUsage(AttributeTargets.Method)]
 public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvider, IRouteTemplateProvider
 {
     /// <summary>
