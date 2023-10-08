@@ -34,13 +34,19 @@ public class UploadController : ControllerBase
             return NotFound();
         }
 
-        var stream = System.IO.File.OpenRead(info.OnDiskFilename);
-        if (stream is null)
+        if (info.OnDiskDirectoryPath is not null)
         {
-            return NotFound();
+            var file = Path.Combine(info.OnDiskDirectoryPath, info.OnDiskFilename);
+            var stream = System.IO.File.OpenRead(file);
+            if (stream is null)
+            {
+                return NotFound();
+            }
+
+            return File(stream, info.Metadata?["contentType"] ?? "application/octet-stream", info.Metadata?["filename"]);
         }
 
-        return File(stream, info.Metadata?["contentType"] ?? "application/octet-stream", info.Metadata?["filename"]);
+        return NotFound();
     }
 
 
