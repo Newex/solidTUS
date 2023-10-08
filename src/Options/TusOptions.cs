@@ -89,6 +89,15 @@ public record TusOptions
     public bool HasTermination { get; set; }
 
     /// <summary>
+    /// If true, partials files will be deleted when finished merging into final file.
+    /// Otherwise the partials files will be kept.
+    /// </summary>
+    /// <remarks>
+    /// Default true.
+    /// </remarks>
+    public bool DeletePartialFilesOnMerge { get; set; } = true;
+
+    /// <summary>
     /// Get the configuration section name
     /// </summary>
     internal const string TusConfigurationSection = "SolidTUS";

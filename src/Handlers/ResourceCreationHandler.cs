@@ -272,18 +272,30 @@ internal class ResourceCreationHandler
             await userOptions.MergeCallback(finalInfo, infos);
         }
 
-        if (merged is not null)
+        if (merged is null)
         {
-            logger.LogInformation("Merged files into {@FinalInfo} with the {@PartialInfos}", merged, infos);
-            tusResult.UploadFileInfo = merged;
-
-            // Create url to new file
-            tusResult.LocationUrl = linkGenerator.GetPathToUploadWithWhenKey(userOptions.FileIdParameterName, userOptions.FileId, userOptions.RouteName);
-            return tusResult.Wrap();
+            logger.LogError("Error occurred could not merge {@PartialFiles}", infos);
+            return HttpError.InternalServerError().Wrap();
         }
 
-        logger.LogError("Error occurred could not merge {@PartialFiles}", infos);
-        return HttpError.InternalServerError().Wrap();
-    }
+        logger.LogInformation("Merged files into {@FinalInfo} with the {@PartialInfos}", merged, infos);
+        tusResult.UploadFileInfo = merged;
 
+        // Create url to new file
+        tusResult.LocationUrl = linkGenerator.GetPathToUploadWithWhenKey(userOptions.FileIdParameterName, userOptions.FileId, userOptions.RouteName);
+
+        // Create final info
+        await uploadMetaHandler.CreateResourceAsync(finalInfo, CancellationToken.None);
+
+        if (globalOptions.DeletePartialFilesOnMerge)
+        {
+            foreach (var info in infos)
+            {
+                await uploadStorageHandler.DeleteFileAsync(info, CancellationToken.None);
+                await uploadMetaHandler.DeleteUploadFileInfoAsync(info, CancellationToken.None);
+            }
+        }
+
+        return tusResult.Wrap();
+    }
 }
