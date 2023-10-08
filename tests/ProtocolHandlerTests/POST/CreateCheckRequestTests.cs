@@ -191,4 +191,25 @@ public class CreateCheckRequestTests
         // Assert
         Assert.Equal(expected: 400, result);
     }
+
+    [Fact]
+    public void Partial_request_should_not_need_length()
+    {
+        // Arrange
+        var request = Setup.CreateRequest(resumable: true,
+            (TusHeaderNames.UploadLength, 20.ToString())
+        );
+        request = request.Map(c =>
+        {
+            c.PartialMode = Models.PartialMode.Partial;
+            return c;
+        });
+
+        // Act
+        var response = request.Bind(c => PostRequestHandler.CheckUploadLengthOrDeferred(c));
+        var result = response.StatusCode();
+
+        // Assert
+        result.Should().Be(200);
+    }
 }
