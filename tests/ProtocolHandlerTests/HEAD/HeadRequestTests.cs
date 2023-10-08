@@ -133,13 +133,14 @@ public class HeadRequestTests
         {
             RawMetadata = "filename d29ybGRfZG9taW5hdGlvbl9wbGFuLnBkZg==,is_confidential"
         };
-        var http = MockHttps.HttpRequest("PATCH",
+        var httpRequest = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
-        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        var httpResponse = MockHttps.HttpResponse();
+        var context = TusResult.Create(httpRequest, httpResponse);
 
         // Act
-        var response = request.Map(c => HeadRequestHandler.SetMetadataHeader(c with
+        var response = context.Map(c => HeadRequestHandler.SetMetadataHeader(c with
         {
             UploadFileInfo = file
         })).GetValueOrDefault();
