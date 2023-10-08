@@ -31,7 +31,6 @@
         endpoint,
         uploadDataDuringCreation: false,
         allowedMetaFields: ["name", "type"],
-        parallelUploads: 3
       });
 
     updateLocalStorage();
