@@ -46,6 +46,7 @@ public class FileUploadStorageHandler : IUploadStorageHandler
         try
         {
             var filename = FullFilenamePath(uploadInfo.OnDiskFilename, directory);
+            uploadInfo.OnDiskDirectoryPath = Path.GetDirectoryName(filename);
 
             using var fs = new FileStream(filename, FileMode.Append, FileAccess.Write);
 

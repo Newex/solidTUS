@@ -72,6 +72,13 @@ public record UploadFileInfo
     public string OnDiskFilename { get; internal set; } = string.Empty;
 
     /// <summary>
+    /// Get the directory path for where the file is stored on disk
+    /// </summary>
+    [JsonInclude]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? OnDiskDirectoryPath { get; internal set; }
+
+    /// <summary>
     /// Get the specific expiration strategy for this related upload.
     /// </summary>
     /// <remarks>
