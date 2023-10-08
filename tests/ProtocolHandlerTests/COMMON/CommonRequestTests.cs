@@ -51,10 +51,10 @@ public class CommonRequestTests
         var http = MockHttps.HttpRequest("OPTIONS",
             (TusHeaderNames.Resumable, "0.2.2")
         );
-        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        var context = TusResult.Create(http, MockHttps.HttpResponse());
 
         // Act
-        var response = request.Bind(c => CommonRequestHandler.CheckTusVersion(c));
+        var response = context.Bind(CommonRequestHandler.CheckTusVersion);
         var result = response.IsSuccess();
 
         // Assert

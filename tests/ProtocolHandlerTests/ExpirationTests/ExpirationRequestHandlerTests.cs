@@ -95,14 +95,15 @@ public class ExpirationTests
     public void File_expiration_strategy_should_take_precedence_over_global_values()
     {
         // Arrange
-        var http = MockHttps.HttpRequest("PATCH",
+        var httpRequest = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
+        var httpResponse = MockHttps.HttpResponse();
 
         // 1st of June 2020 is a Monday
         var now = new DateTimeOffset(2020, 06, 01, 12, 00, 00, TimeSpan.FromHours(0));
-        var request = TusResult
-            .Create(http.HttpContext.Request, http.HttpContext.Response)
+        var context = TusResult
+            .Create(httpRequest, httpResponse)
             .Map(c => c with
             {
                 UploadFileInfo = new()
@@ -122,7 +123,7 @@ public class ExpirationTests
         var handler = new ExpirationRequestHandler(clock, expiredHandler, globalOptions);
 
         // Act
-        var response = request.Map(handler.SetExpiration).GetValueOrDefault();
+        var response = context.Map(handler.SetExpiration).GetValueOrDefault();
         var result = response?.ResponseHeaders[TusHeaderNames.Expiration];
 
         // Assert

@@ -20,10 +20,10 @@ public class CheckRequestTests
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (HeaderNames.ContentType, "wrong_content_type")
         );
-        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        var context = TusResult.Create(http, MockHttps.HttpResponse());
 
         // Act
-        var response = request.Bind(c => PatchRequestHandler.CheckContentType(c));
+        var response = context.Bind(PatchRequestHandler.CheckContentType);
         var result = response.StatusCode(204);
 
         // Assert
@@ -38,10 +38,10 @@ public class CheckRequestTests
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (HeaderNames.ContentType, TusHeaderValues.PatchContentType)
         );
-        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        var context = TusResult.Create(http, MockHttps.HttpResponse());
 
         // Act
-        var response = request.Bind(c => PatchRequestHandler.CheckContentType(c));
+        var response = context.Bind(PatchRequestHandler.CheckContentType);
         var result = response.IsSuccess();
 
         // Assert
@@ -92,14 +92,14 @@ public class CheckRequestTests
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadOffset, "300")
         );
-        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        var context = TusResult.Create(http, MockHttps.HttpResponse());
 
         // Act
-        var response = request.Bind(c => PatchRequestHandler.CheckUploadOffset(c));
+        var response = context.Bind(PatchRequestHandler.CheckUploadOffset);
         var result = response.IsSuccess();
 
         // Assert
-        Assert.True(result);
+        result.Should().BeTrue();
     }
 
     [Fact]
@@ -229,10 +229,10 @@ public class CheckRequestTests
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadOffset, 20L.ToString())
         );
-        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        var context = TusResult.Create(http, MockHttps.HttpResponse());
 
         // Act
-        var response = request.Bind(c => PatchRequestHandler.CheckUploadOffset(c));
+        var response = context.Bind(PatchRequestHandler.CheckUploadOffset);
         var result = response.IsSuccess();
 
         // Assert
@@ -247,10 +247,10 @@ public class CheckRequestTests
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (TusHeaderNames.UploadOffset, 0L.ToString())
         );
-        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        var context = TusResult.Create(http, MockHttps.HttpResponse());
 
         // Act
-        var response = request.Bind(c => PatchRequestHandler.CheckUploadOffset(c));
+        var response = context.Bind(PatchRequestHandler.CheckUploadOffset);
         var result = response.IsSuccess();
 
         // Assert

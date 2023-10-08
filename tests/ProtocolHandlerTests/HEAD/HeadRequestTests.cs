@@ -19,10 +19,10 @@ public class HeadRequestTests
         var http = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
-        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        var context = TusResult.Create(http, MockHttps.HttpResponse());
 
         // Act
-        var response = request.Map(c => HeadRequestHandler.SetResponseCacheControl(c)).GetValueOrDefault();
+        var response = context.Map(HeadRequestHandler.SetResponseCacheControl).GetValueOrDefault();
         var result = response?.ResponseHeaders[HeaderNames.CacheControl];
 
         // Assert
@@ -33,24 +33,22 @@ public class HeadRequestTests
     public void When_the_file_exists_the_Upload_Offset_header_will_be_set_to_the_current_size_of_the_uploaded_file()
     {
         // Arrange
-        var file = RandomEntities.UploadFileInfo() with
-        {
-        };
+        var file = new UploadFileInfo();
         file.AddBytes(212L);
         var http = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
-        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        var context = TusResult.Create(http, MockHttps.HttpResponse());
 
         // Act
-        var response = request.Map(c => HeadRequestHandler.SetUploadOffsetHeader(c with
+        var response = context.Map(c => HeadRequestHandler.SetUploadOffsetHeader(c with
         {
             UploadFileInfo = file
         })).GetValueOrDefault();
         var result = response?.ResponseHeaders[TusHeaderNames.UploadOffset];
 
         // Assert
-        Assert.Equal(212L.ToString(), result);
+        result.ToString().Should().Be("212");
     }
 
     [Fact]
