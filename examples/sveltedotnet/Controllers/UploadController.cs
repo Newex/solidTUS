@@ -96,6 +96,7 @@ public class UploadController : ControllerBase
 
         // Delete info and file respond 204
         await uploadStorageHandler.DeleteFileAsync(info, cancellationToken);
+        await uploadMetaHandler.DeleteUploadFileInfoAsync(info, cancellationToken);
         return NoContent();
     }
 }
