@@ -1,7 +1,5 @@
-using System.Threading;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
-using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.Tests.Fakes;
@@ -59,20 +57,20 @@ public class HeadRequestTests
         {
             FileSize = 4213L
         };
-        var http = MockHttps.HttpRequest("PATCH",
+        var request = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
-        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        var context = TusResult.Create(request, MockHttps.HttpResponse());
 
         // Act
-        var response = request.Map(c => HeadRequestHandler.SetUploadLengthOrDeferred(c with
+        var response = context.Map(c => HeadRequestHandler.SetUploadLengthOrDeferred(c with
         {
             UploadFileInfo = file
         })).GetValueOrDefault();
         var result = response?.ResponseHeaders[TusHeaderNames.UploadLength];
 
         // Assert
-        Assert.Equal(4213L.ToString(), result);
+        result.ToString().Should().Be("4213");
     }
 
     [Fact]
@@ -83,20 +81,20 @@ public class HeadRequestTests
         {
             FileSize = 4213L
         };
-        var http = MockHttps.HttpRequest("PATCH",
+        var request = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
-        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        var context = TusResult.Create(request, MockHttps.HttpResponse());
 
         // Act
-        var response = request.Map(c => HeadRequestHandler.SetUploadLengthOrDeferred(c with
+        var response = context.Map(c => HeadRequestHandler.SetUploadLengthOrDeferred(c with
         {
             UploadFileInfo = file
         })).GetValueOrDefault();
         var result = response?.ResponseHeaders[TusHeaderNames.UploadDeferLength];
 
         // Assert
-        Assert.Empty(result!);
+        result.ToString().Should().BeNullOrEmpty();
     }
 
     [Fact]
@@ -107,20 +105,20 @@ public class HeadRequestTests
         {
             FileSize = null
         };
-        var http = MockHttps.HttpRequest("PATCH",
+        var request = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
-        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        var context = TusResult.Create(request, MockHttps.HttpResponse());
 
         // Act
-        var response = request.Map(c => HeadRequestHandler.SetUploadLengthOrDeferred(c with
+        var response = context.Map(c => HeadRequestHandler.SetUploadLengthOrDeferred(c with
         {
             UploadFileInfo = file
         })).GetValueOrDefault();
         var result = response?.ResponseHeaders[TusHeaderNames.UploadDeferLength];
 
         // Assert
-        Assert.Equal("1", result);
+        result.ToString().Should().Be("1");
     }
 
     [Fact]

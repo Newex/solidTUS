@@ -20,6 +20,7 @@ internal class ExpirationRequestHandler
 {
     private readonly ExpirationStrategy expirationStrategy;
     private readonly ISystemClock clock;
+    private readonly bool allowExpiredUploadsToContinue;
     private readonly IExpiredUploadHandler expiredUploadHandler;
 
     /// <summary>
@@ -35,6 +36,7 @@ internal class ExpirationRequestHandler
     )
     {
         expirationStrategy = options.Value.ExpirationStrategy;
+        allowExpiredUploadsToContinue = options.Value.AllowExpiredUploadsToContinue;
         this.clock = clock;
         this.expiredUploadHandler = expiredUploadHandler;
     }
@@ -75,6 +77,11 @@ internal class ExpirationRequestHandler
             var expired = now > context.UploadFileInfo.ExpirationDate.Value;
             if (expired)
             {
+                if (allowExpiredUploadsToContinue)
+                {
+                    return context.Wrap();
+                }
+
                 await expiredUploadHandler.ExpiredUploadAsync(context.UploadFileInfo, cancellationToken);
                 return HttpError.Gone().Wrap();
             }

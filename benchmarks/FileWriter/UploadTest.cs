@@ -123,7 +123,7 @@ public class UploadTest
         };
         uploadMetaHandler = new FileUploadMetaHandler(MSOptions.Create(options));
         var clock = new SystemClock();
-        uploadStorageHandler = new FileUploadStorageHandler(clock, uploadMetaHandler, MSOptions.Create(options));
+        uploadStorageHandler = new FileUploadStorageHandler(clock, MSOptions.Create(options));
         var info = uploadMetaHandler.GetResourceAsync(OutputFilename, CancellationToken.None).Result;
         if (info is not null)
         {
