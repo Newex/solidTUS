@@ -22,16 +22,13 @@ Extensions:
 - [x] [Creation](https://tus.io/protocols/resumable-upload#creation)
 - [x] [Creation-With-Upload](https://tus.io/protocols/resumable-upload#creation-with-upload)
 - [x] [Expiration](https://tus.io/protocols/resumable-upload#expiration)
+- [x] [Concatenation](https://tus.io/protocols/resumable-upload#concatenation)
 - [x] [Checksum](https://tus.io/protocols/resumable-upload#checksum) *
 - [x] [Termination](https://tus.io/protocols/resumable-upload#termination) **
 
 **Notes:**  
 \* Checksum feature does not implement the trailing header feature, i.e. A checksum value must be provided upon sending the http request.  
 \** Termination must be implemented by yourself. See examples and [documentation](https://github.com/Newex/solidTUS/wiki/TUS-Termination) on how to and why.
-
-Future goals is to implement all the extensions:
-
-- [ ] [Concatenation](https://tus.io/protocols/resumable-upload#concatenation)
 
 ### Other TUS libraries for C#
 * [tusdotnet](https://github.com/tusdotnet/tusdotnet)
@@ -50,22 +47,29 @@ Register the service in the startup process:
 builder.Services.AddTUS();
 ```
 
-In your `Controller` add the `TusCreation`-attribute to the action method endpoint and the `TusCreationContext` as parameter.
+In your `Controller` add the `TusCreation`-attribute to the action method endpoint.
 
-![create_upload](/assets/tus-creation-attribute.png)
+![create_upload](/assets/tus-creation-method.png)
+
+The `builder` has multiple configuration options that can be tweaked, see the wiki for more configurations.
 
 This will not upload any file (unless the client explicitly uses the TUS-extension `Creation-With-Upload` feature).  
 This only sets the ground work for getting information such as file size, and where to upload the data.
 
-Next the actual upload.
+The `routeTemplate` argument must match the actual route template for the `TusUpload` endpoint and the `fileIdParameterName` 
+MUST match the one in the route template.
 
-Set the `TusUpload`-attribute and add the `TusUploadContext` as a parameter
+The upload URL is constructed using these values to set the Location header, furthermore, these values will be used when decoding `Upload-Concat` requests from the client.
 
-![start_upload](/assets/tus-upload-attribute.png)
 
+Next the upload.
+
+![start_upload](/assets/tus-upload-method.png)
+
+Both the extension methods for the `HttpContext` live in `SolidTUS.Extensions` namespace.  
 _And done..._
 
-Congratulations you now have a very basic upload / pause / resume functionality. If you want to add [TUS-termination](https://tus.io/protocols/resumable-upload#termination) then you can add the `TusDelete` attribute to an action. The only requirement is that you ensure the route to the upload endpoint matches the route to the termination endpoint. To see how to implement `Tus-Termination` endpoint see the [wiki](https://github.com/Newex/solidTUS/wiki/TUS-Termination).
+Congratulations you now have a very basic upload / pause / resume functionality. If you want to add [TUS-termination](https://tus.io/protocols/resumable-upload#termination) then you can add the `TusDelete` attribute to an action. The only requirement is that you ensure the route to the upload endpoint matches the route to the termination endpoint. To see how to implement `Tus-Termination` endpoint or how to configure parallel uploads see the [wiki](https://github.com/Newex/solidTUS/wiki).
 
 # Extra options
 To see all the configurations go to the [wiki](https://github.com/Newex/solidTUS/wiki).
@@ -110,92 +114,31 @@ builder.Services
   });
 ```
 
-another option is to determine where each file should be uploaded on per upload basis. In the `Action` you can specify the file path:
+## Context Builders
+The context builders are meant to be used in conjunction with the Tus attributes. These context builders are created using extension methods on the `HttpContext`.
 
+So that `TusCreation` extension method should be used with the `TusCreation` attribute, etc.
 
-```csharp
-[TusUpload]
-public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadContext context)
-{
-    // ... omitted
-    await context.StartAppendDataAsync(fileId, "determine/path/per/upload");
-    // ... omitted
-}
-```
+Each context builder uses a fluent interface to construct a tus context to be used in the library.
 
-## Configuration from appsettings.json or environment variables
-You can configure the `Tus-Max-Size` parameter and the default file storage upload folder from the appsettings.json configuration:
+## The attribute and their purpose
+The `TusCreation` attribute is responsible for:
 
-```json
-{
-  "SolidTUS": {
-    "DirectoryPath": "/path/to/my/uploads",
-    "MaxSize": "3000000"
-  }
-}
-```
+1. Creating new uploads, by creating the `UploadFileInfo` metadata resource
+2. Merging finished partial uploads into a single file
 
-Environment variables are named as `SolidTUS__DirectoryPath` with a double underscore (so they also can be read from a linux environment). See [Microsofts documentation for naming](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-7.0#naming-of-environment-variables)
+The `TusUpload` attribute is responsible for:
 
-## Contexts
-The injected context classes are excluded from ModelBinding but do show up in Swagger SwashBuckle. To exclude from Swagger SwashBuckle you can annotate the contexts with the `FromServices`-attribute.
+1. Storing upload data from the client
+2. Keeping the `UploadFileInfo` in-sync with upload
 
-**IMPORTANT: Callbacks must be defined before upload starts.**  
-**The `StartCreationAsync` and `StartAppendDataAsync` starts upload.**
+# Limitations
 
-### TusUploadContext
-Is responsible for starting the upload.
+The library current limitations, is:
 
-The class contains the following members:
+- Cannot specify where the `UploadFileInfo` metadata should be stored on an upload basis.
 
-* `OnUploadFinished` - A method that takes an awaitable callback. When the whole file has been completely uploaded the callback is invoked.
-* `StartAppendDataAsync` - Starts accepting the upload stream from the client
-* `UploadFileInfo` - Contains the SolidTUS metadata about the current upload.
-* `SetExpirationStrategy` - Defines the expiration strategy for this upload. See [wiki/ExpirationStrategy](https://github.com/Newex/solidTUS/wiki/TusOptions#expirationStrategy) section.
-
-Can only call `StartAppendDataAsync` once - subsequent calls will be ignored.  
-The `TusUploadContext` is injected from the `TusUpload`-attribute.
-
-### TusUploadAttribute
-Is responsible for marking the TUS-protocol upload endpoint. And needs information about 2 things:
-
-1. The file ID parameter name of type `string`
-2. The context parameter name of type `TusUploadContext`
-
-These parameters can be tuned:
-
-```csharp
-[TusUpload(FileIdParameterName = "Id", ContextParameterName = "tus")]
-public async Task<ActionResult> UploadEndPoint(string Id, TusUploadContext tus)
-{
-  /* Logic omitted ... */
-}
-```
-To see all parameters see [wiki/TusUploadAttribute](https://github.com/Newex/solidTUS/wiki/TusUploadAttribute) section.
-
-### TusCreationContext
-Is responsible for creating the resource metadata `UploadFileInfo`. Defining the file ID and eventual any TUS-metadata.  
-SolidTUS implements the TUS-protocol extension `creation-with-upload` thus a resource creation can contain some upload data.  
-Before reaching the actual `Action` method the metadata validator defined in the `Configuration` will run; If metadata is invalid an automatic response of 400 Bad Request will be returned, as specified in the TUS-protocol.   
-The class contains the following members:
-
-* `StartCreationAsync` - Starts resource creation
-* `OnResourceCreated` - A method that takes a callback function, which is invoked when the resource has been successfully created
-* `OnUploadFinished` - A method that takes a callback function, which is invoked when the partial file or whole file has finished uploading. It could be the client has sent a partial upload or the whole file.
-* `Metadata` - A `Dictionary<string, string>` property of the parsed TUS-metadata
-
-The `TusCreationContext` is injected from the `TusCreation`-attribute.
-
-### TusCreationAttribute
-Is responsible for marking the TUS-creation endpoint and needs information about the context parameter name.
-
-```csharp
-[TusCreation(ContextParameterName = "creationContext")]
-public async Task<ActionResult> CreationEndPoint(TusUploadContext creationContext)
-{
-  /* Logic omitted ... */
-}
-```
+This is due to the SolidTUS `FileUploadMetaHandler` only searching for metadata in a specific directory.
 
 # The TUS protocol with SolidTUS simplified
 In essence the client sends a request to an endpoint as marked by the `TusCreation` attribute:
@@ -249,7 +192,6 @@ Using unit tests and manually making TUS-request with the official javascript cl
 
 - [ ] Create wiki pages for all the configuration options
 - [ ] Create wiki pages for library design, and how to extend
-- [ ] Implement all TUS extension features
 - [ ] Add section in readme for examples
 
 # References
