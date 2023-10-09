@@ -17,6 +17,7 @@ public sealed class TusCreationContextBuilder
     private ExpirationStrategy? ExpirationStrategy { get; set; }
     private TimeSpan? Interval { get; set; }
     private string? Filename { get; set; }
+    private string? Directory { get; set; }
     private Func<UploadFileInfo, Task>? UploadFinishedCallback { get; set; }
     private Func<UploadFileInfo, Task>? ResourceCreatedCallback { get; set; }
     private TusParallelContextBuilder? TusParallelContext { get; set; }
@@ -67,6 +68,17 @@ public sealed class TusCreationContextBuilder
     public TusCreationContextBuilder SetFilename(string filename)
     {
         Filename = filename;
+        return this;
+    }
+
+    /// <summary>
+    /// Set the directory where the upload will be stored on disk, if using filesystem to store file.
+    /// </summary>
+    /// <param name="directory">The directory path</param>
+    /// <returns>A tus creation context</returns>
+    public TusCreationContextBuilder SetDirectory(string directory)
+    {
+        Directory = directory;
         return this;
     }
 
@@ -129,6 +141,7 @@ public sealed class TusCreationContextBuilder
             fileIdParameterName,
             routeValues,
             Filename,
+            Directory,
             ExpirationStrategy,
             Interval,
             ResourceCreatedCallback,

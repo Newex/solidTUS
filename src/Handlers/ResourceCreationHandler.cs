@@ -137,6 +137,7 @@ internal class ResourceCreationHandler
                 userOptions.Interval ?? globalOptions.SlidingInterval),
             LastUpdatedDate = null,
             OnDiskFilename = userOptions.Filename ?? fileId,
+            OnDiskDirectoryPath = userOptions.Directory
         };
 
         bool create = await uploadMetaHandler.CreateResourceAsync(uploadInfo, cancellationToken);
@@ -188,9 +189,6 @@ internal class ResourceCreationHandler
     /// <returns>A response context or an error</returns>
     public async Task<Result<TusResult>> MergeFilesAsync(CancellationToken cancellationToken)
     {
-        // TODO:
-        // - Delete partial files - TusOptions -> default true
-        // - Create final info file
         if (userOptions is null)
         {
             throw new UnreachableException();
@@ -252,7 +250,7 @@ internal class ResourceCreationHandler
             ConcatHeaderFinal = tusResult.RequestHeaders[TusHeaderNames.UploadConcat],
             CreatedDate = now,
             ExpirationDate = null, // Uploaded file should not expire
-            ExpirationStrategy = ExpirationStrategy.Never,
+            ExpirationStrategy = null,
             FileSize = infos.Aggregate(0L, (size, curr) => curr.FileSize.GetValueOrDefault() + size),
             Interval = null,
             IsPartial = false, // This is a complete merged file

@@ -19,6 +19,7 @@ public sealed record class TusCreationContext
     /// <param name="fileIdParameterName">The file id route parameter</param>
     /// <param name="routeValues">The extra optional route values</param>
     /// <param name="filename">The optional filename</param>
+    /// <param name="directory">The optional directory</param>
     /// <param name="expirationStrategy">The expiration strategy</param>
     /// <param name="interval">The expiration interval</param>
     /// <param name="resourceCreatedCallback">The resource created callback</param>
@@ -33,6 +34,7 @@ public sealed record class TusCreationContext
         string fileIdParameterName,
         (string, object)[] routeValues,
         string? filename,
+        string? directory,
         ExpirationStrategy? expirationStrategy,
         TimeSpan? interval,
         Func<UploadFileInfo, Task>? resourceCreatedCallback,
@@ -48,6 +50,7 @@ public sealed record class TusCreationContext
         FileIdParameterName = fileIdParameterName;
         RouteValues = routeValues;
         Filename = filename;
+        Directory = directory;
         ExpirationStrategy = expirationStrategy;
         Interval = interval;
         ResourceCreatedCallback = resourceCreatedCallback;
@@ -86,6 +89,11 @@ public sealed record class TusCreationContext
     /// Get the filename
     /// </summary>
     public string? Filename { get; }
+
+    /// <summary>
+    /// Get the directory for the upload
+    /// </summary>
+    public string? Directory { get; }
 
     /// <summary>
     /// Get the expiration strategy
