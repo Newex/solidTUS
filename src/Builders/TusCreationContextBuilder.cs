@@ -118,9 +118,8 @@ public sealed class TusCreationContextBuilder
     /// </summary>
     /// <param name="routeTemplate">The route template</param>
     /// <param name="fileIdParameterName">The name of the parameter for the file id</param>
-    /// <param name="routeValues">The extra optional route values</param>
-    /// <returns></returns>
-    /// <exception cref="NotImplementedException"></exception>
+    /// <param name="routeValues">The extra route values</param>
+    /// <returns>A tus creation context</returns>
     public TusCreationContext Build(string routeTemplate, string fileIdParameterName, params (string, object)[] routeValues)
     {
         return new TusCreationContext(
