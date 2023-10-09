@@ -134,9 +134,9 @@ The `TusUpload` attribute is responsible for:
 
 # Limitations
 
-The library current limitations, is:
+The library current limitations, are:
 
-- Cannot specify where the `UploadFileInfo` metadata should be stored on an upload basis.
+- Cannot specify where the `UploadFileInfo` metadata should be stored on a per upload basis.
 
 This is due to the SolidTUS `FileUploadMetaHandler` only searching for metadata in a specific directory.
 
