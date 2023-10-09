@@ -20,8 +20,6 @@ public sealed record class TusCreationContext
     /// <param name="routeValues">The extra optional route values</param>
     /// <param name="filename">The optional filename</param>
     /// <param name="directory">The optional directory</param>
-    /// <param name="expirationStrategy">The expiration strategy</param>
-    /// <param name="interval">The expiration interval</param>
     /// <param name="resourceCreatedCallback">The resource created callback</param>
     /// <param name="uploadFinishedCallback">The upload finished callback when using Creation-With-Upload</param>
     /// <param name="partialId">The partial id</param>
@@ -35,8 +33,6 @@ public sealed record class TusCreationContext
         (string, object)[] routeValues,
         string? filename,
         string? directory,
-        ExpirationStrategy? expirationStrategy,
-        TimeSpan? interval,
         Func<UploadFileInfo, Task>? resourceCreatedCallback,
         Func<UploadFileInfo, Task>? uploadFinishedCallback,
         string? partialId,
@@ -51,8 +47,6 @@ public sealed record class TusCreationContext
         RouteValues = routeValues;
         Filename = filename;
         Directory = directory;
-        ExpirationStrategy = expirationStrategy;
-        Interval = interval;
         ResourceCreatedCallback = resourceCreatedCallback;
         UploadFinishedCallback = uploadFinishedCallback;
         PartialId = partialId;
@@ -94,16 +88,6 @@ public sealed record class TusCreationContext
     /// Get the directory for the upload
     /// </summary>
     public string? Directory { get; }
-
-    /// <summary>
-    /// Get the expiration strategy
-    /// </summary>
-    public ExpirationStrategy? ExpirationStrategy { get; }
-
-    /// <summary>
-    /// Get the interval for the expiration
-    /// </summary>
-    public TimeSpan? Interval { get; }
 
     /// <summary>
     /// Get the resource created callback

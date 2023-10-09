@@ -115,8 +115,6 @@ internal class ResourceCreationHandler
         tusResult.LocationUrl = uploadUrl;
 
         var now = clock.UtcNow;
-        var strategy = userOptions.ExpirationStrategy;
-        var interval = userOptions.Interval;
         var uploadInfo = new UploadFileInfo
         {
             FileId = fileId,
@@ -124,17 +122,15 @@ internal class ResourceCreationHandler
             FileSize = tusResult.FileSize,
             Metadata = tusResult.Metadata,
             RawMetadata = tusResult.RawMetadata,
-            ExpirationStrategy = strategy,
-            Interval = interval,
             IsPartial = isPartial,
             ConcatHeaderFinal = null,
             ExpirationDate = ExpirationRequestHandler.CalculateExpiration(
-                strategy ?? globalOptions.ExpirationStrategy,
+                globalOptions.ExpirationStrategy,
                 now,
                 now,
                 null,
-                userOptions.Interval ?? globalOptions.AbsoluteInterval,
-                userOptions.Interval ?? globalOptions.SlidingInterval),
+                globalOptions.AbsoluteInterval,
+                globalOptions.SlidingInterval),
             LastUpdatedDate = null,
             OnDiskFilename = userOptions.Filename ?? fileId,
             OnDiskDirectoryPath = userOptions.Directory
@@ -250,9 +246,7 @@ internal class ResourceCreationHandler
             ConcatHeaderFinal = tusResult.RequestHeaders[TusHeaderNames.UploadConcat],
             CreatedDate = now,
             ExpirationDate = null, // Uploaded file should not expire
-            ExpirationStrategy = null,
             FileSize = infos.Aggregate(0L, (size, curr) => curr.FileSize.GetValueOrDefault() + size),
-            Interval = null,
             IsPartial = false, // This is a complete merged file
             LastUpdatedDate = null,
             Metadata = tusResult.Metadata,

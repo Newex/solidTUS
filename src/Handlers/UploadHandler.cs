@@ -61,7 +61,7 @@ internal class UploadHandler
         {
             // calculate expiration
             var now = clock.UtcNow;
-            var expirationDate = ExpirationRequestHandler.CalculateExpiration(info.ExpirationStrategy ?? expirationStrategy, now, info.CreatedDate ?? now, info.LastUpdatedDate, absoluteInterval, slidingInterval);
+            var expirationDate = ExpirationRequestHandler.CalculateExpiration(expirationStrategy, now, info.CreatedDate ?? now, info.LastUpdatedDate, absoluteInterval, slidingInterval);
             info.ExpirationDate = expirationDate;
             await uploadMetaHandler.UpdateResourceAsync(info, cancellationToken);
         }

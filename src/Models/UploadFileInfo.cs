@@ -79,32 +79,11 @@ public record UploadFileInfo
     public string? OnDiskDirectoryPath { get; internal set; }
 
     /// <summary>
-    /// Get the specific expiration strategy for this related upload.
-    /// </summary>
-    /// <remarks>
-    /// If null this means that the global <see cref="ExpirationStrategy"/> is used.
-    /// </remarks>
-    [JsonInclude]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public ExpirationStrategy? ExpirationStrategy { get; internal set; }
-
-    /// <summary>
     /// Get the specific date-time for the upload expiration.
     /// </summary>
     [JsonInclude]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public DateTimeOffset? ExpirationDate { get; internal set; }
-
-    /// <summary>
-    /// Get the specific interval for this upload.
-    /// </summary>
-    /// <remarks>
-    /// If null, the global settings is used, if applicable.
-    /// </remarks>
-    [JsonInclude]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public TimeSpan? Interval { get; internal set; }
 
     /// <summary>
     /// The created date of the upload and metadata

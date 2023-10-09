@@ -48,15 +48,7 @@ internal class ExpirationRequestHandler
     /// <returns>A request context with expiration headers</returns>
     public TusResult SetExpiration(TusResult context)
     {
-        if (context.UploadFileInfo is null
-            || context.UploadFileInfo.ExpirationStrategy == ExpirationStrategy.Never
-            || expirationStrategy == ExpirationStrategy.Never
-            && context.UploadFileInfo.ExpirationStrategy is null)
-        {
-            return context;
-        }
-
-        if (context.UploadFileInfo.ExpirationDate is null)
+        if (context.UploadFileInfo is null || context.UploadFileInfo.ExpirationDate is null)
         {
             return context;
         }

@@ -14,8 +14,6 @@ public sealed class TusCreationContextBuilder
 {
     private readonly string fileId;
 
-    private ExpirationStrategy? ExpirationStrategy { get; set; }
-    private TimeSpan? Interval { get; set; }
     private string? Filename { get; set; }
     private string? Directory { get; set; }
     private Func<UploadFileInfo, Task>? UploadFinishedCallback { get; set; }
@@ -38,22 +36,6 @@ public sealed class TusCreationContextBuilder
     public TusCreationContextBuilder SetRouteName(string routeName)
     {
         RouteName = routeName;
-        return this;
-    }
-
-    /// <summary>
-    /// Set the expiration strategy and the associated time span.
-    /// </summary>
-    /// <remarks>
-    /// If null, the global options will be used from <see cref="TusOptions"/>
-    /// </remarks>
-    /// <param name="strategy">The expiration strategy</param>
-    /// <param name="interval">The expiration interval</param>
-    /// <returns>A tus creation context</returns>
-    public TusCreationContextBuilder SetExpirationStrategy(ExpirationStrategy? strategy, TimeSpan? interval)
-    {
-        ExpirationStrategy = strategy;
-        Interval = interval;
         return this;
     }
 
@@ -142,8 +124,6 @@ public sealed class TusCreationContextBuilder
             routeValues,
             Filename,
             Directory,
-            ExpirationStrategy,
-            Interval,
             ResourceCreatedCallback,
             UploadFinishedCallback,
             TusParallelContext?.PartialId,
