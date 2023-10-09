@@ -69,7 +69,7 @@ public class UploadController : ControllerBase
         var ctx = HttpContext
             .TusCreation(id)
             .SetRouteName("CustomRouteNameUpload")
-            .Build("{fileId}", "fileId");
+            .Build("{fileId}/hello/{name}", "fileId", ("name", "World"));
 
         // Start creation (IuploadStorageHandler.CreateResource())
         await HttpContext.StartCreationAsync(ctx);
@@ -78,7 +78,7 @@ public class UploadController : ControllerBase
         return Ok();
     }
 
-    [TusUpload("{fileId}", Name = "CustomRouteNameUpload")]
+    [TusUpload("{fileId}/hello/{name}", Name = "CustomRouteNameUpload")]
     [RequestSizeLimit(5_000_000_000)]
     public async Task<ActionResult> Upload(string fileId)
     {
