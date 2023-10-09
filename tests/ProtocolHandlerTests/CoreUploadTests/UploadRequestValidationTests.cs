@@ -19,28 +19,27 @@ public class UploadRequestValidationTests
     public async void Valid_request_returns_success()
     {
         // Arrange
-        var file = RandomEntities.UploadFileInfo() with
+        var file = new UploadFileInfo
         {
             FileSize = 100,
-            ExpirationStrategy = ExpirationStrategy.Never,
             CreatedDate = new DateTimeOffset(2020, 06, 01, 12, 30, 00, TimeSpan.FromHours(0))
         };
         file.AddBytes(70);
-        var http = MockHttps.HttpRequest("PATCH",
+        var request = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (HeaderNames.ContentType, TusHeaderValues.PatchContentType),
             (HeaderNames.ContentLength, "30"),
             (TusHeaderNames.UploadOffset, file.ByteOffset.ToString())
         );
-        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
+        var context = TusResult.Create(request, MockHttps.HttpResponse());
         var handler = Setup.UploadFlow(file: file);
 
         // Act
-        var process = await request.BindAsync(async c => await handler.PreUploadAsync(c, "file123", CancellationToken.None));
+        var process = await context.BindAsync(async c => await handler.PreUploadAsync(c, "file123", CancellationToken.None));
         var result = process.IsSuccess();
 
         // Assert
-        Assert.True(result);
+        result.Should().BeTrue();
     }
 
     [Fact]
