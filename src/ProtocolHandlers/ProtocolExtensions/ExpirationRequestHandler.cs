@@ -71,6 +71,11 @@ internal class ExpirationRequestHandler
 
     public async Task<Result<TusResult>> CheckExpirationAsync(TusResult context, CancellationToken cancellationToken)
     {
+        if (context.UploadFileInfo?.Done ?? false)
+        {
+            // The upload has already finished
+            return context.Wrap();
+        }
         if (context.UploadFileInfo?.ExpirationDate.HasValue ?? false)
         {
             var now = clock.UtcNow;
