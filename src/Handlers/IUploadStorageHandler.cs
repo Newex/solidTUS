@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,10 +34,11 @@ public interface IUploadStorageHandler
     Task DeleteFileAsync(UploadFileInfo uploadFileInfo, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Get the current upload size
+    /// Merge the list of uploads in order
     /// </summary>
-    /// <param name="fileId">The file Id</param>
-    /// <param name="uploadInfo">The upload information</param>
-    /// <returns>The number of bytes uploaded so far or null</returns>
-    long? GetUploadSize(string fileId, UploadFileInfo uploadInfo);
+    /// <param name="final">The final upload info</param>
+    /// <param name="files">The list of files to merge</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <returns>An awaitabe task</returns>
+    Task<UploadFileInfo> MergePartialFilesAsync(UploadFileInfo final, IList<UploadFileInfo> files, CancellationToken cancellationToken);
 }

@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Constants;
-using SolidTUS.Contexts;
 using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.ProtocolFlows;
@@ -20,15 +19,9 @@ namespace SolidTUS.Attributes;
 /// <summary>
 /// Identifies an action that supports TUS uploads. Must have a file ID parameter and TusContext parameter.
 /// </summary>
+[AttributeUsage(AttributeTargets.Method)]
 public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvider, IRouteTemplateProvider
 {
-    /// <summary>
-    /// Instantiate a new <see cref="TusUploadAttribute"/> upload endpoint handler
-    /// </summary>
-    public TusUploadAttribute()
-    {
-    }
-
     /// <summary>
     /// Instantiate a new <see cref="TusUploadAttribute"/> upload endpoint handler
     /// </summary>
@@ -38,18 +31,6 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         ArgumentNullException.ThrowIfNull(template);
         Template = template;
     }
-
-    private TusUploadContext? tusContext;
-
-    /// <summary>
-    /// Get or set the name of the file ID parameter
-    /// </summary>
-    public virtual string FileIdParameterName { get; set; } = "fileId";
-
-    /// <summary>
-    /// Get or set the name of the TUS context parameter
-    /// </summary>
-    public virtual string ContextParameterName { get; set; } = "context";
 
     /// <summary>
     /// Gets the supported http metods
@@ -64,6 +45,11 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
 
     /// <inheritdoc />
     public string? Name { get; set; } = EndpointNames.UploadEndpoint;
+
+    /// <summary>
+    /// The file id parameter name
+    /// </summary>
+    public string FileIdParameterName = ParameterNames.FileIdParameterName;
 
     /// <inheritdoc />
     int? IRouteTemplateProvider.Order => Order;
@@ -90,54 +76,84 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         var uploadFlow = http.RequestServices.GetService<UploadFlow>();
         if (uploadFlow is null)
         {
-            response.StatusCode = 500;
+            context.Result = new ObjectResult("Internal server error")
+            {
+                StatusCode = 500
+            };
             return;
         }
 
         var fileId = http.GetRouteValue(FileIdParameterName)?.ToString() ?? string.Empty;
-        var requestContext = RequestContext.Create(request, cancel);
+        var tusResult = TusResult.Create(request, response);
 
         if (isHead)
         {
-            requestContext = await requestContext.BindAsync(async c => await uploadFlow.GetUploadStatusAsync(c, fileId));
-            var statusResponse = requestContext.GetTusHttpResponse(204);
-            response.AddTusHeaders(statusResponse);
-            context.Result = new ObjectResult(statusResponse.Message)
+            tusResult = await tusResult.BindAsync(async c => await uploadFlow.GetUploadStatusAsync(c, fileId, cancel));
+            var error = tusResult.GetHttpError();
+            if (error is not null)
             {
-                StatusCode = statusResponse.StatusCode
-            };
+                context.Result = new ObjectResult(error.Value.Message)
+                {
+                    StatusCode = error.Value.StatusCode
+                };
+                return;
+            }
+
             return;
         }
 
         if (isPatch)
         {
-            requestContext = await requestContext.BindAsync(async c => await uploadFlow.PreUploadAsync(c, fileId));
-            var uploadResponse = requestContext.GetTusHttpResponse();
-            if (!uploadResponse.IsSuccess)
+            tusResult = await tusResult.BindAsync(async c => await uploadFlow.PreUploadAsync(c, fileId, cancel));
+            var error = tusResult.GetHttpError();
+            if (error is not null)
             {
                 // Short circuit on error
-                response.AddTusHeaders(uploadResponse);
-                context.Result = new ObjectResult(uploadResponse.Message)
+                context.Result = new ObjectResult(error.Value.Message)
                 {
-                    StatusCode = uploadResponse.StatusCode
+                    StatusCode = error.Value.StatusCode
                 };
                 return;
             }
 
-            tusContext = uploadFlow.CreateUploadContext(requestContext, request.BodyReader, cancel);
-            context.ActionArguments[ContextParameterName] = tusContext;
+            var actual = tusResult.GetValueOrDefault();
+            context.HttpContext.Items[TusResult.Name] = actual;
 
             // Callback before sending headers add all TUS headers
-            context.HttpContext.Response.OnStarting(async state =>
+            context.HttpContext.Response.OnStarting(state =>
             {
                 var ctx = (ActionExecutingContext)state;
-
-                if (uploadFlow is not null)
+                var uploadFlow = http.RequestServices.GetService<UploadFlow>();
+                if (uploadFlow is null)
                 {
-                    requestContext = await requestContext.MapAsync(async c => await uploadFlow.PostUploadAsync(c, cancel));
-                    var tusResponse = requestContext.GetTusHttpResponse(204);
-                    ctx.HttpContext.Response.AddTusHeaders(tusResponse);
+                    ctx.Result = new ObjectResult("Internal server error")
+                    {
+                        StatusCode = 500
+                    };
+                    return Task.CompletedTask;
                 }
+
+                if (ctx.HttpContext.Items[HttpContextExtensions.UploadResultName] is not Result<TusResult> postAction)
+                {
+                    ctx.Result = new ObjectResult("Internal server error")
+                    {
+                        StatusCode = 500
+                    };
+                    return Task.CompletedTask;
+                }
+
+                var error = postAction.GetHttpError();
+                if (error is not null)
+                {
+                    ctx.Result = new ObjectResult(error.Value.Message)
+                    {
+                        StatusCode = error.Value.StatusCode
+                    };
+                    return Task.CompletedTask;
+                }
+
+                postAction.Map(uploadFlow.PostUpload);
+                return Task.CompletedTask;
             }, context);
         }
 
@@ -164,10 +180,5 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         }, context);
 
         await next();
-
-        if (tusContext?.UploadHasBeenCalled == false)
-        {
-            throw new InvalidOperationException($"Remember to call {nameof(TusUploadContext.StartAppendDataAsync)}");
-        }
     }
 }

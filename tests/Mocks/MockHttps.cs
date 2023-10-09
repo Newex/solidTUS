@@ -25,6 +25,17 @@ public static class MockHttps
         return mock.Object;
     }
 
+    public static HttpResponse HttpResponse(Dictionary<string, string>? headers = null, params (string Key, string Value)[] header)
+    {
+        var mock = new Mock<HttpResponse>();
+
+        var responseHeaders = headers ?? new Dictionary<string, string>();
+        mock.Setup(r => r.Headers)
+        .Returns(responseHeaders.ToHeaderDictionary(header));
+
+        return mock.Object;
+    }
+
     public static IHeaderDictionary Headers(params (string Key, string Value)[] header)
     {
         var headers = new HeaderDictionary();

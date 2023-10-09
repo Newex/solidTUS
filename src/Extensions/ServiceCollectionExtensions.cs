@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SolidTUS.Builders;
 using SolidTUS.Options;
 
 namespace SolidTUS.Extensions;

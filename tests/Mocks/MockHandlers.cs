@@ -13,9 +13,6 @@ public static class MockHandlers
     {
         var mock = new Mock<IUploadStorageHandler>();
 
-        mock.Setup(s => s.GetUploadSize(It.IsAny<string>(), It.IsAny<UploadFileInfo>()))
-        .Returns(currentSize);
-
         mock.Setup(s => s.OnPartialUploadAsync(It.IsAny<PipeReader>(), It.IsAny<UploadFileInfo>(), It.IsAny<ChecksumContext>(), It.IsAny<CancellationToken>()))
         .ReturnsAsync(bytesWritten);
 
@@ -27,7 +24,7 @@ public static class MockHandlers
         var mock = new Mock<IUploadMetaHandler>();
 
         mock.Setup(s => s.GetResourceAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-        .ReturnsAsync(file);
+        .ReturnsAsync((string id, CancellationToken ct) => file is not null ? (file with { FileId = id }) : null);
 
         mock.Setup(s => s.UpdateResourceAsync(It.IsAny<UploadFileInfo>(), It.IsAny<CancellationToken>()))
         .ReturnsAsync(updated);

@@ -1,7 +1,5 @@
-using System.Threading;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
-using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.Tests.Fakes;
@@ -19,11 +17,11 @@ public class HeadRequestTests
         var http = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var context = TusResult.Create(http, MockHttps.HttpResponse());
 
         // Act
-        var response = request.Map(c => HeadRequestHandler.SetResponseCacheControl(c)).GetTusHttpResponse();
-        var result = response.Headers[HeaderNames.CacheControl];
+        var response = context.Map(HeadRequestHandler.SetResponseCacheControl).GetValueOrDefault();
+        var result = response?.ResponseHeaders[HeaderNames.CacheControl];
 
         // Assert
         Assert.Equal("no-store", result);
@@ -33,24 +31,22 @@ public class HeadRequestTests
     public void When_the_file_exists_the_Upload_Offset_header_will_be_set_to_the_current_size_of_the_uploaded_file()
     {
         // Arrange
-        var file = RandomEntities.UploadFileInfo() with
-        {
-            ByteOffset = 212L
-        };
+        var file = new UploadFileInfo();
+        file.AddBytes(212L);
         var http = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var context = TusResult.Create(http, MockHttps.HttpResponse());
 
         // Act
-        var response = request.Map(c => HeadRequestHandler.SetUploadOffsetHeader(c with
+        var response = context.Map(c => HeadRequestHandler.SetUploadOffsetHeader(c with
         {
             UploadFileInfo = file
-        })).GetTusHttpResponse();
-        var result = response.Headers[TusHeaderNames.UploadOffset];
+        })).GetValueOrDefault();
+        var result = response?.ResponseHeaders[TusHeaderNames.UploadOffset];
 
         // Assert
-        Assert.Equal(212L.ToString(), result);
+        result.ToString().Should().Be("212");
     }
 
     [Fact]
@@ -61,20 +57,20 @@ public class HeadRequestTests
         {
             FileSize = 4213L
         };
-        var http = MockHttps.HttpRequest("PATCH",
+        var request = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var context = TusResult.Create(request, MockHttps.HttpResponse());
 
         // Act
-        var response = request.Map(c => HeadRequestHandler.SetUploadLengthOrDeferred(c with
+        var response = context.Map(c => HeadRequestHandler.SetUploadLengthOrDeferred(c with
         {
             UploadFileInfo = file
-        })).GetTusHttpResponse();
-        var result = response.Headers[TusHeaderNames.UploadLength];
+        })).GetValueOrDefault();
+        var result = response?.ResponseHeaders[TusHeaderNames.UploadLength];
 
         // Assert
-        Assert.Equal(4213L.ToString(), result);
+        result.ToString().Should().Be("4213");
     }
 
     [Fact]
@@ -85,20 +81,20 @@ public class HeadRequestTests
         {
             FileSize = 4213L
         };
-        var http = MockHttps.HttpRequest("PATCH",
+        var request = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var context = TusResult.Create(request, MockHttps.HttpResponse());
 
         // Act
-        var response = request.Map(c => HeadRequestHandler.SetUploadLengthOrDeferred(c with
+        var response = context.Map(c => HeadRequestHandler.SetUploadLengthOrDeferred(c with
         {
             UploadFileInfo = file
-        })).GetTusHttpResponse();
-        var result = response.Headers[TusHeaderNames.UploadDeferLength];
+        })).GetValueOrDefault();
+        var result = response?.ResponseHeaders[TusHeaderNames.UploadDeferLength];
 
         // Assert
-        Assert.Empty(result);
+        result.ToString().Should().BeNullOrEmpty();
     }
 
     [Fact]
@@ -109,20 +105,20 @@ public class HeadRequestTests
         {
             FileSize = null
         };
-        var http = MockHttps.HttpRequest("PATCH",
+        var request = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var context = TusResult.Create(request, MockHttps.HttpResponse());
 
         // Act
-        var response = request.Map(c => HeadRequestHandler.SetUploadLengthOrDeferred(c with
+        var response = context.Map(c => HeadRequestHandler.SetUploadLengthOrDeferred(c with
         {
             UploadFileInfo = file
-        })).GetTusHttpResponse();
-        var result = response.Headers[TusHeaderNames.UploadDeferLength];
+        })).GetValueOrDefault();
+        var result = response?.ResponseHeaders[TusHeaderNames.UploadDeferLength];
 
         // Assert
-        Assert.Equal("1", result);
+        result.ToString().Should().Be("1");
     }
 
     [Fact]
@@ -133,17 +129,18 @@ public class HeadRequestTests
         {
             RawMetadata = "filename d29ybGRfZG9taW5hdGlvbl9wbGFuLnBkZg==,is_confidential"
         };
-        var http = MockHttps.HttpRequest("PATCH",
+        var httpRequest = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var httpResponse = MockHttps.HttpResponse();
+        var context = TusResult.Create(httpRequest, httpResponse);
 
         // Act
-        var response = request.Map(c => HeadRequestHandler.SetMetadataHeader(c with
+        var response = context.Map(c => HeadRequestHandler.SetMetadataHeader(c with
         {
             UploadFileInfo = file
-        })).GetTusHttpResponse();
-        var result = response.Headers[TusHeaderNames.UploadMetadata];
+        })).GetValueOrDefault();
+        var result = response?.ResponseHeaders[TusHeaderNames.UploadMetadata];
 
         // Assert
         Assert.Equal(expected: file.RawMetadata, result);

@@ -1,10 +1,11 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using SolidTUS.Attributes;
-using SolidTUS.Contexts;
+using SolidTUS.Extensions;
 using SolidTUS.Handlers;
 
 namespace ExampleSite.Controllers;
@@ -24,35 +25,67 @@ public class UploadController : ControllerBase
         this.uploadMetaHandler = uploadMetaHandler;
     }
 
-    [TusCreation]
-    public async Task<ActionResult> CreateFile([FromServices] TusCreationContext context)
+    [HttpGet("{fileId}")]
+    public async Task<IActionResult> Download(string fileId, CancellationToken cancellationToken)
     {
-        // Read Metadata
-        var filename = context.UploadFileInfo.Metadata["filename"];
-        var mime = context.UploadFileInfo.Metadata["contentType"];
+        var info = await uploadMetaHandler.GetResourceAsync(fileId, cancellationToken);
+        if (info is null)
+        {
+            return NotFound();
+        }
 
-        // Construct upload URL
+        if (info.OnDiskDirectoryPath is not null)
+        {
+            var file = Path.Combine(info.OnDiskDirectoryPath, info.OnDiskFilename);
+            var stream = System.IO.File.OpenRead(file);
+            if (stream is null)
+            {
+                return NotFound();
+            }
+
+            return File(stream, info.Metadata?["contentType"] ?? "application/octet-stream", info.Metadata?["filename"]);
+        }
+
+        return NotFound();
+    }
+
+
+    [TusCreation]
+    [RequestSizeLimit(5_000_000_000)]
+    public async Task<ActionResult> CreateFile()
+    {
         var id = Guid.NewGuid().ToString("N");
 
-        context.SetUploadRouteValues(new { fileId = id }, "CustomRouteNameUpload");
+        // Read Metadata
+        var metadata = HttpContext.TusMetadata();
+        if (metadata is not null)
+        {
+            var filename = metadata["filename"];
+            var mime = metadata["contentType"];
+            Console.WriteLine("Filename is: {0}\nMime-type is: {1}", filename, mime);
+        }
+
+        // Construct upload URL
+        var ctx = HttpContext
+            .TusCreation(id)
+            .SetRouteName("CustomRouteNameUpload")
+            .Build("{fileId}/hello/{name}", "fileId", ("name", "World"));
 
         // Start creation (IuploadStorageHandler.CreateResource())
-        await context.StartCreationAsync(id);
+        await HttpContext.StartCreationAsync(ctx);
 
         // Converts a success to 201 created
         return Ok();
     }
 
-    [TusUpload("{fileId}", Name = "CustomRouteNameUpload")]
+    [TusUpload("{fileId}/hello/{name}", Name = "CustomRouteNameUpload")]
     [RequestSizeLimit(5_000_000_000)]
-    public async Task<ActionResult> Upload(string fileId, [FromServices] TusUploadContext context)
+    public async Task<ActionResult> Upload(string fileId)
     {
-        // Starting append a.k.a. upload
-        // Can set path per file or use default from global configuration
-        await context.StartAppendDataAsync(fileId);
-
-        // context.OnUploadFinished(async _ => await Task.CompletedTask);
-        // context.TerminateUpload(fileId);
+        var ctx = HttpContext
+            .TusUpload(fileId)
+            .Build();
+        await HttpContext.StartAppendDataAsync(ctx);
 
         // Must always return 204 on upload success with no Body content
         return NoContent();
@@ -84,6 +117,7 @@ public class UploadController : ControllerBase
 
         // Delete info and file respond 204
         await uploadStorageHandler.DeleteFileAsync(info, cancellationToken);
+        await uploadMetaHandler.DeleteUploadFileInfoAsync(info, cancellationToken);
         return NoContent();
     }
 }

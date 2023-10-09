@@ -3,9 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using SolidTUS.Attributes;
-using SolidTUS.Contexts;
+using SolidTUS.Extensions;
 using SolidTUS.Handlers;
-using SolidTUS.Models;
 
 namespace ViteDotnet.Controllers;
 
@@ -25,19 +24,30 @@ public class UploadController : ControllerBase
     }
 
     [TusCreation("/api/upload")]
-    public async Task<ActionResult> CreateFile([FromServices] TusCreationContext context)
+    [RequestSizeLimit(5_000_000_000)]
+    public async Task<ActionResult> CreateFile()
     {
-        // Read Metadata
-        var filename = context.UploadFileInfo.Metadata["name"];
-        var mime = context.UploadFileInfo.Metadata["type"];
+        var metadata = HttpContext.TusMetadata();
+        if (metadata is not null)
+        {
+            // Read Metadata
+            var filename = metadata["name"];
+            var mime = metadata["type"];
+        }
 
         // Construct some unique file id
         var id = Guid.NewGuid().ToString("N");
+        var partialId = id[..8];
 
-        context.SetUploadRouteValues(new { fileId = id });
+        var configuration = HttpContext
+            .TusCreation(id)
+            .WithParallelUploads()
+            .SetPartialId(partialId)
+            .Done();
 
         // Accept creating upload and redirect to TusUpload
-        await context.StartCreationAsync(id);
+        var ctx = configuration.Build("{fileId}", "fileId");
+        await HttpContext.StartCreationAsync(ctx);
 
         // Converts a success to 201 created
         return Ok();
@@ -45,18 +55,16 @@ public class UploadController : ControllerBase
 
     [TusUpload("{fileId}")]
     [RequestSizeLimit(5_000_000_000)]
-    public async Task<ActionResult> UploadFile(string fileId, [FromServices] TusUploadContext context)
+    public async Task<ActionResult> UploadFile(string fileId)
     {
-        // Set callback before awaiting upload, otherwise the callback won't be called
-        context.OnUploadFinished(async (file) =>
+        var ctxBuilder = HttpContext.TusUpload(fileId);
+        ctxBuilder.OnUploadFinished((info) =>
         {
-            var filename = file.Metadata["name"];
-            Console.WriteLine($"Uploaded file {filename} with file size {file.FileSize}");
-            await Task.CompletedTask;
+            Console.WriteLine("Finished uploading: {0}", info.OnDiskFilename);
+            return Task.CompletedTask;
         });
-
-        context.SetExpirationStrategy(ExpirationStrategy.SlidingExpiration, TimeSpan.FromSeconds(30));
-        await context.StartAppendDataAsync(fileId);
+        var ctx = ctxBuilder.Build();
+        await HttpContext.StartAppendDataAsync(ctx);
 
         // Must always return 204 on upload success with no Body content
         return NoContent();
@@ -88,6 +96,7 @@ public class UploadController : ControllerBase
 
         // Delete info and file respond 204
         await uploadStorageHandler.DeleteFileAsync(info, cancellationToken);
+        await uploadMetaHandler.DeleteUploadFileInfoAsync(info, cancellationToken);
         return NoContent();
     }
 }

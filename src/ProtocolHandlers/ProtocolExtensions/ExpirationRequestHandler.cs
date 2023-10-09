@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Globalization;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Options;
@@ -15,15 +16,12 @@ namespace SolidTUS.ProtocolHandlers.ProtocolExtensions;
 /// <summary>
 /// Expiration TUS extension request handler
 /// </summary>
-public class ExpirationRequestHandler
+internal class ExpirationRequestHandler
 {
     private readonly ExpirationStrategy expirationStrategy;
-    private readonly TimeSpan slidingInterval;
-    private readonly TimeSpan absoluteInterval;
     private readonly ISystemClock clock;
+    private readonly bool allowExpiredUploadsToContinue;
     private readonly IExpiredUploadHandler expiredUploadHandler;
-
-    private readonly bool allowExpiredUploads;
 
     /// <summary>
     /// Instantiate a new <see cref="ExpirationRequestHandler"/>
@@ -38,124 +36,115 @@ public class ExpirationRequestHandler
     )
     {
         expirationStrategy = options.Value.ExpirationStrategy;
-        slidingInterval = options.Value.SlidingInterval;
-        absoluteInterval = options.Value.AbsoluteInterval;
-        allowExpiredUploads = options.Value.AllowExpiredUploadsToContinue;
+        allowExpiredUploadsToContinue = options.Value.AllowExpiredUploadsToContinue;
         this.clock = clock;
         this.expiredUploadHandler = expiredUploadHandler;
     }
 
     /// <summary>
-    /// Check the upload info expiration
-    /// </summary>
-    /// <param name="context">The request context</param>
-    /// <returns>A request context or an error</returns>
-    /// <exception cref="UnreachableException">Thrown if missing strategy enumeration</exception>
-    public async Task<Result<RequestContext>> CheckExpirationAsync(RequestContext context)
-    {
-        var info = context.UploadFileInfo;
-        if (info.Done)
-        {
-            // File uploaded - can only expire unfinished uploads
-            return context.Wrap();
-        }
-
-        var strategy = info.ExpirationStrategy ?? expirationStrategy;
-        var lastTime = info.LastUpdatedDate ?? info.CreatedDate;
-        if (lastTime is null)
-        {
-            // Could not find updated date or created date
-            return HttpError.InternalServerError().Wrap();
-        }
-
-        DateTimeOffset? deadline = strategy switch
-        {
-            ExpirationStrategy.Never => null,
-            ExpirationStrategy.SlidingExpiration => Sliding(lastTime.Value, info),
-            ExpirationStrategy.AbsoluteExpiration => Absolute(info),
-            ExpirationStrategy.SlideAfterAbsoluteExpiration => SlideAfterAbsolute(lastTime.Value, info),
-            _ => throw new UnreachableException()
-        };
-
-        if (deadline is null)
-        {
-            return context.Wrap();
-        }
-
-        var now = clock.UtcNow;
-        var expired = now > deadline.Value;
-        if (expired && !allowExpiredUploads)
-        {
-            await expiredUploadHandler.ExpiredUploadAsync(info, context.CancellationToken);
-            return HttpError.Gone("Upload expired").Wrap();
-        }
-
-        return context.Wrap();
-    }
-
-    /// <summary>
-    /// Set the expiration header if TUS options is set
+    /// Set the expiration header if resource has expiration date
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A request context with expiration headers</returns>
-    /// <exception cref="UnreachableException">Thrown if expiration strategy is not in the enumeration</exception>
-    public RequestContext SetExpiration(RequestContext context)
+    public TusResult SetExpiration(TusResult context)
     {
-        if (context.UploadFileInfo.ExpirationStrategy == ExpirationStrategy.Never
-            || expirationStrategy == ExpirationStrategy.Never
-            && context.UploadFileInfo.ExpirationStrategy is null)
+        if (context.UploadFileInfo is null || context.UploadFileInfo.ExpirationDate is null)
         {
-            // No expiration
             return context;
         }
 
-        // Assume we have accepted the incoming upload = within the expiration time.
-        // Assume CreatedDate is set.
-        var now = clock.UtcNow;
-        var strategy = context.UploadFileInfo.ExpirationStrategy ?? expirationStrategy;
-        var end = strategy switch
-        {
-            ExpirationStrategy.SlidingExpiration => Sliding(now, context.UploadFileInfo),
-            ExpirationStrategy.AbsoluteExpiration => Absolute(context.UploadFileInfo),
-            ExpirationStrategy.SlideAfterAbsoluteExpiration => SlideAfterAbsolute(now, context.UploadFileInfo),
-            _ => throw new UnreachableException()
-        };
-
-        context.UploadFileInfo.ExpirationDate = end;
-
         // Convert the end date to RFC 7231
-        var time = ToRFC7231(end);
+        var time = ToRFC7231(context.UploadFileInfo.ExpirationDate.Value);
 
         // Overwrite if exists
         context.ResponseHeaders[TusHeaderNames.Expiration] = time;
         return context;
     }
 
-    private DateTimeOffset Sliding(DateTimeOffset from, UploadFileInfo info)
+    public async Task<Result<TusResult>> CheckExpirationAsync(TusResult context, CancellationToken cancellationToken)
     {
-        var interval = info.Interval ?? slidingInterval;
-        return from.Add(interval);
+        if (context.UploadFileInfo?.Done ?? false)
+        {
+            // The upload has already finished
+            return context.Wrap();
+        }
+        if (context.UploadFileInfo?.ExpirationDate.HasValue ?? false)
+        {
+            var now = clock.UtcNow;
+            var expired = now > context.UploadFileInfo.ExpirationDate.Value;
+            if (expired)
+            {
+                if (allowExpiredUploadsToContinue)
+                {
+                    return context.Wrap();
+                }
+
+                await expiredUploadHandler.ExpiredUploadAsync(context.UploadFileInfo, cancellationToken);
+                return HttpError.Gone().Wrap();
+            }
+        }
+
+        return context.Wrap();
     }
 
-    private DateTimeOffset Absolute(UploadFileInfo info)
+    /// <summary>
+    /// Calculate the end date if it exists otherwise if not then it will be null
+    /// </summary>
+    /// <param name="strategy">The expiration strategy</param>
+    /// <param name="current">The current time</param>
+    /// <param name="created">The created time</param>
+    /// <param name="updated">The updated time</param>
+    /// <param name="absoluteInterval">The interval for absolute</param>
+    /// <param name="slidingInterval">The interval for sliding</param>
+    /// <returns>A datetime offset or null</returns>
+    /// <exception cref="UnreachableException">Thrown if missing strategy enum</exception>
+    public static DateTimeOffset? CalculateExpiration(
+        ExpirationStrategy strategy,
+        DateTimeOffset current,
+        DateTimeOffset created,
+        DateTimeOffset? updated,
+        TimeSpan absoluteInterval,
+        TimeSpan slidingInterval)
     {
-        var interval = info.Interval ?? absoluteInterval;
-        var deadline = info.CreatedDate?.Add(interval);
-        return deadline.GetValueOrDefault();
+        DateTimeOffset? end = strategy switch
+        {
+            ExpirationStrategy.Never => null,
+            ExpirationStrategy.SlidingExpiration => Sliding(created, updated, slidingInterval),
+            ExpirationStrategy.AbsoluteExpiration => Absolute(created, absoluteInterval),
+            ExpirationStrategy.SlideAfterAbsoluteExpiration => SlideAfterAbsolute(current, created, updated, absoluteInterval, slidingInterval),
+            _ => throw new UnreachableException()
+        };
+
+        return end;
     }
 
-    private DateTimeOffset SlideAfterAbsolute(DateTimeOffset from, UploadFileInfo info)
+    private static DateTimeOffset Sliding(DateTimeOffset created, DateTimeOffset? updated, TimeSpan interval)
     {
-        var absoluteDeadline = info.CreatedDate?.Add(absoluteInterval);
-        var isPastDeadline = from > absoluteDeadline;
+        if (updated is not null)
+        {
+            return updated.Value.Add(interval);
+        }
+
+        return created.Add(interval);
+    }
+
+    private static DateTimeOffset Absolute(DateTimeOffset created, TimeSpan interval)
+    {
+        return created.Add(interval);
+    }
+
+    private static DateTimeOffset SlideAfterAbsolute(DateTimeOffset now, DateTimeOffset created, DateTimeOffset? updated, TimeSpan absolute, TimeSpan slide)
+    {
+        var absoluteDeadline = Absolute(created, absolute);
+        var isPastDeadline = now > absoluteDeadline;
 
         if (isPastDeadline)
         {
             // We slide
-            return Sliding(from, info);
+            return Sliding(created, updated, slide);
         }
 
-        return Absolute(info);
+        return Absolute(created, absolute);
     }
 
     private static string ToRFC7231(DateTimeOffset time)

@@ -1,3 +1,4 @@
+using SolidTUS.Contexts;
 using SolidTUS.Models;
 
 namespace SolidTUS.Extensions;
@@ -11,24 +12,12 @@ internal static class FunctionalExtensions
     /// Get the result from an either http error or a request context as a response
     /// </summary>
     /// <param name="result">The result</param>
-    /// <param name="successStatus">The success status</param>
     /// <returns>A TUS http response</returns>
-    public static TusHttpResponse GetTusHttpResponse(this Result<RequestContext> result, int successStatus = 200)
+    public static HttpError? GetHttpError<T>(this Result<T> result)
     {
-        return result.Match(
-            c => new TusHttpResponse
-            {
-                Headers = c.ResponseHeaders,
-                IsSuccess = true,
-                StatusCode = successStatus
-            },
-            e => new TusHttpResponse
-            {
-                IsSuccess = false,
-                Headers = e.Headers,
-                Message = e.Message,
-                StatusCode = e.StatusCode
-            }
+        return result.Match<HttpError?>(
+            _ => null,
+            e => e
         );
     }
 
@@ -48,8 +37,8 @@ internal static class FunctionalExtensions
     /// </summary>
     /// <param name="error">The error value</param>
     /// <returns>An error result</returns>
-    public static Result<RequestContext> Wrap(this HttpError error)
+    public static Result<TusResult> Wrap(this HttpError error)
     {
-        return Result<RequestContext>.Error(error);
+        return Result<TusResult>.Error(error);
     }
 }

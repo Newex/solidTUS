@@ -1,14 +1,15 @@
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
-
 using Microsoft.Extensions.Internal;
-
+using Microsoft.Extensions.Options;
 using SolidTUS.Contexts;
 using SolidTUS.Models;
+using SolidTUS.Options;
 
 namespace SolidTUS.Handlers;
 
@@ -18,20 +19,20 @@ namespace SolidTUS.Handlers;
 public class FileUploadStorageHandler : IUploadStorageHandler
 {
     private readonly ISystemClock clock;
-    private readonly IUploadMetaHandler uploadMetaHandler;
+    private readonly string directory;
 
     /// <summary>
     /// Instantiate a new <see cref="FileUploadStorageHandler"/>
     /// </summary>
     /// <param name="clock">The system clock provider</param>
-    /// <param name="uploadMetaHandler">The metadata file handler</param>
+    /// <param name="options"></param>
     public FileUploadStorageHandler(
         ISystemClock clock,
-        IUploadMetaHandler uploadMetaHandler
+        IOptions<FileStorageOptions> options
     )
     {
         this.clock = clock;
-        this.uploadMetaHandler = uploadMetaHandler;
+        directory = options.Value.DirectoryPath;
     }
 
     /// <inheritdoc />
@@ -44,9 +45,11 @@ public class FileUploadStorageHandler : IUploadStorageHandler
 
         try
         {
-            var filename = FullFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath);
+            var fileDirectory = uploadInfo.OnDiskDirectoryPath ?? directory;
+            var filename = FullFilenamePath(uploadInfo.OnDiskFilename, fileDirectory);
+            uploadInfo.OnDiskDirectoryPath = Path.GetDirectoryName(Path.GetFullPath(filename));
 
-            using var fs = new FileStream(filename, FileMode.Append);
+            using var fs = new FileStream(filename, FileMode.Append, FileAccess.Write);
 
             BufferedStream? bs = null;
             Pipe? checksumPipe = null;
@@ -108,7 +111,6 @@ public class FileUploadStorageHandler : IUploadStorageHandler
             {
                 uploadInfo.AddBytes(written);
                 uploadInfo.LastUpdatedDate = clock.UtcNow;
-                await uploadMetaHandler.UpdateResourceAsync(uploadInfo, cancellationToken);
             }
         }
 
@@ -116,25 +118,55 @@ public class FileUploadStorageHandler : IUploadStorageHandler
     }
 
     /// <inheritdoc />
-    public long? GetUploadSize(string fileId, UploadFileInfo uploadInfo)
+    public Task DeleteFileAsync(UploadFileInfo uploadFileInfo, CancellationToken cancellationToken)
     {
-        var filename = FullFilenamePath(uploadInfo.OnDiskFilename, uploadInfo.FileDirectoryPath);
-        var exists = File.Exists(filename);
-        if (!exists)
+        if (uploadFileInfo.OnDiskDirectoryPath is not null)
         {
-            return null;
+            var path = Path.Combine(uploadFileInfo.OnDiskDirectoryPath, uploadFileInfo.OnDiskFilename);
+            File.Delete(path);
+            return Task.CompletedTask;
         }
 
-        var size = new FileInfo(filename).Length;
-        return size;
+        var file = Path.Combine(directory, uploadFileInfo.OnDiskFilename);
+        File.Delete(file);
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public async Task DeleteFileAsync(UploadFileInfo uploadFileInfo, CancellationToken cancellationToken)
+    public async Task<UploadFileInfo> MergePartialFilesAsync(UploadFileInfo final, IList<UploadFileInfo> files, CancellationToken cancellationToken)
     {
-        await uploadMetaHandler.DeleteUploadFileInfoAsync(uploadFileInfo, cancellationToken);
-        var file = Path.Combine(uploadFileInfo.FileDirectoryPath, uploadFileInfo.OnDiskFilename);
-        File.Delete(file);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var finalDirectory = final.OnDiskDirectoryPath ?? directory;
+        final.OnDiskDirectoryPath = Path.GetDirectoryName(Path.GetFullPath(finalDirectory));
+        var filepath = FullFilenamePath(final.OnDiskFilename, finalDirectory);
+        if (File.Exists(filepath))
+        {
+            throw new InvalidOperationException("File exists. Cannot merge partial files on top by overwrite existing file.");
+        }
+
+        try
+        {
+            using var destination = new FileStream(filepath, FileMode.Append);
+
+            foreach (var file in files)
+            {
+                var otherPath = FullFilenamePath(file.OnDiskFilename, file.OnDiskDirectoryPath ?? directory);
+                using var readFs = File.OpenRead(otherPath);
+                await readFs.CopyToAsync(destination, cancellationToken);
+            }
+
+            final.CreatedDate = clock.UtcNow;
+            final.LastUpdatedDate = null;
+            final.AddBytes(destination.Position);
+        }
+        catch(Exception)
+        {
+            File.Delete(filepath);
+            throw;
+        }
+
+        return final;
     }
 
     private static string FullFilenamePath(string filename, string filePath)

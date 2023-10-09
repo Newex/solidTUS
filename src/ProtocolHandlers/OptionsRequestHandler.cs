@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using SolidTUS.Constants;
 using SolidTUS.Models;
@@ -22,7 +24,7 @@ public class OptionsRequestHandler
     /// Instantiate a new object of <see cref="OptionsRequestHandler"/>
     /// </summary>
     /// <param name="options">The TUS options</param>
-    /// <param name="validators"></param>
+    /// <param name="validators">The checksum validators</param>
     public OptionsRequestHandler(IOptions<TusOptions> options, IEnumerable<IChecksumValidator> validators)
     {
         maxSize = options.Value.MaxSize;
@@ -34,20 +36,19 @@ public class OptionsRequestHandler
     /// Constructs a discovery response that indicates the servers capabilities
     /// </summary>
     /// <returns>A TUS response</returns>
-    public TusHttpResponse ServerFeatureAnnouncements()
+    public void ServerFeatureAnnouncements(IHeaderDictionary responseHeaders)
     {
-        var response = new TusHttpResponse();
-        response.Headers.Add(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion);
-        response.Headers.Add(TusHeaderNames.Version, TusHeaderValues.TusServerVersions);
+        responseHeaders.Add(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion);
+        responseHeaders.Add(TusHeaderNames.Version, TusHeaderValues.TusServerVersions);
 
         if (maxSize.HasValue)
         {
-            response.Headers.Add(TusHeaderNames.MaxSize, maxSize.Value.ToString());
+            responseHeaders.Add(TusHeaderNames.MaxSize, maxSize.Value.ToString());
         }
 
         // TUS protocol extensions
         var checksumAlgorithms = string.Join(",", validators.Select(v => v.AlgorithmName));
-        response.Headers.Add(TusHeaderNames.ChecksumAlgorithm, checksumAlgorithms);
+        responseHeaders.Add(TusHeaderNames.ChecksumAlgorithm, checksumAlgorithms);
 
         var extensionList = new List<string> { TusHeaderValues.TusSupportedExtensions };
         if (hasTermination)
@@ -56,7 +57,6 @@ public class OptionsRequestHandler
         }
 
         var extensions = string.Join(",", extensionList);
-        response.Headers.Add(TusHeaderNames.Extension, extensions);
-        return response;
+        responseHeaders.Add(TusHeaderNames.Extension, extensions);
     }
 }

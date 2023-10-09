@@ -313,3 +313,4 @@ vite.config.ts.timestamp-*
 **/BenchmarkDotNet.Artifacts
 benchmarks/TestItems/sample.bin
 benchmarks/TestItems/output.bin.chunk
+examples/sveltedotnet/FileUploads/**/*

@@ -6,13 +6,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
-using SolidTUS.Contexts;
 using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.ProtocolFlows;
 using SolidTUS.ProtocolHandlers;
+
 using static Microsoft.AspNetCore.Http.HttpMethods;
 
 namespace SolidTUS.Attributes;
@@ -20,10 +19,11 @@ namespace SolidTUS.Attributes;
 /// <summary>
 /// Identifies an action that supports TUS resource creation
 /// </summary>
+[AttributeUsage(AttributeTargets.Method)]
 public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProvider, IRouteTemplateProvider
 {
     /// <summary>
-    /// Instantiate a new <see cref="TusCreationAttribute"/> creation endpoint handler.
+    /// Instantiate a new object of <see cref="TusCreationAttribute"/>
     /// </summary>
     public TusCreationAttribute()
     {
@@ -38,13 +38,6 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
         ArgumentNullException.ThrowIfNull(template);
         Template = template;
     }
-
-    private TusCreationContext? tusContext;
-
-    /// <summary>
-    /// Get or set the name of the TUS context parameter
-    /// </summary>
-    public virtual string ContextParameterName { get; set; } = "context";
 
     /// <summary>
     /// Gets the supported http methods
@@ -62,11 +55,6 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
 
     /// <inheritdoc />
     public string? Name { get; set; } = EndpointNames.CreationEpoint;
-
-    /// <summary>
-    /// Get or set the reference for the upload endpoint.
-    /// </summary>
-    public string UploadNameEndpoint { get; set; } = EndpointNames.UploadEndpoint;
 
     /// <inheritdoc />
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -89,12 +77,10 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
             var optionsHandler = http.RequestServices.GetService<OptionsRequestHandler>();
             if (optionsHandler is null)
             {
-                response.StatusCode = 500;
-                return;
+                throw new InvalidOperationException("Must register SolidTus on startup to use the functionalities");
             }
 
-            var discoveryResponse = optionsHandler.ServerFeatureAnnouncements();
-            response.AddTusHeaders(discoveryResponse);
+            optionsHandler.ServerFeatureAnnouncements(response.Headers);
             response.StatusCode = 204;
             return;
         }
@@ -104,51 +90,73 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
             var creationFlow = http.RequestServices.GetService<CreationFlow>();
             if (creationFlow is null)
             {
-                response.StatusCode = 500;
-                return;
+                throw new InvalidOperationException("Must register SolidTus on startup to use the functionalities");
             }
 
-            var cancel = http.RequestAborted;
-            var requestContext = RequestContext.Create(request, cancel);
-            var startCreation = requestContext.Bind(creationFlow.StartResourceCreation);
-            var creationResponse = startCreation.GetTusHttpResponse();
-            if (!creationResponse.IsSuccess)
+            var result = TusResult.Create(request, response);
+            result = result.Bind(creationFlow.PreResourceCreation);
+            var error = result.GetHttpError();
+            if (error is not null)
             {
-                response.AddTusHeaders(creationResponse);
-                context.Result = new ObjectResult(creationResponse.Message)
+                context.Result = new ObjectResult(error.Value.Message)
                 {
-                    StatusCode = creationResponse.StatusCode
+                    StatusCode = error.Value.StatusCode
                 };
                 return;
             }
 
-            // Callbacks
-            void CreatedResource(string location) => response.Headers.Add(HeaderNames.Location, location);
-            void PartialUpload(long written) => response.Headers.Add(TusHeaderNames.UploadOffset, written.ToString());
+            var ctx = result.GetValueOrDefault();
+            context.HttpContext.Items[TusResult.Name] = ctx;
+        }
 
-            tusContext = creationFlow.CreateTusContext(
-                startCreation,
-                request.BodyReader,
-                CreatedResource,
-                PartialUpload,
-                cancel
-            );
-            context.ActionArguments[ContextParameterName] = tusContext;
-
-            // Callback before sending headers add all TUS headers
-            context.HttpContext.Response.OnStarting(state =>
+        response.OnStarting(state =>
+        {
+            var ctx = (ActionExecutingContext)state;
+            if (isPost)
             {
-                var ctx = (ActionExecutingContext)state;
-
-                if (creationFlow is not null)
+                if (ctx.HttpContext.Items[HttpContextExtensions.CreationResultName] is not Result<TusResult> postAction)
                 {
-                    var tusResponse = requestContext.GetTusHttpResponse(201);
-                    ctx.HttpContext.Response.AddTusHeaders(tusResponse);
+                    ctx.Result = new ObjectResult("Internal server error")
+                    {
+                        StatusCode = 500
+                    };
+                    return Task.CompletedTask;
                 }
 
-                return Task.CompletedTask;
-            }, context);
-        }
+                var error = postAction.GetHttpError();
+                if (error is not null)
+                {
+                    ctx.Result = new ObjectResult(error.Value.Message)
+                    {
+                        StatusCode = error.Value.StatusCode
+                    };
+                    return Task.CompletedTask;
+                }
+
+                var creationFlow = http.RequestServices.GetService<CreationFlow>();
+                if (creationFlow is null)
+                {
+                    ctx.Result = new ObjectResult("Internal server error")
+                    {
+                        StatusCode = 500
+                    };
+                    return Task.CompletedTask;
+                }
+
+                var postCreation = postAction.Map(creationFlow.PostResourceCreation);
+                error = postCreation.GetHttpError();
+                if (error is not null)
+                {
+                    ctx.Result = new ObjectResult(error.Value.Message)
+                    {
+                        StatusCode = error.Value.StatusCode
+                    };
+                    return Task.CompletedTask;
+                }
+            }
+
+            return Task.CompletedTask;
+        }, context);
 
         await next();
     }
@@ -171,7 +179,5 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
         }, context);
 
         await next();
-
-        // Response probably already sent here
     }
 }

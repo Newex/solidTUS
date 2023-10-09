@@ -23,7 +23,7 @@ public interface IUploadMetaHandler
     /// <summary>
     /// Get the upload file info
     /// </summary>
-    /// <param name="fileId">The file Id</param>
+    /// <param name="fileId">The file id</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>An upload file info or null</returns>
     Task<UploadFileInfo?> GetResourceAsync(string fileId, CancellationToken cancellationToken);

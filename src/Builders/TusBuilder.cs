@@ -12,17 +12,18 @@ using SolidTUS.ProtocolFlows;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 using SolidTUS.Validators;
+using SolidTUS.Wrappers;
 
-namespace SolidTUS.Extensions;
+namespace SolidTUS.Builders;
 
 /// <summary>
 /// Tus service builder pattern
 /// </summary>
 public sealed class TusBuilder
 {
-    private readonly ServiceDescriptor uploadMetaDescriptor = new(typeof(IUploadMetaHandler), typeof(FileUploadMetaHandler), ServiceLifetime.Scoped);
-    private readonly ServiceDescriptor uploadStorageDescriptor = new(typeof(IUploadStorageHandler), typeof(FileUploadStorageHandler), ServiceLifetime.Scoped);
-    private readonly ServiceDescriptor expiredHandleDescriptor = new(typeof(IExpiredUploadHandler), typeof(FileExpiredUploadHandler), ServiceLifetime.Scoped);
+    private readonly ServiceDescriptor uploadMetaDescriptor = new(typeof(IUploadMetaHandler), typeof(FileUploadMetaHandler), ServiceLifetime.Singleton);
+    private readonly ServiceDescriptor uploadStorageDescriptor = new(typeof(IUploadStorageHandler), typeof(FileUploadStorageHandler), ServiceLifetime.Singleton);
+    private readonly ServiceDescriptor expiredHandleDescriptor = new(typeof(IExpiredUploadHandler), typeof(FileExpiredUploadHandler), ServiceLifetime.Singleton);
 
     private readonly IServiceCollection services;
 
@@ -40,7 +41,7 @@ public sealed class TusBuilder
         where T : class, IUploadStorageHandler
     {
         services.Remove(uploadStorageDescriptor);
-        services.TryAddScoped<IUploadStorageHandler, T>();
+        services.TryAddSingleton<IUploadStorageHandler, T>();
         return this;
     }
 
@@ -53,7 +54,7 @@ public sealed class TusBuilder
         where T : class, IUploadMetaHandler
     {
         services.Remove(uploadMetaDescriptor);
-        services.TryAddScoped<IUploadMetaHandler, T>();
+        services.TryAddSingleton<IUploadMetaHandler, T>();
         return this;
     }
 
@@ -66,7 +67,7 @@ public sealed class TusBuilder
         where T : class, IExpiredUploadHandler
     {
         services.Remove(expiredHandleDescriptor);
-        services.TryAddScoped<IExpiredUploadHandler, T>();
+        services.TryAddSingleton<IExpiredUploadHandler, T>();
         return this;
     }
 
@@ -149,6 +150,10 @@ public sealed class TusBuilder
 
         builder.services.AddScoped<IChecksumValidator, SHA1ChecksumValidator>();
         builder.services.AddScoped<IChecksumValidator, MD5ChecksumValidator>();
+
+        builder.services.TryAddScoped<ResourceCreationHandler>();
+        builder.services.TryAddScoped<UploadHandler>();
+        builder.services.TryAddScoped<ILinkGeneratorWrapper, LinkGeneratorWrapper>();
         return builder;
     }
 }

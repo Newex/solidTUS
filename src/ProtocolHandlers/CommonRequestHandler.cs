@@ -1,6 +1,9 @@
+using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Internal;
 using SolidTUS.Constants;
+using SolidTUS.Contexts;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.Validators;
@@ -11,7 +14,7 @@ namespace SolidTUS.ProtocolHandlers;
 /// <summary>
 /// General TUS request handler
 /// </summary>
-public class CommonRequestHandler
+internal class CommonRequestHandler
 {
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
@@ -37,21 +40,19 @@ public class CommonRequestHandler
     /// <summary>
     /// Check if a <see cref="UploadFileInfo"/> resource has been created
     /// </summary>
-    /// <remarks>
-    /// Sets the <see cref="RequestContext.UploadFileInfo"/> if exists
-    /// </remarks>
     /// <param name="context">The request context</param>
+    /// <param name="fileId">The file id</param>
+    /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Either an error or a request context</returns>
-    public async ValueTask<Result<RequestContext>> CheckUploadFileInfoExistsAsync(RequestContext context)
+    public async ValueTask<Result<TusResult>> SetUploadFileInfoAsync(TusResult context, string fileId, CancellationToken cancellationToken)
     {
-        var fileInfo = await uploadMetaHandler.GetResourceAsync(context.FileID, context.CancellationToken);
+        var fileInfo = await uploadMetaHandler.GetResourceAsync(fileId, cancellationToken);
+
         if (fileInfo is null)
         {
             return HttpError.NotFound("File resource does not exists").Wrap();
         }
 
-        var size = uploadStorageHandler.GetUploadSize(context.FileID, fileInfo);
-        fileInfo.ByteOffset = size ?? 0L;
         context.UploadFileInfo = fileInfo;
         return context.Wrap();
     }
@@ -61,7 +62,7 @@ public class CommonRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an http error or a request context</returns>
-    public static Result<RequestContext> CheckTusVersion(RequestContext context)
+    public static Result<TusResult> CheckTusVersion(TusResult context)
     {
         if (context.Method == "OPTIONS")
         {
@@ -81,38 +82,25 @@ public class CommonRequestHandler
     }
 
     /// <summary>
-    /// Set the created date for the upload
-    /// </summary>
-    /// <param name="context">The request context</param>
-    /// <returns>A request context</returns>
-    public RequestContext SetCreatedDate(RequestContext context)
-    {
-        if (!context.UploadFileInfo.CreatedDate.HasValue)
-        {
-            context.UploadFileInfo.CreatedDate = clock.UtcNow;
-        }
-        return context;
-    }
-
-    /// <summary>
-    /// Set the last time this upload was updated
-    /// </summary>
-    /// <param name="context">The request context</param>
-    /// <returns>A request context</returns>
-    public RequestContext SetUpdatedDate(RequestContext context)
-    {
-        context.UploadFileInfo.LastUpdatedDate = clock.UtcNow;
-        return context;
-    }
-
-    /// <summary>
     /// Set the upload offset header
     /// </summary>
-    /// <param name="context">The request context</param>
+    /// <param name="context">The response context</param>
     /// <returns>A request context</returns>
-    public static RequestContext SetUploadByteOffset(RequestContext context)
+    public static void SetUploadByteOffset(TusResult context)
     {
-        context.ResponseHeaders.Add(TusHeaderNames.UploadOffset, context.UploadFileInfo.ByteOffset.ToString());
+        if (context.UploadFileInfo is not null)
+        {
+            context.ResponseHeaders.Add(TusHeaderNames.UploadOffset, context.UploadFileInfo?.ByteOffset.ToString());
+        }
+    }
+
+    /// <summary>
+    /// Set the tus resumable response header
+    /// </summary>
+    /// <param name="context">The response context</param>
+    public static TusResult SetTusResumableHeader(TusResult context)
+    {
+        context.ResponseHeaders.Add(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion);
         return context;
     }
 }

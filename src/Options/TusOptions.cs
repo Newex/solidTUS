@@ -16,7 +16,15 @@ public record TusOptions
     /// <remarks>
     /// Default validator returns true on any input
     /// </remarks>
-    public Func<IDictionary<string, string>, bool> MetadataValidator { get; set; } = (_) => true;
+    public Func<IReadOnlyDictionary<string, string>, bool> MetadataValidator { get; set; } = (_) => true;
+
+    /// <summary>
+    /// Get or set if the parallel / partial uploads should require to conform to the metadata validator specifications.
+    /// </summary>
+    /// <remarks>
+    /// Beware setting this to true might unnecessarily invalidate parallel uploads.
+    /// </remarks>
+    public bool ValidateMetadataForParallelUploads { get; set; }
 
     /// <summary>
     /// Get or set the maximum TUS upload size
@@ -37,10 +45,10 @@ public record TusOptions
     /// <remarks>
     /// Only used if <see cref="Models.ExpirationStrategy"/> is set to <see cref="ExpirationStrategy.SlidingExpiration"/> or <see cref="ExpirationStrategy.SlideAfterAbsoluteExpiration"/>.
     /// <para>
-    /// The default interval is 10 minutes.
+    /// The default interval is 1 day.
     /// </para>
     /// </remarks>
-    public TimeSpan SlidingInterval { get; set; } = TimeSpan.FromMinutes(10);
+    public TimeSpan SlidingInterval { get; set; } = TimeSpan.FromDays(1);
 
     /// <summary>
     /// Get or set the global absolute interval.
@@ -79,6 +87,15 @@ public record TusOptions
     /// You must implement termination yourself. See example or documentation for more info.
     /// </remarks>
     public bool HasTermination { get; set; }
+
+    /// <summary>
+    /// If true, partials files will be deleted when finished merging into final file.
+    /// Otherwise the partials files will be kept.
+    /// </summary>
+    /// <remarks>
+    /// Default true.
+    /// </remarks>
+    public bool DeletePartialFilesOnMerge { get; set; } = true;
 
     /// <summary>
     /// Get the configuration section name

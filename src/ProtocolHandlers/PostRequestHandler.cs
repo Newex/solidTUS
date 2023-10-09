@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
 using SolidTUS.Models;
 using SolidTUS.Options;
 using SolidTUS.Parsers;
+
 using static SolidTUS.Extensions.FunctionalExtensions;
 
 namespace SolidTUS.ProtocolHandlers;
@@ -14,9 +14,10 @@ namespace SolidTUS.ProtocolHandlers;
 /// <summary>
 /// TUS POST handler
 /// </summary>
-public class PostRequestHandler
+internal class PostRequestHandler
 {
-    private readonly Func<IDictionary<string, string>, bool> metadataValidator;
+    private readonly bool validatePartial;
+    private readonly Func<IReadOnlyDictionary<string, string>, bool> metadataValidator;
     private readonly long? maxSize;
 
     /// <summary>
@@ -29,6 +30,7 @@ public class PostRequestHandler
     {
         metadataValidator = options.Value.MetadataValidator;
         maxSize = options.Value.MaxSize;
+        validatePartial = options.Value.ValidateMetadataForParallelUploads;
     }
 
     /// <summary>
@@ -36,8 +38,14 @@ public class PostRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public static Result<RequestContext> CheckUploadLengthOrDeferred(RequestContext context)
+    public static Result<TusResult> CheckUploadLengthOrDeferred(TusResult context)
     {
+        if (context.PartialMode == PartialMode.Final)
+        {
+            // Do not check on final
+            return context.Wrap();
+        }
+
         var hasDefer = context.RequestHeaders.ContainsKey(TusHeaderNames.UploadDeferLength);
         var hasLength = context.RequestHeaders.ContainsKey(TusHeaderNames.UploadLength);
 
@@ -70,8 +78,13 @@ public class PostRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public Result<RequestContext> CheckMaximumSize(RequestContext context)
+    public Result<TusResult> CheckMaximumSize(TusResult context)
     {
+        if (context.PartialMode == PartialMode.Final)
+        {
+            return context.Wrap();
+        }
+
         var hasHeader = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadLength], out var size);
         if (!hasHeader)
         {
@@ -87,8 +100,6 @@ public class PostRequestHandler
                 error.Headers.Add(TusHeaderNames.MaxSize, maxSize.Value.ToString());
                 return error.Wrap();
             }
-
-            context.ResponseHeaders.Add(TusHeaderNames.MaxSize, maxSize.Value.ToString());
         }
 
         return context.Wrap();
@@ -99,12 +110,17 @@ public class PostRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A tuple containing the raw string metadata and the parsed metadata</returns>
-    public static RequestContext ParseMetadata(RequestContext context)
+    public static TusResult ParseMetadata(TusResult context)
     {
         var rawMetadata = context.RequestHeaders[TusHeaderNames.UploadMetadata];
+        if (rawMetadata.Count == 0)
+        {
+            return context;
+        }
+
         var metadata = MetadataParser.ParseFast(rawMetadata!);
-        context.UploadFileInfo.Metadata = metadata.AsReadOnly();
-        context.UploadFileInfo.RawMetadata = rawMetadata;
+        context.Metadata = metadata.AsReadOnly();
+        context.RawMetadata = rawMetadata;
         return context;
     }
 
@@ -113,31 +129,17 @@ public class PostRequestHandler
     /// </summary>
     /// <param name="context">THe request context</param>
     /// <returns>Either an error or a request context</returns>
-    public Result<RequestContext> ValidateMetadata(RequestContext context)
+    public Result<TusResult> ValidateMetadata(TusResult context)
     {
-        var isValid = metadataValidator(context.UploadFileInfo.Metadata);
-        return isValid ? context.Wrap() : HttpError.BadRequest("Invalid Upload-Metadata").Wrap();
-    }
-
-    /// <summary>
-    /// Set the metadata into the contexts UploadFileInfo
-    /// </summary>
-    /// <param name="context">The request context</param>
-    /// <param name="metadata">The tuple of raw and parsed metadata</param>
-    /// <returns>Either an error or a request context</returns>
-    public static RequestContext SetNewMetadata(RequestContext context, (StringValues, Dictionary<string, string>) metadata)
-    {
-        var uploadInfo = context.UploadFileInfo;
-        var update = uploadInfo with
+        var isPartial = context.PartialMode == PartialMode.Partial;
+        if (validatePartial || !isPartial)
         {
-            RawMetadata = metadata.Item1,
-            Metadata = metadata.Item2.AsReadOnly()
-        };
+            var metadata = context.Metadata ?? new Dictionary<string, string>();
+            var isValid = metadataValidator(metadata);
+            return isValid ? context.Wrap() : HttpError.BadRequest("Invalid Upload-Metadata").Wrap();
+        }
 
-        return context with
-        {
-            UploadFileInfo = update
-        };
+        return context.Wrap();
     }
 
     /// <summary>
@@ -145,24 +147,16 @@ public class PostRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>An updated context with file size</returns>
-    public static RequestContext SetFileSize(RequestContext context)
+    public static TusResult SetFileSize(TusResult context)
     {
-        var info = context.UploadFileInfo;
         var hasLength = long.TryParse(context.RequestHeaders[TusHeaderNames.UploadLength], out var size);
         if (!hasLength)
         {
             return context;
         }
 
-        var update = info with
-        {
-            FileSize = size
-        };
-
-        return context with
-        {
-            UploadFileInfo = update
-        };
+        context.FileSize = size;
+        return context;
     }
 
     /// <summary>
@@ -170,7 +164,7 @@ public class PostRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public static Result<RequestContext> CheckIsValidUpload(RequestContext context)
+    public static Result<TusResult> CheckIsValidUpload(TusResult context)
     {
         var hasContentLength = long.TryParse(context.RequestHeaders[HeaderNames.ContentLength], out var contentLength);
         var isUpload = hasContentLength && contentLength > 0;
@@ -188,5 +182,29 @@ public class PostRequestHandler
         }
 
         return context.Wrap();
+    }
+
+    public static TusResult SetCreationLocation(TusResult context)
+    {
+        var hasLocation = context.LocationUrl is not null;
+        if (!hasLocation)
+        {
+            return context;
+        }
+
+        context.ResponseHeaders.Add(HeaderNames.Location, context.LocationUrl);
+        return context;
+    }
+
+    /// <summary>
+    /// Set the maximum file size header if present
+    /// </summary>
+    /// <param name="context">The response context</param>
+    public void SetMaximumFileSize(TusResult context)
+    {
+        if (maxSize.HasValue)
+        {
+            context.ResponseHeaders.Add(TusHeaderNames.MaxSize, maxSize.Value.ToString());
+        }
     }
 }

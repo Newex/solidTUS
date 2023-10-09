@@ -1,9 +1,5 @@
-using System;
-using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using SolidTUS.Contexts;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;
@@ -14,7 +10,7 @@ namespace SolidTUS.ProtocolFlows;
 /// <summary>
 /// The upload flow
 /// </summary>
-public class UploadFlow
+internal class UploadFlow
 {
     private readonly CommonRequestHandler common;
     private readonly PatchRequestHandler patch;
@@ -54,18 +50,21 @@ public class UploadFlow
     /// </summary>
     /// <param name="context">The request context</param>
     /// <param name="fileId">The file Id</param>
+    /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Either an error or a request context</returns>
-    public async ValueTask<Result<RequestContext>> GetUploadStatusAsync(RequestContext context, string fileId)
+    public async ValueTask<Result<TusResult>> GetUploadStatusAsync(TusResult context, string fileId, CancellationToken cancellationToken)
     {
-        context.FileID = fileId;
         context = HeadRequestHandler.SetResponseCacheControl(context);
-        var requestContext = await common.CheckUploadFileInfoExistsAsync(context);
+        var requestContext = await common.SetUploadFileInfoAsync(context, fileId, cancellationToken);
 
-        requestContext = await requestContext
+        requestContext = requestContext
+            .Map(CommonRequestHandler.SetTusResumableHeader)
             .Map(HeadRequestHandler.SetUploadOffsetHeader)
             .Map(HeadRequestHandler.SetUploadLengthOrDeferred)
             .Map(HeadRequestHandler.SetMetadataHeader)
-            .BindAsync(expirationRequestHandler.CheckExpirationAsync);
+            .Bind(ConcatenationRequestHandler.SetPartialMode)
+            .Bind(ConcatenationRequestHandler.SetPartialFinalUrls)
+            .Map(expirationRequestHandler.SetExpiration);
 
         return requestContext;
     }
@@ -75,23 +74,19 @@ public class UploadFlow
     /// </summary>
     /// <param name="context">The request context</param>
     /// <param name="fileId">The file ID</param>
+    /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Either an error or a request context</returns>
-    public async ValueTask<Result<RequestContext>> PreUploadAsync(RequestContext context, string fileId)
+    public async ValueTask<Result<TusResult>> PreUploadAsync(TusResult context, string fileId, CancellationToken cancellationToken)
     {
-        context.FileID = fileId;
-        var requestContext = await PatchRequestHandler.CheckContentType(context)
+        var requestContext = await common.SetUploadFileInfoAsync(context, fileId, cancellationToken);
+        requestContext = await requestContext.Bind(PatchRequestHandler.CheckContentType)
             .Bind(PatchRequestHandler.CheckUploadOffset)
-            .BindAsync(async c => await common.CheckUploadFileInfoExistsAsync(c));
-
-        requestContext = await requestContext
+            .Bind(ConcatenationRequestHandler.SetPartialMode)
             .Bind(PatchRequestHandler.CheckConsistentByteOffset)
             .Bind(patch.CheckUploadLength)
             .Bind(PatchRequestHandler.CheckUploadExceedsFileSize)
-            .BindAsync(expirationRequestHandler.CheckExpirationAsync);
-
-        requestContext = requestContext
-            .Map(common.SetUpdatedDate)
-            .Bind(checksumHandler.SetChecksum);
+            .Bind(checksumHandler.SetChecksum)
+            .BindAsync(async c => await expirationRequestHandler.CheckExpirationAsync(c, cancellationToken));
 
         return requestContext;
     }
@@ -100,40 +95,12 @@ public class UploadFlow
     /// Called after an upload finishes, before headers are sent.
     /// </summary>
     /// <param name="context">The request context</param>
-    /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>A collection of headers</returns>
-    public async Task<RequestContext> PostUploadAsync(RequestContext context, CancellationToken cancellationToken)
+    public TusResult PostUpload(TusResult context)
     {
-        context = common.SetUpdatedDate(context);
         context = expirationRequestHandler.SetExpiration(context);
-        context = CommonRequestHandler.SetUploadByteOffset(context);
-        await uploadMetaHandler.UpdateResourceAsync(context.UploadFileInfo, cancellationToken);
+        CommonRequestHandler.SetUploadByteOffset(context);
+        CommonRequestHandler.SetTusResumableHeader(context);
         return context;
-    }
-
-    /// <summary>
-    /// Create upload context from the request context
-    /// </summary>
-    /// <param name="context">The request context</param>
-    /// <param name="reader">The pipe reader</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    /// <returns>An upload context or null</returns>
-    public TusUploadContext? CreateUploadContext(Result<RequestContext> context, PipeReader reader, CancellationToken cancellationToken)
-    {
-        var requestContext = context.Match(c => c, _ => null!);
-        if (requestContext is null)
-        {
-            return null;
-        }
-
-        var uploadFileInfo = requestContext.UploadFileInfo;
-        return new TusUploadContext(
-            requestContext.ChecksumContext,
-            uploadMetaHandler,
-            uploadStorageHandler,
-            reader,
-            uploadFileInfo,
-            cancellationToken
-        );
     }
 }

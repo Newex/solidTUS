@@ -68,4 +68,9 @@ public static class TusHeaderNames
     /// Get the expiration header value
     /// </summary>
     public const string Expiration = "Upload-Expires";
+
+    /// <summary>
+    /// Get the upload concat header value
+    /// </summary>
+    public const string UploadConcat = "Upload-Concat";
 }

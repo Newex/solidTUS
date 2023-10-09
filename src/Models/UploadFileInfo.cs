@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
-using SolidTUS.Attributes;
 
 namespace SolidTUS.Models;
 
@@ -21,7 +19,7 @@ public record UploadFileInfo
     /// Get the bytes that have been uploaded so-far
     /// </summary>
     [JsonInclude]
-    public long ByteOffset { get; internal set; }
+    public long ByteOffset { get; private set; }
 
     /// <summary>
     /// Get the total upload file size
@@ -34,11 +32,27 @@ public record UploadFileInfo
     public long? FileSize { get; init; }
 
     /// <summary>
+    /// Get if the upload file is a partial file
+    /// </summary>
+    [JsonInclude]
+    public bool IsPartial { get; internal set; }
+
+    /// <summary>
+    /// The <c>Upload-Concat</c> header value.
+    /// </summary>
+    /// <remarks>
+    /// Only set when the value is finalized and merged.
+    /// </remarks>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonInclude]
+    public string? ConcatHeaderFinal { get; internal set; }
+
+    /// <summary>
     /// Get the parsed TUS metadata
     /// </summary>
-    [JsonReadOnlyDictionary]
     [JsonInclude]
-    public ReadOnlyDictionary<string, string> Metadata { get; internal set; } = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>());
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyDictionary<string, string>? Metadata { get; internal set; }
 
     /// <summary>
     /// Get the original raw metadata
@@ -48,16 +62,7 @@ public record UploadFileInfo
     public string? RawMetadata { get; internal set; }
 
     /// <summary>
-    /// Get the file directory path for this file
-    /// </summary>
-    /// <remarks>
-    /// The directory path
-    /// </remarks>
-    [JsonInclude]
-    public string FileDirectoryPath { get; internal set; } = string.Empty;
-
-    /// <summary>
-    /// Get the filename as it is on the disk
+    /// Get the filename of the uploaded file as it is on the disk
     /// </summary>
     /// <remarks>
     /// This filename is different from the given actual filename.
@@ -67,15 +72,11 @@ public record UploadFileInfo
     public string OnDiskFilename { get; internal set; } = string.Empty;
 
     /// <summary>
-    /// Get the specific expiration strategy for this related upload.
+    /// Get the directory path for where the file is stored on disk
     /// </summary>
-    /// <remarks>
-    /// If null this means that the global <see cref="ExpirationStrategy"/> is used.
-    /// </remarks>
     [JsonInclude]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public ExpirationStrategy? ExpirationStrategy { get; internal set; }
+    public string? OnDiskDirectoryPath { get; internal set; }
 
     /// <summary>
     /// Get the specific date-time for the upload expiration.
@@ -83,16 +84,6 @@ public record UploadFileInfo
     [JsonInclude]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public DateTimeOffset? ExpirationDate { get; internal set; }
-
-    /// <summary>
-    /// Get the specific interval for this upload.
-    /// </summary>
-    /// <remarks>
-    /// If null, the global settings is used, if applicable.
-    /// </remarks>
-    [JsonInclude]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public TimeSpan? Interval { get; internal set; }
 
     /// <summary>
     /// The created date of the upload and metadata

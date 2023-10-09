@@ -20,183 +20,149 @@ public class ExpirationTests
     public void Setting_the_expiration_header_should_follow_RFC7231(int year, int month, int day, int hour, int minutes, int seconds, string dayName, string monthName)
     {
         // Arrange
-        var http = MockHttps.HttpRequest("PATCH",
+        var request = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
 
         // 1st of June 2020 is a Monday
         var now = new DateTimeOffset(year, month, day, hour, minutes, seconds, TimeSpan.FromHours(0));
-        var request = RequestContext.Create(http, CancellationToken.None).Map(c => c with
-        {
-            UploadFileInfo = new()
+        var context = TusResult
+            .Create(request, MockHttps.HttpResponse())
+            .Map(c => c with
             {
-                CreatedDate = now
-            }
+                UploadFileInfo = new()
+                {
+                    CreatedDate = now,
+                    ExpirationDate = now.AddMinutes(2)
+                }
 
-        });
+            });
         var clock = MockOthers.Clock(now);
         var globalOptions = MSOptions.Create(new TusOptions
         {
-            AbsoluteInterval = TimeSpan.FromMinutes(2),
             ExpirationStrategy = ExpirationStrategy.AbsoluteExpiration
         });
         var expiredHandler = MockHandlers.ExpiredUploadHandler();
         var handler = new ExpirationRequestHandler(clock, expiredHandler, globalOptions);
 
         // Act
-        var response = request.Map(handler.SetExpiration).GetTusHttpResponse();
-        var result = response.Headers[TusHeaderNames.Expiration];
+        var response = context.Map(handler.SetExpiration).GetValueOrDefault();
+        var result = response?.ResponseHeaders[TusHeaderNames.Expiration];
 
         // Assert
         var expected = $"{dayName}, {day:00} {monthName} {year:0000} {hour:00}:{minutes+2:00}:{seconds:00} GMT";
-        Assert.Equal(expected, result);
+        result.ToString().Should().Be(expected);
     }
 
     [Fact]
     public void Never_expires_should_not_have_expiration_header()
     {
         // Arrange
-        var http = MockHttps.HttpRequest("PATCH",
+        var request = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
 
         // 1st of June 2020 is a Monday
         var now = new DateTimeOffset(2020, 06, 01, 12, 00, 00, TimeSpan.FromHours(0));
-        var request = RequestContext.Create(http, CancellationToken.None).Map(c => c with
-        {
-            UploadFileInfo = new()
+        var context = TusResult
+            .Create(request, MockHttps.HttpResponse())
+            .Map(c => c with
             {
-                CreatedDate = now
-            }
-
-        });
+                UploadFileInfo = new()
+                {
+                    CreatedDate = now,
+                    ExpirationDate = null
+                }
+            });
         var clock = MockOthers.Clock(now);
         var globalOptions = MSOptions.Create(new TusOptions
         {
-            AbsoluteInterval = TimeSpan.FromMinutes(2),
             ExpirationStrategy = ExpirationStrategy.Never
         });
         var expiredHandler = MockHandlers.ExpiredUploadHandler();
         var handler = new ExpirationRequestHandler(clock, expiredHandler, globalOptions);
 
         // Act
-        var response = request.Map(handler.SetExpiration).GetTusHttpResponse();
-        var result = response.Headers[TusHeaderNames.Expiration];
+        var response = context.Map(handler.SetExpiration).GetValueOrDefault();
+        var result = response?.ResponseHeaders[TusHeaderNames.Expiration];
 
         // Assert
         result.Should().BeNullOrEmpty();
     }
 
     [Fact]
-    public void File_expiration_strategy_should_take_precedence_over_global_values()
-    {
-        // Arrange
-        var http = MockHttps.HttpRequest("PATCH",
-            (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
-        );
-
-        // 1st of June 2020 is a Monday
-        var now = new DateTimeOffset(2020, 06, 01, 12, 00, 00, TimeSpan.FromHours(0));
-        var request = RequestContext.Create(http, CancellationToken.None).Map(c => c with
-        {
-            UploadFileInfo = new()
-            {
-                CreatedDate = now,
-                ExpirationStrategy = ExpirationStrategy.SlidingExpiration,
-                Interval = TimeSpan.FromMinutes(5)
-            }
-
-        });
-        var clock = MockOthers.Clock(now);
-        var globalOptions = MSOptions.Create(new TusOptions
-        {
-            AbsoluteInterval = TimeSpan.FromMinutes(2),
-            ExpirationStrategy = ExpirationStrategy.Never
-        });
-        var expiredHandler = MockHandlers.ExpiredUploadHandler();
-        var handler = new ExpirationRequestHandler(clock, expiredHandler, globalOptions);
-
-        // Act
-        var response = request.Map(handler.SetExpiration).GetTusHttpResponse();
-        var result = response.Headers[TusHeaderNames.Expiration];
-
-        // Assert
-        result.Should().BeEquivalentTo("Mon, 01 Jun 2020 12:05:00 GMT");
-    }
-
-    [Fact]
     public async Task Expired_upload_should_return_410_Gone()
     {
         // Arrange
-        var http = MockHttps.HttpRequest("PATCH",
+        var request = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
+        var response = MockHttps.HttpResponse();
 
         // 1st of June 2020 is a Monday
         var lastWeek = new DateTimeOffset(2020, 06, 01, 12, 00, 00, TimeSpan.FromHours(0));
-        var today = lastWeek.AddDays(7);
+        var today = lastWeek.AddDays(6);
+        var yesterday = lastWeek.AddDays(5);
 
-        var request = RequestContext.Create(http, CancellationToken.None).Map(c => c with
-        {
-            UploadFileInfo = new()
+        var expiration = TusResult
+            .Create(request, response)
+            .Map(c => c with
             {
-                CreatedDate = lastWeek
-            }
-
-        });
+                UploadFileInfo = new()
+                {
+                    ExpirationDate = yesterday
+                }
+            });
         var clock = MockOthers.Clock(today);
-        var globalOptions = MSOptions.Create(new TusOptions
-        {
-            AbsoluteInterval = TimeSpan.FromDays(5),
-            ExpirationStrategy = ExpirationStrategy.AbsoluteExpiration
-        });
+        var globalOptions = MSOptions.Create(new TusOptions());
         var expiredHandler = MockHandlers.ExpiredUploadHandler();
         var handler = new ExpirationRequestHandler(clock, expiredHandler, globalOptions);
 
         // Act
-        var response = await request.BindAsync(handler.CheckExpirationAsync);
-        var status = response.GetTusHttpResponse().StatusCode;
+        var hasExpired = await expiration.BindAsync(async c => await handler.CheckExpirationAsync(c, CancellationToken.None));
+        var result = hasExpired.GetHttpError();
 
         // Assert
-        status.Should().Be(410);
+        result.Should().NotBeNull().And.Match<HttpError>(x => x.StatusCode == 410);
     }
 
     [Fact]
     public async Task Expired_upload_can_be_allowed()
     {
         // Arrange
-        var http = MockHttps.HttpRequest("PATCH",
+        var request = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion)
         );
 
         // 1st of June 2020 is a Monday
         var lastWeek = new DateTimeOffset(2020, 06, 01, 12, 00, 00, TimeSpan.FromHours(0));
         var today = lastWeek.AddDays(7);
+        var yesterday = today.AddDays(-1);
 
-        var request = RequestContext.Create(http, CancellationToken.None).Map(c => c with
-        {
-            UploadFileInfo = new()
+        var context = TusResult
+            .Create(request, MockHttps.HttpResponse())
+            .Map(c => c with
             {
-                CreatedDate = lastWeek
-            }
-
-        });
+                UploadFileInfo = new()
+                {
+                    CreatedDate = lastWeek,
+                    ExpirationDate = yesterday
+                }
+            });
         var clock = MockOthers.Clock(today);
-        var globalOptions = MSOptions.Create(new TusOptions
+        var options = MSOptions.Create(new TusOptions
         {
-            AbsoluteInterval = TimeSpan.FromDays(5),
             ExpirationStrategy = ExpirationStrategy.AbsoluteExpiration,
             AllowExpiredUploadsToContinue = true
         });
-        var options = MSOptions.Create(new TusOptions());
         var expiredHandler = MockHandlers.ExpiredUploadHandler();
         var handler = new ExpirationRequestHandler(clock, expiredHandler, options);
 
         // Act
-        var response = await request.BindAsync(handler.CheckExpirationAsync);
-        var result = response.GetTusHttpResponse().IsSuccess;
+        var response = await context.BindAsync(async c => await handler.CheckExpirationAsync(c, CancellationToken.None));
+        var result = response.GetValueOrDefault();
 
         // Assert
-        result.Should().BeTrue();
+        result.Should().NotBeNull();
     }
 }

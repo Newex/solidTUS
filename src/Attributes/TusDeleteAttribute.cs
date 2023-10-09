@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
 using SolidTUS.Models;
@@ -19,6 +18,7 @@ namespace SolidTUS.Attributes;
 /// <summary>
 /// Marks the TUS-termination action. The route MUST match the route to the TUS-upload endpoint.
 /// </summary>
+[AttributeUsage(AttributeTargets.Method)]
 public class TusDeleteAttribute : ActionFilterAttribute, IActionHttpMethodProvider, IRouteTemplateProvider
 {
     /// <summary>
@@ -68,7 +68,7 @@ public class TusDeleteAttribute : ActionFilterAttribute, IActionHttpMethodProvid
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         var cancel = context.HttpContext.RequestAborted;
-        var requestContext = RequestContext.Create(context.HttpContext.Request, cancel);
+        var requestContext = TusResult.Create(context.HttpContext.Request, context.HttpContext.Response);
         var terminateRequest = context.HttpContext.RequestServices.GetService<TerminationRequestHandler>();
         if (terminateRequest is null)
         {
@@ -82,12 +82,12 @@ public class TusDeleteAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         var values = context.RouteData.Values.AsEnumerable().Where(x => x.Key != "action" && x.Key != "controller");
         var routeData = new RouteValueDictionary(values);
         requestContext = requestContext.Bind(c => terminateRequest.ValidateRoute(c, Name, UploadNameEndpoint, routeData));
-        var tusResponse = requestContext.GetTusHttpResponse(204);
-        if (!tusResponse.IsSuccess)
+        var error = requestContext.GetHttpError();
+        if (error is not null)
         {
-            context.Result = new ObjectResult(tusResponse.Message)
+            context.Result = new ObjectResult(error.Value.Message)
             {
-                StatusCode = tusResponse.StatusCode
+                StatusCode = error.Value.StatusCode
             };
             return;
         }
@@ -99,18 +99,22 @@ public class TusDeleteAttribute : ActionFilterAttribute, IActionHttpMethodProvid
     public override async Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
     {
         var cancel = context.HttpContext.RequestAborted;
-        var requestContext = RequestContext.Create(context.HttpContext.Request, cancel);
+        var requestContext = TusResult.Create(context.HttpContext.Request, context.HttpContext.Response);
         context.HttpContext.Response.OnStarting(state =>
         {
             var ctx = (ResultExecutingContext)state;
             var status = ctx.HttpContext.Response.StatusCode;
-            var tusResponse = requestContext.GetTusHttpResponse(204);
-            ctx.HttpContext.Response.AddTusHeaders(tusResponse);
-            if (tusResponse.IsSuccess)
+            var error = requestContext.GetHttpError();
+            if (error is null)
             {
                 ctx.HttpContext.Response.StatusCode = 204;
+                return Task.CompletedTask;
             }
 
+            ctx.Result = new ObjectResult(error.Value.Message)
+            {
+                StatusCode = error.Value.StatusCode
+            };
             return Task.CompletedTask;
         }, context);
 

@@ -1,9 +1,5 @@
 using System;
-using System.IO;
-using System.IO.Pipelines;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
 using SolidTUS.Models;
@@ -23,32 +19,27 @@ public class UploadRequestValidationTests
     public async void Valid_request_returns_success()
     {
         // Arrange
-        var file = RandomEntities.UploadFileInfo() with
+        var file = new UploadFileInfo
         {
             FileSize = 100,
-            ByteOffset = 70,
-            ExpirationStrategy = ExpirationStrategy.Never,
             CreatedDate = new DateTimeOffset(2020, 06, 01, 12, 30, 00, TimeSpan.FromHours(0))
         };
-        var http = MockHttps.HttpRequest("PATCH",
+        file.AddBytes(70);
+        var request = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
             (HeaderNames.ContentType, TusHeaderValues.PatchContentType),
             (HeaderNames.ContentLength, "30"),
             (TusHeaderNames.UploadOffset, file.ByteOffset.ToString())
         );
-        var request = RequestContext.Create(http, CancellationToken.None).Map(c =>
-        {
-            c.FileID = "file#1";
-            return c;
-        });
+        var context = TusResult.Create(request, MockHttps.HttpResponse());
         var handler = Setup.UploadFlow(file: file);
 
         // Act
-        var process = await request.BindAsync(async c => await handler.PreUploadAsync(c, c.FileID));
+        var process = await context.BindAsync(async c => await handler.PreUploadAsync(c, "file123", CancellationToken.None));
         var result = process.IsSuccess();
 
         // Assert
-        Assert.True(result);
+        result.Should().BeTrue();
     }
 
     [Fact]
@@ -58,8 +49,8 @@ public class UploadRequestValidationTests
         var file = RandomEntities.UploadFileInfo() with
         {
             FileSize = 100,
-            ByteOffset = 70
         };
+        file.AddBytes(70);
         var uploadMetaHandler = MockHandlers.UploadMetaHandler(file);
         var http = MockHttps.HttpRequest("PATCH",
             (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
@@ -67,11 +58,11 @@ public class UploadRequestValidationTests
             (HeaderNames.ContentLength, "30"),
             (TusHeaderNames.UploadOffset, "XX") // <-- Bad header value
         );
-        var request = RequestContext.Create(http, CancellationToken.None);
+        var request = TusResult.Create(http.HttpContext.Request, http.HttpContext.Response);
         var handler = Setup.UploadFlow(uploadMetaHandler);
 
         // Act
-        var process = await request.BindAsync(async c => await handler.PreUploadAsync(c, c.FileID));
+        var process = await request.BindAsync(async c => await handler.PreUploadAsync(c, "file123", CancellationToken.None));
         var result = process.IsSuccess();
 
         // Assert
@@ -79,39 +70,14 @@ public class UploadRequestValidationTests
     }
 
     [Fact]
-    public async void CreateWithUpload_should_call_OnUploadFinished_callback_if_whole_file_is_uploaded()
+    public void CreateWithUpload_should_call_OnUploadFinished_callback_if_whole_file_is_uploaded()
     {
-        // Arrange
-        var contentString = "Hello World!";
-        var fileSize = Encoding.UTF8.GetByteCount(contentString);
-        var array = Encoding.UTF8.GetBytes(contentString);
-        var file = RandomEntities.UploadFileInfo() with
-        {
-            FileSize = fileSize,
-            ByteOffset = 0
-        };
-        var http = MockHttps.HttpRequest("POST",
-            (TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion),
-            (HeaderNames.ContentType, TusHeaderValues.PatchContentType),
-            (HeaderNames.ContentLength, "100"),
-            (TusHeaderNames.UploadOffset, file.ByteOffset.ToString())
-        );
-        var request = RequestContext.Create(http, CancellationToken.None);
-        using var memory = new MemoryStream(array);
-        var reader = PipeReader.Create(memory);
-        var handler = Setup.TusCreationContext(withUpload: true, reader, bytesWritten: fileSize, fileInfo: file);
-        var called = false;
-        Task OnUploadFinished()
-        {
-            called = true;
-            return Task.CompletedTask;
-        }
+        throw new NotImplementedException();
+    }
 
-        // Act: MUST call the on upload finished before starting upload!
-        handler.OnUploadFinished(OnUploadFinished);
-        await handler.StartCreationAsync("file_123", "/upload-to-here");
-
-        // Assert
-        Assert.True(called);
+    [Fact]
+    public void PartialUpload_should_set_mode_to_Partial()
+    {
+        throw new NotImplementedException();
     }
 }

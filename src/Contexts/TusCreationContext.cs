@@ -1,200 +1,117 @@
 using System;
-using System.IO.Pipelines;
-using System.Threading;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Options;
-
-using SolidTUS.Constants;
-using SolidTUS.Handlers;
 using SolidTUS.Models;
-using SolidTUS.Options;
 
 namespace SolidTUS.Contexts;
 
 /// <summary>
-/// The TUS creation context
+/// Creation context for TUS
 /// </summary>
-public class TusCreationContext
+public sealed record class TusCreationContext
 {
-    private readonly string defaultFileDirectory;
-    private readonly bool withUpload;
-    private readonly PipeReader reader;
-    private readonly IUploadStorageHandler uploadStorageHandler;
-    private readonly IUploadMetaHandler uploadMetaHandler;
-    private readonly CancellationToken cancellationToken;
-    private readonly LinkGenerator linkGenerator;
-    private readonly Action<string> onCreated;
-    private readonly Action<long> onUpload;
-    private RouteNameValuePair? uploadRoute = null;
-    private bool isCalledMoreThanOnce = false;
-
-    private Func<UploadFileInfo, Task>? onResourceCreatedAsync;
-    private Func<Task>? onUploadFinishedAsync;
-
     /// <summary>
     /// Instantiate a new object of <see cref="TusCreationContext"/>
     /// </summary>
-    /// <param name="options">The options</param>
-    /// <param name="withUpload">True if request includes upload otherwise false</param>
-    /// <param name="uploadFileInfo">The upload file info</param>
-    /// <param name="onCreated">Callback when resource has been created</param>
-    /// <param name="onUpload">Callback when resource has been uploaded</param>
-    /// <param name="reader">The upload reader</param>
-    /// <param name="uploadStorageHandler">The upload storage handler</param>
-    /// <param name="uploadMetaHandler">The upload meta handler</param>
-    /// <param name="linkGenerator">The link generator</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    public TusCreationContext(
-        IOptions<FileStorageOptions> options,
-        bool withUpload,
-        UploadFileInfo uploadFileInfo,
-        Action<string> onCreated,
-        Action<long> onUpload,
-        PipeReader reader,
-        IUploadStorageHandler uploadStorageHandler,
-        IUploadMetaHandler uploadMetaHandler,
-        LinkGenerator linkGenerator,
-        CancellationToken cancellationToken
-)
+    /// <param name="fileId">The file id</param>
+    /// <param name="routeTemplate">The route template</param>
+    /// <param name="routeName">The route name</param>
+    /// <param name="fileIdParameterName">The file id route parameter</param>
+    /// <param name="routeValues">The extra optional route values</param>
+    /// <param name="filename">The optional filename</param>
+    /// <param name="directory">The optional directory</param>
+    /// <param name="resourceCreatedCallback">The resource created callback</param>
+    /// <param name="uploadFinishedCallback">The upload finished callback when using Creation-With-Upload</param>
+    /// <param name="partialId">The partial id</param>
+    /// <param name="allowMergeCallback">The allow merge callback</param>
+    /// <param name="mergeCallback">The merge callback</param>
+    internal TusCreationContext(
+        string fileId,
+        string routeTemplate,
+        string routeName,
+        string fileIdParameterName,
+        (string, object)[] routeValues,
+        string? filename,
+        string? directory,
+        Func<UploadFileInfo, Task>? resourceCreatedCallback,
+        Func<UploadFileInfo, Task>? uploadFinishedCallback,
+        string? partialId,
+        Func<IList<UploadFileInfo>, bool>? allowMergeCallback,
+        Func<UploadFileInfo, IList<UploadFileInfo>, Task>? mergeCallback
+    )
     {
-        defaultFileDirectory = options.Value.DirectoryPath;
-        this.withUpload = withUpload;
-        UploadFileInfo = uploadFileInfo;
-        this.onCreated = onCreated;
-        this.onUpload = onUpload;
-        this.reader = reader;
-        this.uploadStorageHandler = uploadStorageHandler;
-        this.uploadMetaHandler = uploadMetaHandler;
-        this.cancellationToken = cancellationToken;
-        this.linkGenerator = linkGenerator;
+        FileId = fileId;
+        RouteTemplate = routeTemplate;
+        RouteName = routeName;
+        FileIdParameterName = fileIdParameterName;
+        RouteValues = routeValues;
+        Filename = filename;
+        Directory = directory;
+        ResourceCreatedCallback = resourceCreatedCallback;
+        UploadFinishedCallback = uploadFinishedCallback;
+        PartialId = partialId;
+        AllowMergeCallback = allowMergeCallback;
+        MergeCallback = mergeCallback;
     }
 
     /// <summary>
-    /// Get the upload file info
+    /// Get the file id
     /// </summary>
-    public UploadFileInfo UploadFileInfo { get; init; }
+    public string FileId { get; }
 
     /// <summary>
-    /// Function called when resource has been created
+    /// Get the route template
     /// </summary>
-    /// <param name="callback">The callback function</param>
-    public void OnResourceCreated(Func<UploadFileInfo, Task> callback)
-    {
-        onResourceCreatedAsync = callback;
-    }
+    public string RouteTemplate { get; }
 
     /// <summary>
-    /// Function called when an optional creation contains upload data that has finished uploading data
+    /// Get the route name
     /// </summary>
-    /// <remarks>
-    /// Is not called if the upload is only a partial upload
-    /// </remarks>
-    /// <param name="callback"></param>
-    public void OnUploadFinished(Func<Task> callback)
-    {
-        onUploadFinishedAsync = callback;
-    }
+    public string RouteName { get; }
 
     /// <summary>
-    /// Set the individual upload expiration strategy
+    /// Get the file id parameter name
     /// </summary>
-    /// <remarks>
-    /// Must be called prior to starting the resource creation.
-    /// </remarks>
-    /// <param name="expiration">The expiration strategy</param>
-    /// <param name="interval">The optional time span interval</param>
-    public void SetExpirationStrategy(ExpirationStrategy expiration, TimeSpan? interval = null)
-    {
-        UploadFileInfo.ExpirationStrategy = expiration;
-        UploadFileInfo.Interval = interval;
-    }
+    public string FileIdParameterName { get; }
 
     /// <summary>
-    /// Set the route values to the <c>TusUpload</c> endpoint
+    /// Get the route values
     /// </summary>
-    /// <typeparam name="T">The route value type, must be a reference type</typeparam>
-    /// <param name="routeValues">The route values</param>
-    /// <param name="routeName">The route name. If null the default name will be used <see cref="EndpointNames.UploadEndpoint"/></param>
-    public void SetUploadRouteValues<T>(T routeValues, string? routeName = null)
-    where T : class
-    {
-        uploadRoute = new(routeName, routeValues);
-    }
+    public (string, object)[] RouteValues { get; }
 
     /// <summary>
-    /// Start resource creation
+    /// Get the filename
     /// </summary>
-    /// <remarks>
-    /// The metadata upload file info will only be deleted if the request contains the whole upload. Otherwise the client will be directed to the upload location.
-    /// It is recommended to create a unique and different filename to avoid any malicious uploads overwriting other files.
-    /// The metadata.json file that is created by default by <see cref="FileUploadMetaHandler"/> creates a filename using the file id.
-    /// Be careful not to overwrite other uploads that are in progress by naming them the same.
-    /// </remarks>
-    /// <param name="fileId">The file Id</param>
-    /// <param name="directoryPath">The optional file directory path</param>
-    /// <param name="filename">The filename on disk. Defaults to <paramref name="fileId"/> value</param>
-    /// <param name="deleteInfoOnDone">True if the metadata upload info file should be deleted when upload has been finished otherwise false</param>
-    /// <returns>An awaitable task</returns>
-    public async Task StartCreationAsync(string fileId, string? directoryPath = null, string? filename = null, bool deleteInfoOnDone = false)
-    {
-        var routeName = uploadRoute.HasValue ? (uploadRoute.Value.RouteName ?? EndpointNames.UploadEndpoint) : EndpointNames.UploadEndpoint;
-        var routeValues = uploadRoute.HasValue ? uploadRoute.Value.RouteValues : null;
-        var uploadUrl = linkGenerator.GetPathByName(routeName, routeValues);
-        if (uploadUrl is null)
-        {
-            throw new ArgumentException("Could not create URL to the upload endpoint route");
-        }
+    public string? Filename { get; }
 
-        await UploadBeginAsync(fileId, uploadUrl, directoryPath, filename, deleteInfoOnDone);
-    }
+    /// <summary>
+    /// Get the directory for the upload
+    /// </summary>
+    public string? Directory { get; }
 
-    private async Task UploadBeginAsync(string fileId, string uploadLocationUrl, string? directoryPath = null, string? filename = null, bool deleteInfoOnDone = false)
-    {
-        if (isCalledMoreThanOnce)
-        {
-            return;
-        }
+    /// <summary>
+    /// Get the resource created callback
+    /// </summary>
+    public Func<UploadFileInfo, Task>? ResourceCreatedCallback { get; }
 
-        UploadFileInfo.FileId = fileId;
-        UploadFileInfo.OnDiskFilename = filename ?? fileId;
-        UploadFileInfo.FileDirectoryPath = directoryPath ?? defaultFileDirectory;
+    /// <summary>
+    /// Get the upload finished callback
+    /// </summary>
+    public Func<UploadFileInfo, Task>? UploadFinishedCallback { get; }
 
-        var created = await uploadMetaHandler.CreateResourceAsync(UploadFileInfo, cancellationToken);
-        if (created)
-        {
-            // Server side callback
-            onCreated(uploadLocationUrl);
+    /// <summary>
+    /// Get the partial id
+    /// </summary>
+    public string? PartialId { get; }
 
-            if (onResourceCreatedAsync is not null)
-            {
-                // Client side callback
-                await onResourceCreatedAsync(UploadFileInfo);
-            }
-        }
+    /// <summary>
+    /// Get the allow merge callback
+    /// </summary>
+    public Func<IList<UploadFileInfo>, bool>? AllowMergeCallback { get; }
 
-        if (withUpload)
-        {
-            // Can append if we dont need to worry about checksum
-            var written = await uploadStorageHandler.OnPartialUploadAsync(reader, UploadFileInfo, null, cancellationToken);
+    /// <summary>
+    /// Get the merge callback
+    /// </summary>
+    public Func<UploadFileInfo, IList<UploadFileInfo>, Task>? MergeCallback { get; }
 
-            // First server callback -->
-            onUpload(written);
-
-            // Finished upload -->
-            var isFinished = written == UploadFileInfo.FileSize;
-            if (isFinished && onUploadFinishedAsync is not null)
-            {
-                // Client callback -->
-                await onUploadFinishedAsync();
-            }
-
-            if (isFinished && deleteInfoOnDone)
-            {
-                await uploadMetaHandler.DeleteUploadFileInfoAsync(UploadFileInfo, cancellationToken);
-            }
-        }
-
-        isCalledMoreThanOnce = true;
-    }
-}
+};

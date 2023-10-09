@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-
 using SolidTUS.Constants;
 using SolidTUS.Contexts;
 using SolidTUS.Extensions;
@@ -15,7 +13,7 @@ namespace SolidTUS.ProtocolHandlers.ProtocolExtensions;
 /// <summary>
 /// Checksum request handler
 /// </summary>
-public class ChecksumRequestHandler
+internal class ChecksumRequestHandler
 {
     private readonly IEnumerable<IChecksumValidator> validators;
 
@@ -35,7 +33,7 @@ public class ChecksumRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>An option tuple containing the algorithm name and the hash cipher</returns>
-    public static (string AlgorithmName, byte[] Cipher)? ParseChecksum(RequestContext context)
+    public static (string AlgorithmName, byte[] Cipher)? ParseChecksum(TusResult context)
     {
         var raw = context.RequestHeaders[TusHeaderNames.UploadChecksum];
         return ChecksumValueParser.DecodeCipher(raw!);
@@ -46,7 +44,7 @@ public class ChecksumRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>The request context</returns>
-    public Result<RequestContext> SetChecksum(RequestContext context)
+    public Result<TusResult> SetChecksum(TusResult context)
     {
         var hasChecksum = context.RequestHeaders.ContainsKey(TusHeaderNames.UploadChecksum);
         if (!hasChecksum)
@@ -66,16 +64,13 @@ public class ChecksumRequestHandler
             return HttpError.BadRequest("Checksum not supported").Wrap();
         }
 
-        var result = context with
+        context.ChecksumContext = new ChecksumContext
         {
-            ChecksumContext = new ChecksumContext
-            {
-                AlgorithmName = checksum.Value.AlgorithmName,
-                Checksum = checksum.Value.Cipher,
-                Validator = validator
-            }
+            AlgorithmName = checksum.Value.AlgorithmName,
+            Checksum = checksum.Value.Cipher,
+            Validator = validator
         };
 
-        return result.Wrap();
+        return context.Wrap();
     }
 }
