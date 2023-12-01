@@ -1,6 +1,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Internal;
 using SolidTUS.Constants;
 using SolidTUS.Contexts;
@@ -74,7 +76,7 @@ internal class CommonRequestHandler
         {
             var error = HttpError.PreconditionFailed();
 
-            error.Headers.Add(TusHeaderNames.Version, TusHeaderValues.TusServerVersions);
+            error.Headers.Append(TusHeaderNames.Version, TusHeaderValues.TusServerVersions);
             return error.Wrap();
         }
 
@@ -90,7 +92,7 @@ internal class CommonRequestHandler
     {
         if (context.UploadFileInfo is not null)
         {
-            context.ResponseHeaders.Add(TusHeaderNames.UploadOffset, context.UploadFileInfo?.ByteOffset.ToString());
+            context.ResponseHeaders.Append(TusHeaderNames.UploadOffset, context.UploadFileInfo?.ByteOffset.ToString());
         }
     }
 
@@ -100,7 +102,7 @@ internal class CommonRequestHandler
     /// <param name="context">The response context</param>
     public static TusResult SetTusResumableHeader(TusResult context)
     {
-        context.ResponseHeaders.Add(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion);
+        context.ResponseHeaders.Append(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion);
         return context;
     }
 }
