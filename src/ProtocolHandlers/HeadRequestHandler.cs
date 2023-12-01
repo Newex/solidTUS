@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
 using SolidTUS.Contexts;
@@ -17,7 +18,7 @@ internal static class HeadRequestHandler
     /// <returns>Either an error or a request context</returns>
     public static TusResult SetResponseCacheControl(TusResult context)
     {
-        context.ResponseHeaders.Add(HeaderNames.CacheControl, "no-store");
+        context.ResponseHeaders.Append(HeaderNames.CacheControl, "no-store");
         return context;
     }
 
@@ -31,12 +32,12 @@ internal static class HeadRequestHandler
         var size = context.UploadFileInfo?.FileSize ?? context.FileSize;
         if (!size.HasValue)
         {
-            context.ResponseHeaders.Add(TusHeaderNames.UploadDeferLength, "1");
+            context.ResponseHeaders.Append(TusHeaderNames.UploadDeferLength, "1");
         }
         else
         {
             context.FileSize = size;
-            context.ResponseHeaders.Add(TusHeaderNames.UploadLength, context.FileSize.GetValueOrDefault().ToString());
+            context.ResponseHeaders.Append(TusHeaderNames.UploadLength, context.FileSize.GetValueOrDefault().ToString());
         }
 
         return context;
@@ -49,7 +50,7 @@ internal static class HeadRequestHandler
     /// <returns>A request context</returns>
     public static TusResult SetMetadataHeader(TusResult context)
     {
-        context.ResponseHeaders.Add(TusHeaderNames.UploadMetadata, context.UploadFileInfo?.RawMetadata);
+        context.ResponseHeaders.Append(TusHeaderNames.UploadMetadata, context.UploadFileInfo?.RawMetadata);
         return context;
     }
 
@@ -63,7 +64,7 @@ internal static class HeadRequestHandler
         var file = context.UploadFileInfo;
         var offset = file?.ByteOffset.ToString();
 
-        context.ResponseHeaders.Add(TusHeaderNames.UploadOffset, offset);
+        context.ResponseHeaders.Append(TusHeaderNames.UploadOffset, offset);
         return context;
     }
 }

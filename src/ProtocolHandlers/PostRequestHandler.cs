@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
@@ -97,7 +99,7 @@ internal class PostRequestHandler
             if (!allowed)
             {
                 var error = HttpError.EntityTooLarge("File upload is bigger than server restrictions");
-                error.Headers.Add(TusHeaderNames.MaxSize, maxSize.Value.ToString());
+                error.Headers.Append(TusHeaderNames.MaxSize, maxSize.Value.ToString());
                 return error.Wrap();
             }
         }
@@ -192,7 +194,7 @@ internal class PostRequestHandler
             return context;
         }
 
-        context.ResponseHeaders.Add(HeaderNames.Location, context.LocationUrl);
+        context.ResponseHeaders.Append(HeaderNames.Location, context.LocationUrl);
         return context;
     }
 
@@ -204,7 +206,7 @@ internal class PostRequestHandler
     {
         if (maxSize.HasValue)
         {
-            context.ResponseHeaders.Add(TusHeaderNames.MaxSize, maxSize.Value.ToString());
+            context.ResponseHeaders.Append(TusHeaderNames.MaxSize, maxSize.Value.ToString());
         }
     }
 }

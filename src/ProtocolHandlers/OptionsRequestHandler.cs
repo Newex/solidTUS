@@ -38,17 +38,17 @@ public class OptionsRequestHandler
     /// <returns>A TUS response</returns>
     public void ServerFeatureAnnouncements(IHeaderDictionary responseHeaders)
     {
-        responseHeaders.Add(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion);
-        responseHeaders.Add(TusHeaderNames.Version, TusHeaderValues.TusServerVersions);
+        responseHeaders.Append(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion);
+        responseHeaders.Append(TusHeaderNames.Version, TusHeaderValues.TusServerVersions);
 
         if (maxSize.HasValue)
         {
-            responseHeaders.Add(TusHeaderNames.MaxSize, maxSize.Value.ToString());
+            responseHeaders.Append(TusHeaderNames.MaxSize, maxSize.Value.ToString());
         }
 
         // TUS protocol extensions
         var checksumAlgorithms = string.Join(",", validators.Select(v => v.AlgorithmName));
-        responseHeaders.Add(TusHeaderNames.ChecksumAlgorithm, checksumAlgorithms);
+        responseHeaders.Append(TusHeaderNames.ChecksumAlgorithm, checksumAlgorithms);
 
         var extensionList = new List<string> { TusHeaderValues.TusSupportedExtensions };
         if (hasTermination)
@@ -57,6 +57,6 @@ public class OptionsRequestHandler
         }
 
         var extensions = string.Join(",", extensionList);
-        responseHeaders.Add(TusHeaderNames.Extension, extensions);
+        responseHeaders.Append(TusHeaderNames.Extension, extensions);
     }
 }
