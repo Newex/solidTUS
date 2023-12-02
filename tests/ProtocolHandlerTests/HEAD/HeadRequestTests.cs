@@ -1,3 +1,4 @@
+using CSharpFunctionalExtensions;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
 using SolidTUS.Models;
@@ -20,7 +21,7 @@ public class HeadRequestTests
         var context = TusResult.Create(http, MockHttps.HttpResponse());
 
         // Act
-        var response = context.Map(HeadRequestHandler.SetResponseCacheControl).GetValueOrDefault();
+        var response = context.Map(HeadRequestHandler.SetResponseCacheControl).Value;
         var result = response?.ResponseHeaders[HeaderNames.CacheControl];
 
         // Assert
@@ -42,7 +43,7 @@ public class HeadRequestTests
         var response = context.Map(c => HeadRequestHandler.SetUploadOffsetHeader(c with
         {
             UploadFileInfo = file
-        })).GetValueOrDefault();
+        })).Value;
         var result = response?.ResponseHeaders[TusHeaderNames.UploadOffset];
 
         // Assert
@@ -66,7 +67,7 @@ public class HeadRequestTests
         var response = context.Map(c => HeadRequestHandler.SetUploadLengthOrDeferred(c with
         {
             UploadFileInfo = file
-        })).GetValueOrDefault();
+        })).Value;
         var result = response?.ResponseHeaders[TusHeaderNames.UploadLength];
 
         // Assert
@@ -90,7 +91,7 @@ public class HeadRequestTests
         var response = context.Map(c => HeadRequestHandler.SetUploadLengthOrDeferred(c with
         {
             UploadFileInfo = file
-        })).GetValueOrDefault();
+        })).Value;
         var result = response?.ResponseHeaders[TusHeaderNames.UploadDeferLength];
 
         // Assert
@@ -114,7 +115,7 @@ public class HeadRequestTests
         var response = context.Map(c => HeadRequestHandler.SetUploadLengthOrDeferred(c with
         {
             UploadFileInfo = file
-        })).GetValueOrDefault();
+        })).Value;
         var result = response?.ResponseHeaders[TusHeaderNames.UploadDeferLength];
 
         // Assert
@@ -139,7 +140,7 @@ public class HeadRequestTests
         var response = context.Map(c => HeadRequestHandler.SetMetadataHeader(c with
         {
             UploadFileInfo = file
-        })).GetValueOrDefault();
+        })).Value;
         var result = response?.ResponseHeaders[TusHeaderNames.UploadMetadata];
 
         // Assert

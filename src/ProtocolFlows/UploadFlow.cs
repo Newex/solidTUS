@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using CSharpFunctionalExtensions;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;
@@ -52,7 +53,7 @@ internal class UploadFlow
     /// <param name="fileId">The file Id</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Either an error or a request context</returns>
-    public async ValueTask<Result<TusResult>> GetUploadStatusAsync(TusResult context, string fileId, CancellationToken cancellationToken)
+    public async ValueTask<Result<TusResult, HttpError>> GetUploadStatusAsync(TusResult context, string fileId, CancellationToken cancellationToken)
     {
         context = HeadRequestHandler.SetResponseCacheControl(context);
         var requestContext = await common.SetUploadFileInfoAsync(context, fileId, cancellationToken);
@@ -76,7 +77,7 @@ internal class UploadFlow
     /// <param name="fileId">The file ID</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Either an error or a request context</returns>
-    public async ValueTask<Result<TusResult>> PreUploadAsync(TusResult context, string fileId, CancellationToken cancellationToken)
+    public async ValueTask<Result<TusResult, HttpError>> PreUploadAsync(TusResult context, string fileId, CancellationToken cancellationToken)
     {
         var requestContext = await common.SetUploadFileInfoAsync(context, fileId, cancellationToken);
         requestContext = await requestContext.Bind(PatchRequestHandler.CheckContentType)
@@ -86,7 +87,7 @@ internal class UploadFlow
             .Bind(patch.CheckUploadLength)
             .Bind(PatchRequestHandler.CheckUploadExceedsFileSize)
             .Bind(checksumHandler.SetChecksum)
-            .BindAsync(async c => await expirationRequestHandler.CheckExpirationAsync(c, cancellationToken));
+            .Bind(async c => await expirationRequestHandler.CheckExpirationAsync(c, cancellationToken));
 
         return requestContext;
     }

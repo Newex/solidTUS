@@ -1,3 +1,5 @@
+using CSharpFunctionalExtensions;
+using Microsoft.AspNetCore.Http;
 using SolidTUS.Constants;
 using SolidTUS.Models;
 using SolidTUS.Tests.Mocks;
@@ -6,7 +8,7 @@ namespace SolidTUS.Tests.ProtocolHandlerTests.POST;
 
 internal static class Setup
 {
-    public static Result<TusResult> CreateRequest(bool resumable = true, params (string, string)[] header)
+    public static Result<TusResult, HttpError> CreateRequest(bool resumable = true, params (string, string)[] header)
     {
         var http = MockHttps.HttpRequest("POST",
             header
@@ -14,7 +16,7 @@ internal static class Setup
 
         if (resumable)
         {
-            http.Headers.Add(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion);
+            http.Headers.Append(TusHeaderNames.Resumable, TusHeaderValues.TusPreferredVersion);
         }
 
         var response = MockHttps.HttpResponse();

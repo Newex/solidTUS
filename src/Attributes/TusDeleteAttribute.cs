@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
+using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Constants;
-using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 
@@ -82,12 +82,11 @@ public class TusDeleteAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         var values = context.RouteData.Values.AsEnumerable().Where(x => x.Key != "action" && x.Key != "controller");
         var routeData = new RouteValueDictionary(values);
         requestContext = requestContext.Bind(c => terminateRequest.ValidateRoute(c, Name, UploadNameEndpoint, routeData));
-        var error = requestContext.GetHttpError();
-        if (error is not null)
+        if (requestContext.TryGetError(out var error))
         {
-            context.Result = new ObjectResult(error.Value.Message)
+            context.Result = new ObjectResult(error.Message)
             {
-                StatusCode = error.Value.StatusCode
+                StatusCode = error.StatusCode
             };
             return;
         }
@@ -104,16 +103,15 @@ public class TusDeleteAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         {
             var ctx = (ResultExecutingContext)state;
             var status = ctx.HttpContext.Response.StatusCode;
-            var error = requestContext.GetHttpError();
-            if (error is null)
+            if (requestContext.TryGetError(out var error))
             {
                 ctx.HttpContext.Response.StatusCode = 204;
                 return Task.CompletedTask;
             }
 
-            ctx.Result = new ObjectResult(error.Value.Message)
+            ctx.Result = new ObjectResult(error.Message)
             {
-                StatusCode = error.Value.StatusCode
+                StatusCode = error.StatusCode
             };
             return Task.CompletedTask;
         }, context);

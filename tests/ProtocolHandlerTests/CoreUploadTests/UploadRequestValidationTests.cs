@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using CSharpFunctionalExtensions;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
 using SolidTUS.Models;
@@ -35,7 +36,7 @@ public class UploadRequestValidationTests
         var handler = Setup.UploadFlow(file: file);
 
         // Act
-        var process = await context.BindAsync(async c => await handler.PreUploadAsync(c, "file123", CancellationToken.None));
+        var process = await context.Bind(async c => await handler.PreUploadAsync(c, "file123", CancellationToken.None));
         var result = process.IsSuccess();
 
         // Assert
@@ -62,7 +63,7 @@ public class UploadRequestValidationTests
         var handler = Setup.UploadFlow(uploadMetaHandler);
 
         // Act
-        var process = await request.BindAsync(async c => await handler.PreUploadAsync(c, "file123", CancellationToken.None));
+        var process = await request.Bind(async c => await handler.PreUploadAsync(c, "file123", CancellationToken.None));
         var result = process.IsSuccess();
 
         // Assert

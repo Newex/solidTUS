@@ -72,7 +72,7 @@ public class PreUploadRequestTests
         );
 
         // TusResult
-        var context = TusResult.Create(http, new Mock<HttpResponse>().Object).GetValueOrDefault();
+        var context = TusResult.Create(http, new Mock<HttpResponse>().Object).Value;
 
 
         // Act

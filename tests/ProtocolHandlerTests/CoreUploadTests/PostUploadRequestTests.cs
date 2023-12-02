@@ -60,7 +60,7 @@ public class PostUploadRequestTests
         var response = MockHttps.HttpResponse();
 
         // TusResult
-        var context = TusResult.Create(request, response).GetValueOrDefault();
+        var context = TusResult.Create(request, response).Value;
 
         // Act
         var pre = sut.PreResourceCreation(context!);

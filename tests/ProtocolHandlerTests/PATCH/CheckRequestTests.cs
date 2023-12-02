@@ -1,3 +1,4 @@
+using CSharpFunctionalExtensions;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
 using SolidTUS.Models;
