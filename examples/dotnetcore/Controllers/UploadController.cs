@@ -80,7 +80,7 @@ public class UploadController : ControllerBase
 
     [TusUpload("{fileId}/hello/{name}", Name = "CustomRouteNameUpload")]
     [RequestSizeLimit(5_000_000_000)]
-    public async Task<ActionResult> Upload(string fileId)
+    public async Task<ActionResult> Upload(string fileId, string name)
     {
         var ctx = HttpContext
             .TusUpload(fileId)

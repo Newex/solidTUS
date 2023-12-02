@@ -18,7 +18,7 @@ using static Microsoft.AspNetCore.Http.HttpMethods;
 namespace SolidTUS.Attributes;
 
 /// <summary>
-/// Identifies an action that supports TUS resource creation
+/// Identifies an action that supports TUS resource creation.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
 public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProvider, IRouteTemplateProvider

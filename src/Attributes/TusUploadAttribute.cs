@@ -18,7 +18,7 @@ using static Microsoft.AspNetCore.Http.HttpMethods;
 namespace SolidTUS.Attributes;
 
 /// <summary>
-/// Identifies an action that supports TUS uploads. Must have a file ID parameter and TusContext parameter.
+/// Identifies an action that supports TUS uploads.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
 public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvider, IRouteTemplateProvider
