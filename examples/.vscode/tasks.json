@@ -1,0 +1,29 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-dotnetcore",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "dotnetcore/dotnetcore.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build-sveltedotnet",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "sveltedotnet/sveltedotnet.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+    ]
+}
