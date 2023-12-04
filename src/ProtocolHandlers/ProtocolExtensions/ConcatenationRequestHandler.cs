@@ -33,7 +33,11 @@ internal partial class ConcatenationRequestHandler
     }
 
     /// <summary>
-    /// Set the <see cref="TusResult.PartialMode"/>
+    /// Set the <see cref="TusResult.PartialMode"/>.
+    /// <c>PartialMode</c> can be either Final, Partial or None.
+    /// If the request is a parallel request that has not finished, this will set the mode to Partial.
+    /// If the request is a parallel request that is finished should be merging partial files, this will set the mode to Final.
+    /// If the request is not a parallel request, this will set the mode to None.
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A request context</returns>
