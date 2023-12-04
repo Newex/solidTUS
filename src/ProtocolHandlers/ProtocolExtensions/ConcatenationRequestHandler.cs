@@ -4,7 +4,6 @@ using System.Text.RegularExpressions;
 using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Options;
 using SolidTUS.Constants;
-using SolidTUS.Extensions;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.Options;
@@ -14,7 +13,7 @@ namespace SolidTUS.ProtocolHandlers.ProtocolExtensions;
 /// <summary>
 /// Concatenation request handler
 /// </summary>
-internal class ConcatenationRequestHandler
+internal partial class ConcatenationRequestHandler
 {
     private readonly IUploadMetaHandler uploadMetaHandler;
     private readonly long? maxSize;
@@ -97,7 +96,7 @@ internal class ConcatenationRequestHandler
             relativeUrls.Add(relative);
         }
 
-        context.Urls = relativeUrls.ToArray();
+        context.Urls = [.. relativeUrls];
         return context;
     }
 
@@ -112,7 +111,7 @@ internal class ConcatenationRequestHandler
     {
         string pattern = Regex.Escape(template).Replace("\\{", "{").Replace("\\}", "}");
         // pattern = Regex.Replace(pattern, @"{([^}]+)}", @"(?<$1>[^/]+)", RegexOptions.None);
-        pattern = Regex.Replace(pattern, @"{([^:]+)(:[^}]+)?}", @"(?<$1>[^/]+)");
+        pattern = MyRegex().Replace(pattern, @"(?<$1>[^/]+)");
 
         var match = Regex.Match(input, pattern);
         if (match.Success && match.Groups[token].Success)
@@ -122,5 +121,9 @@ internal class ConcatenationRequestHandler
 
         return null;
     }
+
+    [GeneratedRegex(@"{([^:]+)(:[^}]+)?}")]
+    private static partial Regex MyRegex();
+
 }
 
