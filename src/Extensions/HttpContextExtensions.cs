@@ -45,7 +45,7 @@ public static class HttpContextExtensions
     {
         if (context.RequestServices.GetService(typeof(ResourceCreationHandler)) is not ResourceCreationHandler resource)
         {
-            throw new UnreachableException();
+            throw new InvalidOperationException("Remember to register SolidTUS on program startup");
         }
 
         if (context.Items[TusResult.Name] is not TusResult tusResult)
