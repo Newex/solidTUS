@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
-
 using BenchmarkDotNet.Attributes;
-
 using SolidTUS.Parsers;
 
 namespace SolidTUS.Benchmarks.Parsing;
@@ -33,7 +31,7 @@ public class MetadataParsing
     }
 
     [Benchmark]
-    public Dictionary<string, string> OldParse() => MetadataParser.Parse(metadata);
+    public Dictionary<string, string> OldParse() => MetadataParser.ParseFast(metadata);
 
     [Benchmark]
     public Dictionary<string, string> NewParse() => MetadataParser.ParseFast(metadata);
