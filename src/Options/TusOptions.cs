@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-
 using SolidTUS.Models;
 
 namespace SolidTUS.Options;
