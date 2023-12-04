@@ -1,0 +1,44 @@
+{
+    "configurations": [
+        {
+            "name": "dotnetcore",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-dotnetcore",
+            "program": "${workspaceFolder}/dotnetcore/bin/Debug/net8.0/ExampleSite.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/dotnetcore",
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/dotnetcore/Views"
+            }
+        },
+        {
+            "name": "sveltedotnet",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-sveltedotnet",
+            "program": "${workspaceFolder}/sveltedotnet/bin/Debug/net8.0/SvelteDotnet.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/sveltedotnet",
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/sveltedotnet/Views"
+            }
+        }
+    ]
+}

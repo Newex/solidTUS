@@ -1,15 +1,12 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
-
+using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Internal;
 using SolidTUS.Constants;
-using SolidTUS.Contexts;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.Validators;
-using static SolidTUS.Extensions.FunctionalExtensions;
 
 namespace SolidTUS.ProtocolHandlers;
 
@@ -46,17 +43,17 @@ internal class CommonRequestHandler
     /// <param name="fileId">The file id</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>Either an error or a request context</returns>
-    public async ValueTask<Result<TusResult>> SetUploadFileInfoAsync(TusResult context, string fileId, CancellationToken cancellationToken)
+    public async ValueTask<Result<TusResult, HttpError>> SetUploadFileInfoAsync(TusResult context, string fileId, CancellationToken cancellationToken)
     {
         var fileInfo = await uploadMetaHandler.GetResourceAsync(fileId, cancellationToken);
 
         if (fileInfo is null)
         {
-            return HttpError.NotFound("File resource does not exists").Wrap();
+            return HttpError.NotFound("File resource does not exists");
         }
 
         context.UploadFileInfo = fileInfo;
-        return context.Wrap();
+        return context;
     }
 
     /// <summary>
@@ -64,11 +61,11 @@ internal class CommonRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an http error or a request context</returns>
-    public static Result<TusResult> CheckTusVersion(TusResult context)
+    public static Result<TusResult, HttpError> CheckTusVersion(TusResult context)
     {
         if (context.Method == "OPTIONS")
         {
-            return context.Wrap();
+            return context;
         }
 
         var isSupported = TusVersionValidator.IsValidVersion(context.RequestHeaders[TusHeaderNames.Resumable]);
@@ -77,10 +74,10 @@ internal class CommonRequestHandler
             var error = HttpError.PreconditionFailed();
 
             error.Headers.Append(TusHeaderNames.Version, TusHeaderValues.TusServerVersions);
-            return error.Wrap();
+            return error;
         }
 
-        return context.Wrap();
+        return context;
     }
 
     /// <summary>

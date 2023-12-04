@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Options;
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
@@ -37,7 +38,7 @@ internal class ConcatenationRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A request context</returns>
-    public static Result<TusResult> SetPartialMode(TusResult context)
+    public static Result<TusResult, HttpError> SetPartialMode(TusResult context)
     {
         var concat = context.RequestHeaders[TusHeaderNames.UploadConcat].ToString();
 
@@ -47,26 +48,26 @@ internal class ConcatenationRequestHandler
             if (isFinal)
             {
                 context.PartialMode = PartialMode.Final;
-                return context.Wrap();
+                return context;
             }
 
             var isPartial = string.Equals(concat, TusHeaderValues.UploadPartial, StringComparison.OrdinalIgnoreCase);
             if (isPartial)
             {
                 context.PartialMode = PartialMode.Partial;
-                return context.Wrap();
+                return context;
             }
 
             if (!isFinal && !isPartial)
             {
-                return HttpError.BadRequest("Upload-Concat must either be partial or final").Wrap();
+                return HttpError.BadRequest("Upload-Concat must either be partial or final");
             }
 
-            return context.Wrap();
+            return context;
         }
 
         context.PartialMode = PartialMode.None;
-        return context.Wrap();
+        return context;
     }
 
     /// <summary>
@@ -74,18 +75,18 @@ internal class ConcatenationRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A request context or an error</returns>
-    public static Result<TusResult> SetPartialFinalUrls(TusResult context)
+    public static Result<TusResult, HttpError> SetPartialFinalUrls(TusResult context)
     {
         if (context.PartialMode != PartialMode.Final)
         {
-            return context.Wrap();
+            return context;
         }
 
         var header = context.RequestHeaders[TusHeaderNames.UploadConcat].ToString();
         var list = header[(header.IndexOf(";") + 1)..];
         if (list.Length == 0)
         {
-            return HttpError.BadRequest("Must provide a list of files to concatenate").Wrap();
+            return HttpError.BadRequest("Must provide a list of files to concatenate");
         }
 
         var urls = list.Split(" ");
@@ -97,7 +98,7 @@ internal class ConcatenationRequestHandler
         }
 
         context.Urls = relativeUrls.ToArray();
-        return context.Wrap();
+        return context;
     }
 
     /// <summary>

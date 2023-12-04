@@ -1,4 +1,5 @@
 using System.Threading;
+using CSharpFunctionalExtensions;
 using SolidTUS.Constants;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;
@@ -37,7 +38,7 @@ public class CommonRequestTests
         var context = TusResult.Create(request, MockHttps.HttpResponse());
 
         // Act
-        var response = context.Bind(c => CommonRequestHandler.CheckTusVersion(c));
+        var response = context.Bind(CommonRequestHandler.CheckTusVersion);
         var result = response.StatusCode();
 
         // Assert
@@ -73,7 +74,7 @@ public class CommonRequestTests
         var handler = Setup.CommonRequestHandler(file);
 
         // Act
-        var response = await context.BindAsync(async c => await handler.SetUploadFileInfoAsync(c, file.FileId, CancellationToken.None));
+        var response = await context.Bind(async c => await handler.SetUploadFileInfoAsync(c, file.FileId, CancellationToken.None));
         var result = response.IsSuccess();
 
         // Assert
@@ -91,7 +92,7 @@ public class CommonRequestTests
         var handler = Setup.CommonRequestHandler();
 
         // Act
-        var response = await context.BindAsync(async c => await handler.SetUploadFileInfoAsync(c, "nothing", CancellationToken.None));
+        var response = await context.Bind(async c => await handler.SetUploadFileInfoAsync(c, "nothing", CancellationToken.None));
         var result = response.StatusCode();
 
         // Assert

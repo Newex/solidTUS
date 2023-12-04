@@ -2,6 +2,7 @@ using System;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Options;
 using SolidTUS.Contexts;
@@ -40,7 +41,7 @@ internal class UploadHandler
         this.expiredUploadHandler = expiredUploadHandler;
     }
 
-    public async Task<Result<TusResult>> HandleUploadAsync(PipeReader reader, TusUploadContext uploadContext, TusResult tusResult, CancellationToken cancellationToken)
+    public async Task<Result<TusResult, HttpError>> HandleUploadAsync(PipeReader reader, TusUploadContext uploadContext, TusResult tusResult, CancellationToken cancellationToken)
     {
         var info = tusResult.UploadFileInfo;
         if (info is null)
@@ -73,9 +74,9 @@ internal class UploadHandler
                 await uploadContext.UploadFinishedCallback(info);
             }
 
-            return tusResult.Wrap();
+            return tusResult;
         }
 
-        return HttpError.InternalServerError().Wrap();
+        return HttpError.InternalServerError();
     }
 }

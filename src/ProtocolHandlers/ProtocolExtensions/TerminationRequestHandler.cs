@@ -1,6 +1,6 @@
 using System;
+using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Routing;
-using SolidTUS.Extensions;
 using SolidTUS.Models;
 
 namespace SolidTUS.ProtocolHandlers.ProtocolExtensions;
@@ -32,7 +32,7 @@ internal class TerminationRequestHandler
     /// <param name="routeValues">The route values for either</param>
     /// <returns>A request context result</returns>
     /// <exception cref="InvalidOperationException">Thrown if routes mismatch</exception>
-    public Result<TusResult> ValidateRoute(TusResult context, string? deleteRouteName, string? uploadRouteName, RouteValueDictionary routeValues)
+    public Result<TusResult, HttpError> ValidateRoute(TusResult context, string? deleteRouteName, string? uploadRouteName, RouteValueDictionary routeValues)
     {
         if (deleteRouteName is null || uploadRouteName is null)
         {
@@ -43,7 +43,7 @@ internal class TerminationRequestHandler
         var deletePath = linkGenerator.GetPathByName(deleteRouteName, routeValues);
         if (uploadPath == deletePath)
         {
-            return context.Wrap();
+            return context;
         }
 
         throw new InvalidOperationException("Both routes for the upload endpoint and the delete endpoint must be the same route");

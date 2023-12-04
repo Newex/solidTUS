@@ -8,6 +8,7 @@ using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 using SolidTUS.Tests.Mocks;
 using System.Threading.Tasks;
+using CSharpFunctionalExtensions;
 
 namespace SolidTUS.Tests.ProtocolHandlerTests.ExpirationTests;
 
@@ -46,7 +47,7 @@ public class ExpirationTests
         var handler = new ExpirationRequestHandler(clock, expiredHandler, globalOptions);
 
         // Act
-        var response = context.Map(handler.SetExpiration).GetValueOrDefault();
+        var response = context.Map(handler.SetExpiration).Value;
         var result = response?.ResponseHeaders[TusHeaderNames.Expiration];
 
         // Assert
@@ -83,7 +84,7 @@ public class ExpirationTests
         var handler = new ExpirationRequestHandler(clock, expiredHandler, globalOptions);
 
         // Act
-        var response = context.Map(handler.SetExpiration).GetValueOrDefault();
+        var response = context.Map(handler.SetExpiration).Value;
         var result = response?.ResponseHeaders[TusHeaderNames.Expiration];
 
         // Assert
@@ -119,8 +120,8 @@ public class ExpirationTests
         var handler = new ExpirationRequestHandler(clock, expiredHandler, globalOptions);
 
         // Act
-        var hasExpired = await expiration.BindAsync(async c => await handler.CheckExpirationAsync(c, CancellationToken.None));
-        var result = hasExpired.GetHttpError();
+        var hasExpired = await expiration.Bind(async c => await handler.CheckExpirationAsync(c, CancellationToken.None));
+        hasExpired.TryGetError(out var result);
 
         // Assert
         result.Should().NotBeNull().And.Match<HttpError>(x => x.StatusCode == 410);
@@ -159,8 +160,8 @@ public class ExpirationTests
         var handler = new ExpirationRequestHandler(clock, expiredHandler, options);
 
         // Act
-        var response = await context.BindAsync(async c => await handler.CheckExpirationAsync(c, CancellationToken.None));
-        var result = response.GetValueOrDefault();
+        var response = await context.Bind(async c => await handler.CheckExpirationAsync(c, CancellationToken.None));
+        var result = response.Value;
 
         // Assert
         result.Should().NotBeNull();

@@ -1,5 +1,5 @@
 # Local private registry
-image: registry.digify/dotnet/sdk:7.0
+image: registry.digify/dotnet/sdk:8.0
 
 variables:
   GITLAB_NUGET_URL: ${CI_API_V4_URL}/projects/5/packages/nuget/index.json

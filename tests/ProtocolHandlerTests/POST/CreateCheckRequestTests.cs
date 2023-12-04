@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using CSharpFunctionalExtensions;
 using SolidTUS.Constants;
 using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers;

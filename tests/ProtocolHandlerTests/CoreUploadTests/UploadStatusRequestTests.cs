@@ -79,12 +79,12 @@ public class UploadStatusRequestTests
         var response = MockHttps.HttpResponse(responseHeaders);
 
         // TusResult
-        var context = TusResult.Create(request, response).GetValueOrDefault();
+        var context = TusResult.Create(request, response).Value;
 
 
         // Act
         var status = await sut.GetUploadStatusAsync(context!, fileId, CancellationToken.None);
-        var result = status.GetValueOrDefault()!.ResponseHeaders.ToDictionary(x => x.Key.ToString(), x => x.Value.ToString());
+        var result = status.Value!.ResponseHeaders.ToDictionary(x => x.Key.ToString(), x => x.Value.ToString());
 
         // Assert
         result.Should().Contain(

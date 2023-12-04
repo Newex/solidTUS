@@ -80,7 +80,7 @@ public class UploadController : ControllerBase
 
     [TusUpload("{fileId}/hello/{name}", Name = "CustomRouteNameUpload")]
     [RequestSizeLimit(5_000_000_000)]
-    public async Task<ActionResult> Upload(string fileId)
+    public async Task<ActionResult> Upload(string fileId, string name)
     {
         var ctx = HttpContext
             .TusUpload(fileId)
@@ -89,6 +89,25 @@ public class UploadController : ControllerBase
 
         // Must always return 204 on upload success with no Body content
         return NoContent();
+    }
+
+    [HttpGet("{fileId}/hello/{name}")]
+    public async Task<ActionResult> Download(string fileId, string name, CancellationToken cancellationToken)
+    {
+        var meta = await uploadMetaHandler.GetResourceAsync(fileId, cancellationToken);
+        if (meta is null)
+        {
+            return NotFound();
+        }
+
+        var filePath = Path.Combine(meta.OnDiskDirectoryPath ?? "./", meta.OnDiskFilename);
+        if (filePath is null)
+        {
+            return NotFound();
+        }
+
+        var stream = System.IO.File.OpenRead(filePath);
+        return File(stream, meta.Metadata?["contentType"] ?? "application/octet-stream", meta.Metadata?["filename"] ?? fileId, true);
     }
 
     // Must have same route as the Upload route

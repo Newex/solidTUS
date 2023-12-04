@@ -5,13 +5,13 @@ using System.IO.Pipelines;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using SolidTUS.Constants;
 using SolidTUS.Contexts;
-using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
@@ -89,7 +89,7 @@ internal class ResourceCreationHandler
     /// <param name="hasUpload">True if request contains upload data otherwise false</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>A response context or an error</returns>
-    public async Task<Result<TusResult>> CreateResourceAsync(bool hasUpload, CancellationToken cancellationToken)
+    public async Task<Result<TusResult, HttpError>> CreateResourceAsync(bool hasUpload, CancellationToken cancellationToken)
     {
         if (userOptions is null
             || tusResult is null
@@ -101,7 +101,7 @@ internal class ResourceCreationHandler
         if (userOptions.FileId is null)
         {
             logger.LogError("Must provide file id for the resource");
-            return HttpError.InternalServerError().Wrap();
+            return HttpError.InternalServerError();
         }
 
         var isPartial = tusResult.PartialMode == PartialMode.Partial;
@@ -110,7 +110,7 @@ internal class ResourceCreationHandler
         if (uploadUrl is null)
         {
             logger.LogError("Must have an upload endpoint to upload the resource");
-            return HttpError.InternalServerError().Wrap();
+            return HttpError.InternalServerError();
         }
         tusResult.LocationUrl = uploadUrl;
 
@@ -147,7 +147,7 @@ internal class ResourceCreationHandler
                     await userOptions.ResourceCreatedCallback(uploadInfo);
                 }
                 logger.LogInformation("Created resource {@UploadFileInfo}", uploadInfo);
-                return tusResult.Wrap();
+                return tusResult;
             }
 
 
@@ -170,12 +170,12 @@ internal class ResourceCreationHandler
                 }
 
                 logger.LogInformation("Created resource with upload data {@UploadFileInfo}", uploadInfo);
-                return tusResult.Wrap();
+                return tusResult;
             }
         }
 
         logger.LogError("Could not create upload resource {@UploadInfo}", uploadInfo);
-        return HttpError.InternalServerError().Wrap();
+        return HttpError.InternalServerError();
     }
 
     /// <summary>
@@ -183,7 +183,7 @@ internal class ResourceCreationHandler
     /// </summary>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>A response context or an error</returns>
-    public async Task<Result<TusResult>> MergeFilesAsync(CancellationToken cancellationToken)
+    public async Task<Result<TusResult, HttpError>> MergeFilesAsync(CancellationToken cancellationToken)
     {
         if (userOptions is null)
         {
@@ -202,26 +202,26 @@ internal class ResourceCreationHandler
             if (partialId is null)
             {
                 logger.LogError("Could not find partial resource with url {PartialUrl} for merging", url);
-                return HttpError.NotFound("Partial resource not found").Wrap();
+                return HttpError.NotFound("Partial resource not found");
             }
 
             var info = await uploadMetaHandler.GetResourceAsync(partialId, cancellationToken);
             if (info is null)
             {
                 logger.LogError("Could not find partial resource with id {PartialId} for merging", partialId);
-                return HttpError.InternalServerError().Wrap();
+                return HttpError.InternalServerError();
             }
 
             if (!info.Done)
             {
                 logger.LogError("Partial resource {PartialId} has not yet finished uploading, cannot merge unfinished uploads", partialId);
-                return HttpError.BadRequest("Cannot merge partial files that have not finished uploading").Wrap();
+                return HttpError.BadRequest("Cannot merge partial files that have not finished uploading");
             }
 
             if (!info.IsPartial)
             {
                 logger.LogError("Cannot merge non-partial files {@File}", info);
-                return HttpError.BadRequest("Cannot merge non-partial files").Wrap();
+                return HttpError.BadRequest("Cannot merge non-partial files");
             }
 
             infos.Add(info);
@@ -236,7 +236,7 @@ internal class ResourceCreationHandler
         if (!allowed)
         {
             logger.LogInformation("Denied merge of {@Files}", infos);
-            return HttpError.Forbidden().Wrap();
+            return HttpError.Forbidden();
         }
 
         var now = clock.UtcNow;
@@ -263,7 +263,7 @@ internal class ResourceCreationHandler
         if (merged is null)
         {
             logger.LogError("Error occurred could not merge {@PartialFiles}", infos);
-            return HttpError.InternalServerError().Wrap();
+            return HttpError.InternalServerError();
         }
 
         logger.LogInformation("Merged files into {@FinalInfo} with the {@PartialInfos}", merged, infos);
@@ -284,6 +284,6 @@ internal class ResourceCreationHandler
             }
         }
 
-        return tusResult.Wrap();
+        return tusResult;
     }
 }

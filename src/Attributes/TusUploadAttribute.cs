@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
+using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -17,7 +18,7 @@ using static Microsoft.AspNetCore.Http.HttpMethods;
 namespace SolidTUS.Attributes;
 
 /// <summary>
-/// Identifies an action that supports TUS uploads. Must have a file ID parameter and TusContext parameter.
+/// Identifies an action that supports TUS uploads.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
 public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvider, IRouteTemplateProvider
@@ -88,13 +89,12 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
 
         if (isHead)
         {
-            tusResult = await tusResult.BindAsync(async c => await uploadFlow.GetUploadStatusAsync(c, fileId, cancel));
-            var error = tusResult.GetHttpError();
-            if (error is not null)
+            tusResult = await tusResult.Bind(async c => await uploadFlow.GetUploadStatusAsync(c, fileId, cancel));
+            if (tusResult.TryGetError(out var error))
             {
-                context.Result = new ObjectResult(error.Value.Message)
+                context.Result = new ObjectResult(error.Message)
                 {
-                    StatusCode = error.Value.StatusCode
+                    StatusCode = error.StatusCode
                 };
                 return;
             }
@@ -104,19 +104,18 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
 
         if (isPatch)
         {
-            tusResult = await tusResult.BindAsync(async c => await uploadFlow.PreUploadAsync(c, fileId, cancel));
-            var error = tusResult.GetHttpError();
-            if (error is not null)
+            tusResult = await tusResult.Bind(async c => await uploadFlow.PreUploadAsync(c, fileId, cancel));
+            if (tusResult.TryGetError(out var error))
             {
                 // Short circuit on error
-                context.Result = new ObjectResult(error.Value.Message)
+                context.Result = new ObjectResult(error.Message)
                 {
-                    StatusCode = error.Value.StatusCode
+                    StatusCode = error.StatusCode
                 };
                 return;
             }
 
-            var actual = tusResult.GetValueOrDefault();
+            tusResult.TryGetValue(out var actual);
             context.HttpContext.Items[TusResult.Name] = actual;
 
             // Callback before sending headers add all TUS headers
@@ -133,7 +132,7 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
                     return Task.CompletedTask;
                 }
 
-                if (ctx.HttpContext.Items[HttpContextExtensions.UploadResultName] is not Result<TusResult> postAction)
+                if (ctx.HttpContext.Items[HttpContextExtensions.UploadResultName] is not Result<TusResult, HttpError> postAction)
                 {
                     ctx.Result = new ObjectResult("Internal server error")
                     {
@@ -142,12 +141,11 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
                     return Task.CompletedTask;
                 }
 
-                var error = postAction.GetHttpError();
-                if (error is not null)
+                if (postAction.TryGetError(out var postError))
                 {
-                    ctx.Result = new ObjectResult(error.Value.Message)
+                    ctx.Result = new ObjectResult(postError.Message)
                     {
-                        StatusCode = error.Value.StatusCode
+                        StatusCode = postError.StatusCode
                     };
                     return Task.CompletedTask;
                 }

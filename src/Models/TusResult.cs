@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
 using SolidTUS.Contexts;
 using SolidTUS.ProtocolHandlers;
@@ -88,7 +89,7 @@ internal record TusResult
     /// <param name="request">The request</param>
     /// <param name="response">The response</param>
     /// <returns>Either a success of <see cref="TusResult"/> or an error of <see cref="HttpError"/></returns>
-    public static Result<TusResult> Create(HttpRequest request, HttpResponse response)
+    public static Result<TusResult, HttpError> Create(HttpRequest request, HttpResponse response)
     {
         var context = new TusResult(request.Method, request.Headers, response.Headers);
         return CommonRequestHandler.CheckTusVersion(context);

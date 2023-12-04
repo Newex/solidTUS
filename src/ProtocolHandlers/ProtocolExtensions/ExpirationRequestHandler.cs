@@ -3,10 +3,10 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Options;
 using SolidTUS.Constants;
-using SolidTUS.Extensions;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.Options;
@@ -61,12 +61,12 @@ internal class ExpirationRequestHandler
         return context;
     }
 
-    public async Task<Result<TusResult>> CheckExpirationAsync(TusResult context, CancellationToken cancellationToken)
+    public async Task<Result<TusResult, HttpError>> CheckExpirationAsync(TusResult context, CancellationToken cancellationToken)
     {
         if (context.UploadFileInfo?.Done ?? false)
         {
             // The upload has already finished
-            return context.Wrap();
+            return context;
         }
         if (context.UploadFileInfo?.ExpirationDate.HasValue ?? false)
         {
@@ -76,15 +76,15 @@ internal class ExpirationRequestHandler
             {
                 if (allowExpiredUploadsToContinue)
                 {
-                    return context.Wrap();
+                    return context;
                 }
 
                 await expiredUploadHandler.ExpiredUploadAsync(context.UploadFileInfo, cancellationToken);
-                return HttpError.Gone().Wrap();
+                return HttpError.Gone();
             }
         }
 
-        return context.Wrap();
+        return context;
     }
 
     /// <summary>

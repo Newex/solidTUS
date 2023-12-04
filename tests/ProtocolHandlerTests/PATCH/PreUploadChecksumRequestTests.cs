@@ -1,3 +1,4 @@
+using CSharpFunctionalExtensions;
 using SolidTUS.Constants;
 using SolidTUS.Models;
 using SolidTUS.Parsers;
@@ -23,7 +24,7 @@ public class PreUploadChecksumRequestTests
         var context = TusResult.Create(request, response);
 
         // Act
-        var checksum = context.Map(ChecksumRequestHandler.ParseChecksum);
+        var checksum = context.Bind(ChecksumRequestHandler.ParseChecksum);
         var result = checksum.IsSuccess();
 
         // Assert
@@ -42,7 +43,7 @@ public class PreUploadChecksumRequestTests
         var context = TusResult.Create(request, response);
 
         // Act
-        var checksum = context.Map(ChecksumRequestHandler.ParseChecksum);
+        var checksum = context.Bind(ChecksumRequestHandler.ParseChecksum);
         var result = checksum.IsSuccess();
 
         // Assert

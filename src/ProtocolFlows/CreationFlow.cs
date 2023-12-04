@@ -1,4 +1,4 @@
-using SolidTUS.Contexts;
+using CSharpFunctionalExtensions;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
@@ -36,7 +36,7 @@ internal class CreationFlow
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public Result<TusResult> PreResourceCreation(TusResult context)
+    public Result<TusResult, HttpError> PreResourceCreation(TusResult context)
     {
         var requestContext = ConcatenationRequestHandler.SetPartialMode(context)
             .Bind(ConcatenationRequestHandler.SetPartialFinalUrls)
