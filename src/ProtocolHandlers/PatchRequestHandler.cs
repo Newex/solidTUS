@@ -22,7 +22,7 @@ internal class PatchRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public Result<TusResult, HttpError> CheckUploadLength(TusResult context)
+    public static Result<TusResult, HttpError> CheckUploadLength(TusResult context)
     {
         var hasSize = context.UploadFileInfo?.FileSize.HasValue ?? false;
         if (hasSize)

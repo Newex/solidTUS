@@ -47,7 +47,7 @@ public class ExpirationTests
         var handler = new ExpirationRequestHandler(clock, expiredHandler, globalOptions);
 
         // Act
-        var response = context.Map(handler.SetExpiration).Value;
+        var response = context.Map(ExpirationRequestHandler.SetExpiration).Value;
         var result = response?.ResponseHeaders[TusHeaderNames.Expiration];
 
         // Assert
@@ -84,7 +84,7 @@ public class ExpirationTests
         var handler = new ExpirationRequestHandler(clock, expiredHandler, globalOptions);
 
         // Act
-        var response = context.Map(handler.SetExpiration).Value;
+        var response = context.Map(ExpirationRequestHandler.SetExpiration).Value;
         var result = response?.ResponseHeaders[TusHeaderNames.Expiration];
 
         // Assert

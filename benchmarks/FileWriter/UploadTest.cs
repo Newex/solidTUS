@@ -168,7 +168,7 @@ public class UploadTest
         }
     }
 
-    private async Task FillPipeAsync(Stream stream, PipeWriter writer)
+    private static async Task FillPipeAsync(Stream stream, PipeWriter writer)
     {
         int minBufferSize = 4096;
         while (true)

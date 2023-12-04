@@ -193,7 +193,7 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         return false;
     }
 
-    private string MetadataFullFilename(string fileId)
+    private static string MetadataFullFilename(string fileId)
     {
         var temp = fileId.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries);
         var sanitized = string.Join("_", temp);
@@ -201,7 +201,7 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         return filename;
     }
 
-    private string MetadataPartialFilename(string partialId)
+    private static string MetadataPartialFilename(string partialId)
     {
         var temp = partialId.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries);
         var sanitized = string.Join("_", temp);

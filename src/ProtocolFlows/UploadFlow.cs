@@ -65,7 +65,7 @@ internal class UploadFlow
             .Map(HeadRequestHandler.SetMetadataHeader)
             .Bind(ConcatenationRequestHandler.SetPartialMode)
             .Bind(ConcatenationRequestHandler.SetPartialFinalUrls)
-            .Map(expirationRequestHandler.SetExpiration);
+            .Map(ExpirationRequestHandler.SetExpiration);
 
         return requestContext;
     }
@@ -84,7 +84,7 @@ internal class UploadFlow
             .Bind(PatchRequestHandler.CheckUploadOffset)
             .Bind(ConcatenationRequestHandler.SetPartialMode)
             .Bind(PatchRequestHandler.CheckConsistentByteOffset)
-            .Bind(patch.CheckUploadLength)
+            .Bind(PatchRequestHandler.CheckUploadLength)
             .Bind(PatchRequestHandler.CheckUploadExceedsFileSize)
             .Bind(checksumHandler.SetChecksum)
             .Bind(async c => await expirationRequestHandler.CheckExpirationAsync(c, cancellationToken));
@@ -99,7 +99,7 @@ internal class UploadFlow
     /// <returns>A collection of headers</returns>
     public TusResult PostUpload(TusResult context)
     {
-        context = expirationRequestHandler.SetExpiration(context);
+        context = ExpirationRequestHandler.SetExpiration(context);
         CommonRequestHandler.SetUploadByteOffset(context);
         CommonRequestHandler.SetTusResumableHeader(context);
         return context;

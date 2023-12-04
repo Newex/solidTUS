@@ -275,7 +275,7 @@ public class CheckRequestTests
         var handler = new PatchRequestHandler();
 
         // Act
-        var response = context.Bind(handler.CheckUploadLength);
+        var response = context.Bind(PatchRequestHandler.CheckUploadLength);
         var result = response.IsSuccess();
 
         // Assert
