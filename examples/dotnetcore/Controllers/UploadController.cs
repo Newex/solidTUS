@@ -91,6 +91,25 @@ public class UploadController : ControllerBase
         return NoContent();
     }
 
+    [HttpGet("{fileId}/hello/{name}")]
+    public async Task<ActionResult> Download(string fileId, string name, CancellationToken cancellationToken)
+    {
+        var meta = await uploadMetaHandler.GetResourceAsync(fileId, cancellationToken);
+        if (meta is null)
+        {
+            return NotFound();
+        }
+
+        var filePath = Path.Combine(meta.OnDiskDirectoryPath ?? "./", meta.OnDiskFilename);
+        if (filePath is null)
+        {
+            return NotFound();
+        }
+
+        var stream = System.IO.File.OpenRead(filePath);
+        return File(stream, meta.Metadata?["contentType"] ?? "application/octet-stream", meta.Metadata?["filename"] ?? fileId, true);
+    }
+
     // Must have same route as the Upload route
     [TusDelete("{fileId}", UploadNameEndpoint = "CustomRouteNameUpload")]
     public async Task<ActionResult> DeleteUpload(string fileId, CancellationToken cancellationToken)
