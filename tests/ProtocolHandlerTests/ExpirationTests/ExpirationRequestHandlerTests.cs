@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using MSOptions = Microsoft.Extensions.Options.Options;
 using SolidTUS.Constants;
-using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;

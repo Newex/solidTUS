@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using SolidTUS.Constants;
 using SolidTUS.Contexts;
 using SolidTUS.Models;
-using SolidTUS.Options;
 
 namespace SolidTUS.Builders;
 

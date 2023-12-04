@@ -6,7 +6,6 @@ using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Options;
 using SolidTUS.Contexts;
-using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;

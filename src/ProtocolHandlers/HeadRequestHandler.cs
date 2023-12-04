@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
-using SolidTUS.Contexts;
 using SolidTUS.Models;
 
 namespace SolidTUS.ProtocolHandlers;

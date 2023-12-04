@@ -8,7 +8,6 @@ using SolidTUS.Builders;
 using SolidTUS.Contexts;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
-using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 
 namespace SolidTUS.Extensions;
 
