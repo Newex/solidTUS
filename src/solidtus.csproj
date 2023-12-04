@@ -22,7 +22,7 @@
 
   <ItemGroup>
     <PackageReference Include="CSharpFunctionalExtensions" Version="2.40.3">
-      <PrivateAssets>all</PrivateAssets>
+      <PrivateAssets>none</PrivateAssets>
     </PackageReference>
   </ItemGroup>
 </Project>
