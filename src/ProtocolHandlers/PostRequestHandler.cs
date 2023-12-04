@@ -118,7 +118,7 @@ internal class PostRequestHandler
             return context;
         }
 
-        var metadata = MetadataParser.ParseFast(rawMetadata!);
+        var metadata = MetadataParser.Parse(rawMetadata!);
         context.Metadata = metadata.AsReadOnly();
         context.RawMetadata = rawMetadata;
         return context;

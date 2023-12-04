@@ -31,10 +31,10 @@ public class MetadataParsing
     }
 
     [Benchmark]
-    public Dictionary<string, string> OldParse() => MetadataParser.ParseFast(metadata);
+    public Dictionary<string, string> OldParse() => MetadataParser.Parse(metadata);
 
     [Benchmark]
-    public Dictionary<string, string> NewParse() => MetadataParser.ParseFast(metadata);
+    public Dictionary<string, string> NewParse() => MetadataParser.Parse(metadata);
 
 
 

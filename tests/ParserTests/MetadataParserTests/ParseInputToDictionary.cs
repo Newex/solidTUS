@@ -16,7 +16,7 @@ public class ParseInputToDictionary
         var input = $"{Key1} {Base64Converters.Encode(Value1)},{Key2} {Base64Converters.Encode(Value2)},{Key3}";
 
         // Act
-        var result = MetadataParser.ParseFast(input);
+        var result = MetadataParser.Parse(input);
 
         // Assert
         Assert.Collection(result,
@@ -37,7 +37,7 @@ public class ParseInputToDictionary
         var input = $"{Key1} {Base64Converters.Encode(Value1)},{Key2},{Key3} {Base64Converters.Encode(Value3)}";
 
         // Act
-        var result = MetadataParser.ParseFast(input);
+        var result = MetadataParser.Parse(input);
 
         // Assert
         Assert.Collection(result,
@@ -58,7 +58,7 @@ public class ParseInputToDictionary
         var input = $"{Key1} {Base64Converters.Encode(Value1)},{Key2},{Key3} {Base64Converters.Encode(Value3)}";
 
         // Act
-        var result = MetadataParser.ParseFast(input);
+        var result = MetadataParser.Parse(input);
 
         // Assert
         Assert.Collection(result,
@@ -79,7 +79,7 @@ public class ParseInputToDictionary
         var input = $"{Key1} {Base64Converters.Encode(Value1)},{Key2} {Base64Converters.Encode(Value2)},{Key3}";
 
         // Act
-        var result = MetadataParser.ParseFast(input);
+        var result = MetadataParser.Parse(input);
 
         // Assert
         Assert.Collection(result,

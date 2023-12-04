@@ -14,7 +14,7 @@ public static class MetadataParser
     /// </summary>
     /// <param name="metadata">The metadata</param>
     /// <returns>A dictionary of decoded metadata</returns>
-    public static Dictionary<string, string> ParseFast(string metadata)
+    public static Dictionary<string, string> Parse(string metadata)
     {
         try
         {
