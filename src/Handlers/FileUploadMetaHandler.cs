@@ -83,7 +83,7 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         try
         {
             var fileInfoTxt = File.ReadAllText(path);
-            var fileInfo = JsonSerializer.Deserialize<UploadFileInfo>(fileInfoTxt);
+            var fileInfo = JsonSerializer.Deserialize(fileInfoTxt, UploadFileInfoSourceGen.Default.UploadFileInfo);
             return Task.FromResult(fileInfo);
         }
         catch (JsonException)
@@ -158,7 +158,7 @@ public class FileUploadMetaHandler : IUploadMetaHandler
             try
             {
                 var text = await File.ReadAllTextAsync(filename);
-                info = JsonSerializer.Deserialize<UploadFileInfo>(text);
+                info = JsonSerializer.Deserialize(text, UploadFileInfoSourceGen.Default.UploadFileInfo);
             }
             catch (IOException) { }
             catch (JsonException) { }
@@ -181,7 +181,7 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         {
             var filename = MetadataFullFilename(fileInfo.FileId);
             var path = Path.Combine(directoryPath, filename);
-            var content = JsonSerializer.Serialize(fileInfo);
+            var content = JsonSerializer.Serialize(fileInfo, UploadFileInfoSourceGen.Default.UploadFileInfo);
             File.WriteAllText(path, content);
             return true;
         }
@@ -206,7 +206,7 @@ public class FileUploadMetaHandler : IUploadMetaHandler
             var sysInfo = new FileInfo(filename);
             sysInfo.Directory?.Create();
             var path = Path.Combine(directoryPath, filename);
-            var content = JsonSerializer.Serialize(fileInfo);
+            var content = JsonSerializer.Serialize(fileInfo, UploadFileInfoSourceGen.Default.UploadFileInfo);
             File.WriteAllText(path, content);
             return true;
         }

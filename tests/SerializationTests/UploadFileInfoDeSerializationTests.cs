@@ -12,7 +12,7 @@ public class UploadFileInfoDeSerializationTests
     [Fact]
     public void UploadFileInfo_deserialization_should_include_CreatedDate_property()
     {
-        var uploadFileInfo = JsonSerializer.Deserialize<UploadFileInfo>(Json);
+        var uploadFileInfo = JsonSerializer.Deserialize(Json, UploadFileInfoSourceGen.Default.UploadFileInfo);
         var createdDate = uploadFileInfo?.CreatedDate;
         createdDate.Should().NotBeNull();
     }
@@ -20,7 +20,7 @@ public class UploadFileInfoDeSerializationTests
     [Fact]
     public void UploadFileInfo_deserialization_should_include_metadata_property()
     {
-        var uploadFileInfo = JsonSerializer.Deserialize<UploadFileInfo>(Json);
+        var uploadFileInfo = JsonSerializer.Deserialize(Json, UploadFileInfoSourceGen.Default.UploadFileInfo);
         var metadata = uploadFileInfo?.Metadata;
         metadata.Should()
             .NotBeNull().And
@@ -31,7 +31,7 @@ public class UploadFileInfoDeSerializationTests
     [Fact]
     public void UploadFileInfo_deserialization_should_deserialize_partial_info()
     {
-        var uploadFileInfo = JsonSerializer.Deserialize<UploadFileInfo>(Partial);
+        var uploadFileInfo = JsonSerializer.Deserialize(Partial, UploadFileInfoSourceGen.Default.UploadFileInfo);
         uploadFileInfo.Should().NotBeNull();
     }
 }
