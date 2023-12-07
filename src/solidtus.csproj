@@ -10,6 +10,10 @@
     <Description>An implementation of the TUS protocol for dotnet</Description>
     <PackageProjectUrl>https://github.com/Newex/solidTUS</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Newex/solidTUS</RepositoryUrl>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
   </PropertyGroup>
 
   <ItemGroup>

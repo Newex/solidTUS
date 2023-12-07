@@ -1,10 +1,12 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace SolidTUS.Options;
 
 /// <summary>
 /// Options for the default file storage upload handler
 /// </summary>
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public record FileStorageOptions
 {
     /// <summary>

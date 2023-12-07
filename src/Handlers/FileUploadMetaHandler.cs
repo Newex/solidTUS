@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
@@ -56,6 +57,12 @@ public class FileUploadMetaHandler : IUploadMetaHandler
     }
 
     /// <inheritdoc />
+    [UnconditionalSuppressMessage("Trimming",
+    "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code",
+    Justification = "Options annotated with dynamic members attribute")]
+    [UnconditionalSuppressMessage("AOT",
+    "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.",
+    Justification = "Options annotated with dynamic members attribute")]
     public Task<UploadFileInfo?> GetResourceAsync(string fileId, CancellationToken cancellationToken)
     {
         var filename = MetadataFullFilename(fileId);
@@ -136,6 +143,12 @@ public class FileUploadMetaHandler : IUploadMetaHandler
     }
 
     /// <inheritdoc />
+    [UnconditionalSuppressMessage("Trimming",
+    "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code",
+    Justification = "Options annotated with dynamic members attribute")]
+    [UnconditionalSuppressMessage("AOT",
+    "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.",
+    Justification = "Options annotated with dynamic members attribute")]
     public async IAsyncEnumerable<UploadFileInfo> GetAllResourcesAsync()
     {
         var filenames = Directory.GetFiles(directoryPath, "*.metadata.json", SearchOption.AllDirectories);
@@ -156,6 +169,12 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         }
     }
 
+    [UnconditionalSuppressMessage("Trimming",
+    "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code",
+    Justification = "Options annotated with dynamic members attribute")]
+    [UnconditionalSuppressMessage("AOT",
+    "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.",
+    Justification = "Options annotated with dynamic members attribute")]
     private bool WriteUploadFileInfo(UploadFileInfo fileInfo)
     {
         try
@@ -173,6 +192,12 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         }
     }
 
+    [UnconditionalSuppressMessage("Trimming",
+    "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code",
+    Justification = "Added attribute annotation for object.")]
+    [UnconditionalSuppressMessage("AOT",
+    "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.",
+    Justification = "Options annotated with dynamic members attribute")]
     private bool WritePartialUploadFileInfo(UploadFileInfo fileInfo)
     {
         try

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using SolidTUS.Models;
 
 namespace SolidTUS.Options;
@@ -7,6 +8,7 @@ namespace SolidTUS.Options;
 /// <summary>
 /// TUS options
 /// </summary>
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public record TusOptions
 {
     /// <summary>

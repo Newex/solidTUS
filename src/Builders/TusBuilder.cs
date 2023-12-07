@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,7 +38,7 @@ public sealed class TusBuilder
     /// </summary>
     /// <typeparam name="T">The specific upload storage handler</typeparam>
     /// <returns>builder</returns>
-    public TusBuilder AddStorageHandler<T>()
+    public TusBuilder AddStorageHandler<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>()
         where T : class, IUploadStorageHandler
     {
         services.Remove(uploadStorageDescriptor);
@@ -50,7 +51,7 @@ public sealed class TusBuilder
     /// </summary>
     /// <typeparam name="T">The specific upload meta handler</typeparam>
     /// <returns>builder</returns>
-    public TusBuilder AddMetaHandler<T>()
+    public TusBuilder AddMetaHandler<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>()
         where T : class, IUploadMetaHandler
     {
         services.Remove(uploadMetaDescriptor);
@@ -63,7 +64,7 @@ public sealed class TusBuilder
     /// </summary>
     /// <typeparam name="T">The specific expired handler</typeparam>
     /// <returns>builder</returns>
-    public TusBuilder AddExpirationHandler<T>()
+    public TusBuilder AddExpirationHandler<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>()
         where T : class, IExpiredUploadHandler
     {
         services.Remove(expiredHandleDescriptor);
@@ -76,7 +77,7 @@ public sealed class TusBuilder
     /// </summary>
     /// <typeparam name="T">The specific implementation type</typeparam>
     /// <returns>builder</returns>
-    public TusBuilder AddChecksumValidator<T>()
+    public TusBuilder AddChecksumValidator<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>()
         where T : class, IChecksumValidator
     {
         services.AddScoped<IChecksumValidator, T>();

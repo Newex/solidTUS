@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace SolidTUS.Models;
@@ -7,6 +8,7 @@ namespace SolidTUS.Models;
 /// <summary>
 /// Represents an upload file info
 /// </summary>
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public record UploadFileInfo
 {
     /// <summary>
