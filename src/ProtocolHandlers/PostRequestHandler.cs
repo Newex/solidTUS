@@ -114,11 +114,17 @@ internal class PostRequestHandler
     /// <returns>Either an error or a request context</returns>
     public Result<TusResult, HttpError> ParseAndValidateMetadata(TusResult context)
     {
+        if (context.PartialMode == PartialMode.Partial)
+        {
+            return context;
+        }
+
+        // Only check for "normal" uploads and a final upload
         var rawMetadata = context.RequestHeaders[TusHeaderNames.UploadMetadata];
         var metadata = metadataParser.Parse(rawMetadata);
         var result = metadata.Map(m =>
         {
-            context.Metadata = m.AsReadOnly();
+            context.Metadata = m?.AsReadOnly();
             context.RawMetadata = rawMetadata;
             return context;
         });

@@ -31,11 +31,11 @@ public class MetadataParser
     /// <param name="metadata">The raw TUS metadata</param>
     /// <returns>A collection of key value pairs</returns>
     /// <exception cref="InvalidOperationException">Invalid metadata and cannot parse it</exception>
-    public Result<Dictionary<string, string>, HttpError> Parse(string? metadata)
+    public Result<Dictionary<string, string>?, HttpError> Parse(string? metadata)
     {
         if (allowEmpty() && string.IsNullOrWhiteSpace(metadata))
         {
-            return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            return null;
         }
         else if (!allowEmpty() && string.IsNullOrWhiteSpace(metadata))
         {
