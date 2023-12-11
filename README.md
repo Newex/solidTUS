@@ -81,11 +81,10 @@ SolidTUS can be configured through the `TusOptions` object, either on startup or
 // Custom metadata provider or set maximum TUS protocol file size
 builder.Services
   .AddTUS()
+  .SetMetadataValidator(metadata => metadata.ContainsKey("filename"))
+  .AllowEmptyMetadata(true)
   .Configuration(options =>
   {
-    // A Func<string, bool> that validates the given TUS-metadata upon resource creation
-    options.MetadataValidator = (metadata) => metadata.ContainsKey("filename");
-    
     // This max size is different than the ASP.NET specified max size. To change the request size limit do it per Action with an attribute (recommended).
     options.MaxSize = 5_000_000_000;
   });
