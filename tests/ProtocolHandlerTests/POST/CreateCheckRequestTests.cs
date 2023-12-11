@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using CSharpFunctionalExtensions;
 using SolidTUS.Constants;
 using SolidTUS.Options;
@@ -140,7 +139,6 @@ public class CreateCheckRequestTests
         // Arrange
         var options = MSOptions.Create(new TusOptions());
         var request = Setup.CreateRequest(resumable: true);
-        var metadata = new Dictionary<string, string>();
         var parser = new MetadataParser((_) => true, () => false);
         var handler = new PostRequestHandler(parser, options);
 
@@ -160,7 +158,6 @@ public class CreateCheckRequestTests
         var request = Setup.CreateRequest(resumable: true,
             (TusHeaderNames.UploadLength, 123L.ToString())
         );
-        var metadata = new Dictionary<string, string>();
         var parser = new MetadataParser((m) => m.ContainsKey("filename") && m.ContainsKey("is_confidential"), () => true);
         var handler = new PostRequestHandler(parser, options);
 
@@ -206,5 +203,77 @@ public class CreateCheckRequestTests
 
         // Assert
         result.Should().Be(200);
+    }
+
+    [Fact]
+    public void Normal_upload_should_validate_metadata()
+    {
+        // Arrange
+        var options = MSOptions.Create(new TusOptions());
+        var request = Setup.CreateRequest(resumable: true,
+            (TusHeaderNames.UploadLength, 20.ToString()),
+            (TusHeaderNames.UploadMetadata, "filename d29ybGRfZG9taW5hdGlvbl9wbGFuLnBkZg==,is_confidential")
+        );
+        request = request.Map(c =>
+        {
+            c.PartialMode = Models.PartialMode.None;
+            return c;
+        });
+        
+        var parser = new MetadataParser((m) => m.ContainsKey("filename"), () => false);
+        var handler = new PostRequestHandler(parser, options);
+
+        // Act
+        var result = request.Bind(handler.ParseAndValidateMetadata);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Partial_request_should_not_validate_metadata()
+    {
+        // Arrange
+        var options = MSOptions.Create(new TusOptions());
+        var request = Setup.CreateRequest(resumable: true,
+            (TusHeaderNames.UploadLength, 20.ToString())
+        );
+        request = request.Map(c =>
+        {
+            c.PartialMode = Models.PartialMode.Partial;
+            return c;
+        });
+        var parser = new MetadataParser((_) => false, () => false);
+        var handler = new PostRequestHandler(parser, options);
+
+        // Act
+        var result = request.Bind(handler.ParseAndValidateMetadata);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Final_parallel_upload_must_validate_metadata()
+    {
+        // Arrange
+        var options = MSOptions.Create(new TusOptions());
+        var request = Setup.CreateRequest(resumable: true,
+            (TusHeaderNames.UploadLength, 20.ToString()),
+            (TusHeaderNames.UploadMetadata, "filename d29ybGRfZG9taW5hdGlvbl9wbGFuLnBkZg==,is_confidential")
+        );
+        request = request.Map(c =>
+        {
+            c.PartialMode = Models.PartialMode.Final;
+            return c;
+        });
+        var parser = new MetadataParser((m) => m.ContainsKey("filename"), () => true);
+        var handler = new PostRequestHandler(parser, options);
+
+        // Act
+        var result = request.Bind(handler.ParseAndValidateMetadata);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
     }
 }
