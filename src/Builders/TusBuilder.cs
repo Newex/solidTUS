@@ -10,6 +10,7 @@ using SolidTUS.Contexts;
 using SolidTUS.Handlers;
 using SolidTUS.Jobs;
 using SolidTUS.Options;
+using SolidTUS.Parsers;
 using SolidTUS.ProtocolFlows;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
@@ -180,6 +181,7 @@ public sealed class TusBuilder
             );
         });
 
+        builder.services.TryAddSingleton<MetadataParser>();
         builder.services.TryAddSingleton<MetadataValidatorFunc>(provider => MetadataValidator.Validator);
         builder.services.TryAddSingleton<AllowEmptyMetadataFunc>(provider => MetadataValidator.AllowEmptyMetadata);
         builder.services.AddScoped<IChecksumValidator, SHA1ChecksumValidator>();
