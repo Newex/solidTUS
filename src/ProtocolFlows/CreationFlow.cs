@@ -43,8 +43,7 @@ internal class CreationFlow
             .Bind(PostRequestHandler.CheckUploadLengthOrDeferred)
             .Map(PostRequestHandler.SetFileSize)
             .Bind(post.CheckMaximumSize)
-            .Map(PostRequestHandler.ParseMetadata)
-            .Bind(post.ValidateMetadata)
+            .Bind(post.ParseAndValidateMetadata)
             .Bind(PostRequestHandler.CheckIsValidUpload)
             .Bind(checksum.SetChecksum);
 

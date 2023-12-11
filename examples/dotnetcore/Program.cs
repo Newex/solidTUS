@@ -15,12 +15,8 @@ builder.Services.AddSwaggerGen();
 // builder.Services.AddTus(builder.Configuration);
 builder.Services
     .AddTus(builder.Configuration)
-    .Configuration(options =>
-    {
-        options.HasTermination = true;
-        options.MetadataValidator = (metadata) =>
-            metadata.ContainsKey("filename") && metadata.ContainsKey("contentType");
-    })
+    .Configuration(options => options.HasTermination = true)
+    .SetMetadataValidator(m => m.ContainsKey("filename") && m.ContainsKey("contentType"))
     .FileStorageConfiguration(options =>
     {
         options.DirectoryPath = "./FILES";

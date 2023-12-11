@@ -8,17 +8,9 @@ namespace SolidTUS.Options;
 /// <summary>
 /// TUS options
 /// </summary>
-[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+// [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public record TusOptions
 {
-    /// <summary>
-    /// Get or set the metadata validator
-    /// </summary>
-    /// <remarks>
-    /// Default validator returns true on any input
-    /// </remarks>
-    public Func<IReadOnlyDictionary<string, string>, bool> MetadataValidator { get; set; } = (_) => true;
-
     /// <summary>
     /// Get or set if the parallel / partial uploads should require to conform to the metadata validator specifications.
     /// </summary>

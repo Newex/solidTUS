@@ -1,6 +1,7 @@
 using System.Linq;
 using SolidTUS.Models;
 using SolidTUS.Options;
+using SolidTUS.Parsers;
 using SolidTUS.ProtocolFlows;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
@@ -39,8 +40,9 @@ public class PostUploadRequestTests
         var clock = MockOthers.Clock();
         var tusOptions = MSOptions.Create(new TusOptions());
         var expiredHandler = MockHandlers.ExpiredUploadHandler();
+        var parser = new MetadataParser(_ => true, () => true);
 
-        var post = new PostRequestHandler(tusOptions);
+        var post = new PostRequestHandler(parser, tusOptions);
         var checksum = new ChecksumRequestHandler(Enumerable.Empty<IChecksumValidator>());
         var expiration = new ExpirationRequestHandler(clock, expiredHandler, tusOptions);
 

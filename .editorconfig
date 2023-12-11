@@ -62,7 +62,7 @@ dotnet_style_object_initializer = true:suggestion
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
 dotnet_style_prefer_auto_properties = true:suggestion
 dotnet_style_prefer_compound_assignment = true:suggestion
-dotnet_style_prefer_conditional_expression_over_assignment = true:suggestion
+# dotnet_style_prefer_conditional_expression_over_assignment = true:suggestion
 dotnet_style_prefer_conditional_expression_over_return = true:suggestion
 dotnet_style_prefer_inferred_anonymous_type_member_names = true:suggestion
 dotnet_style_prefer_inferred_tuple_names = true:suggestion
@@ -370,5 +370,6 @@ dotnet_naming_style.s_camelcase.capitalization = camel_case
 # Using if statement is allowed for simple statements - jkms
 dotnet_style_coalesce_expression = off
 dotnet_diagnostic.IDE0270.severity = none
+# dotnet_style_prefer_conditional_expression_over_assignment = false
 dotnet_diagnostic.IDE0046.severity = none # "IF" to ternary expression
 dotnet_diagnostic.IDE0290.severity = none # Use primary constructor

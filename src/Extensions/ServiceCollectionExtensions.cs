@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Builders;
@@ -30,12 +29,6 @@ public static class ServiceCollectionExtensions
     /// <param name="services">The services collection</param>
     /// <param name="configuration">The configuration</param>
     /// <returns>A TUS builder</returns>
-    [UnconditionalSuppressMessage("Trimming",
-    "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code",
-    Justification = "Options annotated with dynamic members attribute")]
-    [UnconditionalSuppressMessage("AOT",
-    "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.",
-    Justification = "Options annotated with dynamic members attribute")]
     public static TusBuilder AddTus(this IServiceCollection services, IConfiguration configuration)
     {
         var tusSection = configuration.GetSection(TusOptions.TusConfigurationSection);
