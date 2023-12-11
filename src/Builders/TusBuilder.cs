@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
@@ -25,6 +26,8 @@ public sealed class TusBuilder
     private readonly ServiceDescriptor uploadMetaDescriptor = new(typeof(IUploadMetaHandler), typeof(FileUploadMetaHandler), ServiceLifetime.Singleton);
     private readonly ServiceDescriptor uploadStorageDescriptor = new(typeof(IUploadStorageHandler), typeof(FileUploadStorageHandler), ServiceLifetime.Singleton);
     private readonly ServiceDescriptor expiredHandleDescriptor = new(typeof(IExpiredUploadHandler), typeof(FileExpiredUploadHandler), ServiceLifetime.Singleton);
+    private readonly ServiceDescriptor metadataValidatorDescriptor = new(typeof(MetadataValidatorFunc), typeof(MetadataValidatorFunc), ServiceLifetime.Singleton);
+    private readonly ServiceDescriptor allowEmptyMetadataDescriptor = new(typeof(AllowEmptyMetadataFunc), typeof(AllowEmptyMetadataFunc), ServiceLifetime.Singleton);
 
     private readonly IServiceCollection services;
 
@@ -56,6 +59,34 @@ public sealed class TusBuilder
     {
         services.Remove(uploadMetaDescriptor);
         services.TryAddSingleton<IUploadMetaHandler, T>();
+        return this;
+    }
+
+    /// <summary>
+    /// Set a custom metadata validator.
+    /// </summary>
+    /// <remarks>
+    /// Default allows any entry.
+    /// </remarks>
+    /// <param name="validator">Validate the parsed <c>Upload-Metadata</c> header</param>
+    /// <returns>builder</returns>
+    public TusBuilder SetMetadataValidator(Func<Dictionary<string, string>, bool> validator)
+    {
+        services.Remove(metadataValidatorDescriptor);
+        services.TryAddSingleton<MetadataValidatorFunc>(provider => (m) => validator(m));
+        return this;
+    }
+
+    /// <summary>
+    /// Whether to allow empty metadata entries.
+    /// </summary>
+    /// <remarks>Default allows empty entries.</remarks>
+    /// <param name="allow">True if it should allow empty metadata entries otherwise false</param>
+    /// <returns>builder</returns>
+    public TusBuilder AllowEmptyMetadata(bool allow)
+    {
+        services.Remove(allowEmptyMetadataDescriptor);
+        services.TryAddSingleton<AllowEmptyMetadataFunc>(provider => () => allow);
         return this;
     }
 
@@ -149,6 +180,8 @@ public sealed class TusBuilder
             );
         });
 
+        builder.services.TryAddSingleton<MetadataValidatorFunc>(provider => MetadataValidator.Validator);
+        builder.services.TryAddSingleton<AllowEmptyMetadataFunc>(provider => MetadataValidator.AllowEmptyMetadata);
         builder.services.AddScoped<IChecksumValidator, SHA1ChecksumValidator>();
         builder.services.AddScoped<IChecksumValidator, MD5ChecksumValidator>();
 

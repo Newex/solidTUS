@@ -1,100 +1,79 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using CSharpFunctionalExtensions;
+using SolidTUS.Models;
+using SolidTUS.Validators;
 
 namespace SolidTUS.Parsers;
 
 /// <summary>
 /// TUS Metadata parser
 /// </summary>
-public static class MetadataParser
+public class MetadataParser
 {
+    private readonly MetadataValidatorFunc metadataValidator;
+    private readonly AllowEmptyMetadataFunc allowEmpty;
+
     /// <summary>
-    /// Fast parsing using unsafe and stack allocated strings
+    /// Instantiate a new metadata parser
     /// </summary>
-    /// <param name="metadata">The metadata</param>
-    /// <returns>A dictionary of decoded metadata</returns>
-    public static Dictionary<string, string> Parse(string metadata)
+    /// <param name="metadataValidator">The metadata validator</param>
+    /// <param name="allowEmpty"></param>
+    public MetadataParser(MetadataValidatorFunc metadataValidator, AllowEmptyMetadataFunc allowEmpty)
     {
-        try
+        this.metadataValidator = metadataValidator;
+        this.allowEmpty = allowEmpty;
+    }
+
+    /// <summary>
+    /// Parses TUS metadata
+    /// </summary>
+    /// <param name="metadata">The raw TUS metadata</param>
+    /// <returns>A collection of key value pairs</returns>
+    /// <exception cref="InvalidOperationException">Invalid metadata and cannot parse it</exception>
+    public Result<Dictionary<string, string>, HttpError> Parse(string? metadata)
+    {
+        if (allowEmpty() && string.IsNullOrWhiteSpace(metadata))
         {
-            var result = new Dictionary<string, string>();
+            return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        }
+        else if (!allowEmpty() && string.IsNullOrWhiteSpace(metadata))
+        {
+            return HttpError.BadRequest("Must have Upload-Metadata header");
+        }
 
-            ReadOnlySpan<char> chars = metadata;
+        var keyValues = metadata!.Split(",");
 
-            int start = 0;
-            int stride = 0;
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var keyValue in keyValues)
+        {
+            var item = keyValue.Split(" ");
 
-            var hasValue = false;
-            var processed = false;
-            ReadOnlySpan<char> key = stackalloc char[metadata.Length];
-            ReadOnlySpan<char> value = stackalloc char[metadata.Length];
-
-            for (int i = 0; i < chars.Length; i++)
+            if (item.Length == 2)
             {
-                var token = chars[i];
-                if (token != ' ' && token != ',' && i != (chars.Length - 1))
-                {
-                    stride++;
-                    continue;
-                }
-                else if (token == ' ')
-                {
-                    key = chars.Slice(start, stride);
-                    start = i + 1;
-                    stride = 0;
-                    hasValue = true;
-                    continue;
-                }
-
-                if (token == ',' || i == (chars.Length - 1))
-                {
-                    if (i == (chars.Length - 1))
-                    {
-                        // To the end
-                        stride++;
-                    }
-
-                    if (hasValue)
-                    {
-                        value = chars.Slice(start, stride);
-                    }
-                    else
-                    {
-                        key = chars.Slice(start, stride);
-                    }
-
-                    processed = true;
-                    start = i + 1;
-                    stride = 0;
-                }
-
-                if (processed && hasValue)
-                {
-                    ref var val = ref CollectionsMarshal.GetValueRefOrAddDefault(result, key.ToString(), out var exist);
-                    if (!exist)
-                    {
-                        var decode = Base64Converters.Decode(value.ToString());
-                        val = decode;
-                    }
-
-                    processed = false;
-                    hasValue = false;
-                } else if (processed)
-                {
-                    ref var val = ref CollectionsMarshal.GetValueRefOrAddDefault(result, key.ToString(), out var exist);
-                    val = string.Empty;
-
-                    processed = false;
-                    hasValue = false;
-                }
+                var key = item[0];
+                var value = item[1];
+                var decode = Base64Converters.Decode(value);
+                result.Add(key, decode);
             }
+            else if (item.Length == 1)
+            {
+                var key = item[0];
+                var value = string.Empty;
+                result.Add(key, value);
+            }
+            else
+            {
+                return HttpError.BadRequest("Invalid Upload-Metadata header values");
+            }
+        }
 
-            return result;
-        }
-        catch (Exception)
+        var isValid = metadataValidator(result);
+        if (!isValid)
         {
-            throw;
+            return HttpError.BadRequest("Invalid Upload-Metadata");
         }
+
+        return result;
     }
 }

@@ -2,5 +2,4 @@
 using BenchmarkDotNet.Running;
 using SolidTUS.Benchmarks.FileWriter;
 
-// var summary = BenchmarkRunner.Run<MetadataParsing>();
 BenchmarkRunner.Run<UploadTest>();

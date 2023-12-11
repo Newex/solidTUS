@@ -17,20 +17,22 @@ namespace SolidTUS.ProtocolHandlers;
 internal class PostRequestHandler
 {
     private readonly bool validatePartial;
-    private readonly Func<IReadOnlyDictionary<string, string>, bool> metadataValidator;
     private readonly long? maxSize;
+    private readonly MetadataParser metadataParser;
 
     /// <summary>
     /// Instantiate a new object of <see cref="PostRequestHandler"/>
     /// </summary>
+    /// <param name="metadataParser">The metadata parser</param>
     /// <param name="options">The TUS options</param>
     public PostRequestHandler(
+        MetadataParser metadataParser,
         IOptions<TusOptions> options
     )
     {
-        metadataValidator = options.Value.MetadataValidator;
         maxSize = options.Value.MaxSize;
         validatePartial = options.Value.ValidateMetadataForParallelUploads;
+        this.metadataParser = metadataParser;
     }
 
     /// <summary>
@@ -106,40 +108,21 @@ internal class PostRequestHandler
     }
 
     /// <summary>
-    /// Parse metadata from a request
+    /// Parse and validate metadata from a request
     /// </summary>
     /// <param name="context">The request context</param>
-    /// <returns>A tuple containing the raw string metadata and the parsed metadata</returns>
-    public static TusResult ParseMetadata(TusResult context)
+    /// <returns>Either an error or a request context</returns>
+    public Result<TusResult, HttpError> ParseAndValidateMetadata(TusResult context)
     {
         var rawMetadata = context.RequestHeaders[TusHeaderNames.UploadMetadata];
-        if (rawMetadata.Count == 0)
+        var metadata = metadataParser.Parse(rawMetadata);
+        var result = metadata.Map(m =>
         {
+            context.Metadata = m.AsReadOnly();
+            context.RawMetadata = rawMetadata;
             return context;
-        }
-
-        var metadata = MetadataParser.Parse(rawMetadata!);
-        context.Metadata = metadata.AsReadOnly();
-        context.RawMetadata = rawMetadata;
-        return context;
-    }
-
-    /// <summary>
-    /// Validate the metadata
-    /// </summary>
-    /// <param name="context">THe request context</param>
-    /// <returns>Either an error or a request context</returns>
-    public Result<TusResult, HttpError> ValidateMetadata(TusResult context)
-    {
-        var isPartial = context.PartialMode == PartialMode.Partial;
-        if (validatePartial || !isPartial)
-        {
-            var metadata = context.Metadata ?? new Dictionary<string, string>();
-            var isValid = metadataValidator(metadata);
-            return Result.SuccessIf(isValid, context, HttpError.BadRequest("Invalid Upload-Metadata"));
-        }
-
-        return context;
+        });
+        return result;
     }
 
     /// <summary>

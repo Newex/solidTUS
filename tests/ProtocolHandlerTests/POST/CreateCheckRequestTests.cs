@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using CSharpFunctionalExtensions;
 using SolidTUS.Constants;
 using SolidTUS.Options;
+using SolidTUS.Parsers;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.Tests.Tools;
 using MSOptions = Microsoft.Extensions.Options.Options;
@@ -85,7 +86,8 @@ public class CreateCheckRequestTests
         var request = Setup.CreateRequest(resumable: true,
             (TusHeaderNames.UploadLength, "300")
         );
-        var handler = new PostRequestHandler(options);
+        var parser = new MetadataParser((_) => true, () => true);
+        var handler = new PostRequestHandler(parser, options);
 
         // Act
         var response = request.Bind(c => handler.CheckMaximumSize(c));
@@ -103,7 +105,8 @@ public class CreateCheckRequestTests
         var request = Setup.CreateRequest(resumable: true,
             (TusHeaderNames.UploadLength, long.MaxValue.ToString())
         );
-        var handler = new PostRequestHandler(options);
+        var parser = new MetadataParser((_) => true, () => true);
+        var handler = new PostRequestHandler(parser, options);
 
         // Act
         var response = request.Bind(c => handler.CheckMaximumSize(c));
@@ -121,60 +124,51 @@ public class CreateCheckRequestTests
             (TusHeaderNames.UploadLength, 123L.ToString()),
             (TusHeaderNames.UploadMetadata, "filename d29ybGRfZG9taW5hdGlvbl9wbGFuLnBkZg==,is_confidential")
         );
+        var parser = new MetadataParser((_) => true, () => true);
+        var handler = new PostRequestHandler(parser, MSOptions.Create(new TusOptions()));
 
         // Act
-        var response = request.Map(c => PostRequestHandler.ParseMetadata(c));
-        var hasMetadata = response.IsSuccess();
+        var response = request.Map(handler.ParseAndValidateMetadata);
 
         // Assert
-        Assert.True(hasMetadata);
+        response.IsSuccess.Should().BeTrue();
     }
 
     [Fact]
-    public void Invalid_metadata_returns_400_status()
+    public void Empty_metadata_is_not_valid_if_not_allowed()
     {
         // Arrange
-        var options = MSOptions.Create(new TusOptions
-        {
-            MetadataValidator = (_) => false
-        });
+        var options = MSOptions.Create(new TusOptions());
         var request = Setup.CreateRequest(resumable: true);
         var metadata = new Dictionary<string, string>();
-        var handler = new PostRequestHandler(options);
+        var parser = new MetadataParser((_) => true, () => false);
+        var handler = new PostRequestHandler(parser, options);
 
         // Act
-        var response = request.Bind(handler.ValidateMetadata);
+        var response = request.Bind(handler.ParseAndValidateMetadata);
         var result = response.StatusCode();
 
         // Assert
-        Assert.Equal(expected: 400, result);
+        result.Should().Be(400);
     }
 
     [Fact]
-    public void Empty_metadata_is_still_validated()
+    public void Empty_metadata_is_valid_if_allowed()
     {
         // Arrange
-        var validationRun = false;
-        var options = MSOptions.Create(new TusOptions
-        {
-            MetadataValidator = (metadata) =>
-            {
-                validationRun = true;
-                return metadata.ContainsKey("filename") && metadata.ContainsKey("is_confidential");
-            },
-        });
+        var options = MSOptions.Create(new TusOptions());
         var request = Setup.CreateRequest(resumable: true,
             (TusHeaderNames.UploadLength, 123L.ToString())
         );
         var metadata = new Dictionary<string, string>();
-        var handler = new PostRequestHandler(options);
+        var parser = new MetadataParser((m) => m.ContainsKey("filename") && m.ContainsKey("is_confidential"), () => true);
+        var handler = new PostRequestHandler(parser, options);
 
         // Act
-        var response = request.Bind(handler.ValidateMetadata);
-        var result = response.StatusCode();
+        var result = request.Bind(handler.ParseAndValidateMetadata);
 
         // Assert
-        Assert.True(validationRun);
+        result.IsSuccess.Should().BeTrue();
     }
 
     [Fact]
@@ -190,7 +184,7 @@ public class CreateCheckRequestTests
         var result = response.StatusCode();
 
         // Assert
-        Assert.Equal(expected: 400, result);
+        result.Should().Be(400);
     }
 
     [Fact]
