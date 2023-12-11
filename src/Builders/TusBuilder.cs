@@ -27,8 +27,6 @@ public sealed class TusBuilder
     private readonly ServiceDescriptor uploadMetaDescriptor = new(typeof(IUploadMetaHandler), typeof(FileUploadMetaHandler), ServiceLifetime.Singleton);
     private readonly ServiceDescriptor uploadStorageDescriptor = new(typeof(IUploadStorageHandler), typeof(FileUploadStorageHandler), ServiceLifetime.Singleton);
     private readonly ServiceDescriptor expiredHandleDescriptor = new(typeof(IExpiredUploadHandler), typeof(FileExpiredUploadHandler), ServiceLifetime.Singleton);
-    private readonly ServiceDescriptor metadataValidatorDescriptor = new(typeof(MetadataValidatorFunc), typeof(MetadataValidatorFunc), ServiceLifetime.Singleton);
-    private readonly ServiceDescriptor allowEmptyMetadataDescriptor = new(typeof(AllowEmptyMetadataFunc), typeof(AllowEmptyMetadataFunc), ServiceLifetime.Singleton);
 
     private readonly IServiceCollection services;
 
@@ -73,7 +71,7 @@ public sealed class TusBuilder
     /// <returns>builder</returns>
     public TusBuilder SetMetadataValidator(Func<Dictionary<string, string>, bool> validator)
     {
-        services.Remove(metadataValidatorDescriptor);
+        services.RemoveAll(typeof(MetadataValidatorFunc));
         services.TryAddSingleton<MetadataValidatorFunc>(provider => (m) => validator(m));
         return this;
     }
@@ -86,7 +84,7 @@ public sealed class TusBuilder
     /// <returns>builder</returns>
     public TusBuilder AllowEmptyMetadata(bool allow)
     {
-        services.Remove(allowEmptyMetadataDescriptor);
+        services.RemoveAll(typeof(AllowEmptyMetadataFunc));
         services.TryAddSingleton<AllowEmptyMetadataFunc>(provider => () => allow);
         return this;
     }
