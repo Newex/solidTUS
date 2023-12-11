@@ -131,6 +131,11 @@ The `TusUpload` attribute is responsible for:
 1. Storing upload data from the client
 2. Keeping the `UploadFileInfo` in-sync with upload
 
+The `TusDelete` attribute is responsible for:
+
+1. Terminating an upload
+2. Must have the same endpoint route as `TusUpload`
+
 # Limitations
 
 The library current limitations, are:
