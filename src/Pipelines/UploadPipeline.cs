@@ -44,7 +44,7 @@ internal static class UploadPipeline
         if (isPatch)
         {
             tusResult = await tusResult.Bind(async c => await uploadFlow.PreUploadAsync(c, fileId, cancel));
-            tusResult.Deconstruct(out var isSuccess, out var isFailure, out var result, out var error);
+            var (isSuccess, isFailure, result, error) = tusResult;
             if (isFailure)
             {
                 return error;
@@ -76,8 +76,7 @@ internal static class UploadPipeline
             return HttpError.InternalServerError();
         }
 
-        post.Deconstruct(out var _, out var isFailure, out var result, out var postError);
-
+        var (_, isFailure, result, postError) = post;
         if (isFailure)
         {
             return postError;
