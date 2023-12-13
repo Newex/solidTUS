@@ -6,10 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
 using SolidTUS.Pipelines;
-
+using SolidTUS.ProtocolFlows;
 using static Microsoft.AspNetCore.Http.HttpMethods;
 
 namespace SolidTUS.Attributes;
@@ -58,7 +59,8 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         var http = context.HttpContext;
         var fileId = http.GetRouteValue(FileIdParameterName)?.ToString() ?? string.Empty;
 
-        var pre = await UploadPipeline.PreUpload(http, fileId);
+        var uploadFlow = context.HttpContext.RequestServices.GetService<UploadFlow>();
+        var pre = await UploadPipeline.Begin(http, fileId, uploadFlow);
         if (pre.TryGetValue(out var error))
         {
             http.AddHeaderErrors(error);
@@ -69,7 +71,6 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
             return;
         }
 
-        http.Response.OnStarting(UploadPipeline.SetHeadersCallback, http);
         await next();
     }
 

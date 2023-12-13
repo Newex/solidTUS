@@ -14,7 +14,7 @@ namespace SolidTUS.Pipelines;
 
 internal static class UploadPipeline
 {
-    public static async ValueTask<Maybe<HttpError>> PreUpload(HttpContext context, string? fileId)
+    public static async ValueTask<Maybe<HttpError>> Begin(HttpContext context, string? fileId, UploadFlow? uploadFlow)
     {
         var request = context.Request;
         var isHead = IsHead(request.Method);
@@ -28,7 +28,6 @@ internal static class UploadPipeline
         var response = context.Response;
         var cancel = context.RequestAborted;
 
-        var uploadFlow = context.RequestServices.GetService<UploadFlow>();
         if (uploadFlow is null || fileId is null)
         {
             return HttpError.InternalServerError("Internal server error");
@@ -44,7 +43,7 @@ internal static class UploadPipeline
         if (isPatch)
         {
             tusResult = await tusResult.Bind(async c => await uploadFlow.PreUploadAsync(c, fileId, cancel));
-            var (isSuccess, isFailure, result, error) = tusResult;
+            var (_, isFailure, result, error) = tusResult;
             if (isFailure)
             {
                 return error;
@@ -53,16 +52,18 @@ internal static class UploadPipeline
             context.Items[TusResult.Name] = result;
         }
 
+        context.Response.OnStarting(SetHeadersCallback, context);
         return Maybe<HttpError>.None;
     }
 
-    public static Task SetHeadersCallback(object? state)
+    private static Task SetHeadersCallback(object? state)
     {
         var ctx = (HttpContext)state!;
         var post = Post(ctx);
         if (post.TryGetError(out var error))
         {
             ctx.AddHeaderErrors(error);
+            ctx.Response.StatusCode = error.StatusCode;
             return Task.CompletedTask;
         }
 
