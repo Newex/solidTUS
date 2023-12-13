@@ -2,17 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using CSharpFunctionalExtensions;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
-using SolidTUS.Models;
-using SolidTUS.ProtocolFlows;
+using SolidTUS.Pipelines;
 
 using static Microsoft.AspNetCore.Http.HttpMethods;
 
@@ -62,7 +58,7 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         var http = context.HttpContext;
         var fileId = http.GetRouteValue(FileIdParameterName)?.ToString() ?? string.Empty;
 
-        var pre = await UploadLogic.Pre(http, fileId);
+        var pre = await UploadPipeline.PreUpload(http, fileId);
         if (pre.TryGetValue(out var error))
         {
             http.AddHeaderErrors(error);
@@ -73,7 +69,7 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
             return;
         }
 
-        http.Response.OnStarting(UploadLogic.SetHeadersCallback, http);
+        http.Response.OnStarting(UploadPipeline.SetHeadersCallback, http);
         await next();
     }
 

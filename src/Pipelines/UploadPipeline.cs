@@ -6,14 +6,15 @@ using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
 using SolidTUS.Models;
+using SolidTUS.ProtocolFlows;
 
 using static Microsoft.AspNetCore.Http.HttpMethods;
 
-namespace SolidTUS.ProtocolFlows;
+namespace SolidTUS.Pipelines;
 
-internal static class UploadLogic
+internal static class UploadPipeline
 {
-    public static async ValueTask<Maybe<HttpError>> Pre(HttpContext context, string? fileId)
+    public static async ValueTask<Maybe<HttpError>> PreUpload(HttpContext context, string? fileId)
     {
         var request = context.Request;
         var isHead = IsHead(request.Method);
