@@ -50,7 +50,7 @@ public static class HttpContextExtensions
 
         if (context.Items[TusResult.Name] is not TusResult tusResult)
         {
-            throw new InvalidOperationException("Must have TusCreation attribute to start accepting tus uploads");
+            throw new InvalidOperationException("Can only use this method in conjuction with either endpoint filter or action filter.");
         }
 
         resource.SetDetails(creationContext, tusResult);
@@ -80,7 +80,7 @@ public static class HttpContextExtensions
     {
         if (context.Items[TusResult.Name] is not TusResult request)
         {
-            throw new InvalidOperationException("Must have TusCreation or TusUpload attribute to access tus metadata");
+            throw new InvalidOperationException("Can only use this method in conjuction with either endpoint filter or action filter.");
         }
 
         return request.Metadata;
@@ -113,11 +113,19 @@ public static class HttpContextExtensions
 
         if (context.Items[TusResult.Name] is not TusResult tusResult)
         {
-            throw new InvalidOperationException("Must have TusUpload attribute to start appending data from client");
+            throw new InvalidOperationException("Can only use this method in conjuction with either endpoint filter or action filter.");
         }
 
         var result = await uploadHandler.HandleUploadAsync(context.Request.BodyReader, uploadContext, tusResult, context.RequestAborted);
         context.Items[UploadResultName] = result;
+    }
+
+    internal static void AddHeaderErrors(this HttpContext context, HttpError error)
+    {
+        foreach (var (key, value) in error.Headers)
+        {
+            context.Response.Headers.TryAdd(key, value);
+        }
     }
 
     /// <summary>

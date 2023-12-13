@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -59,103 +60,20 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         var http = context.HttpContext;
-        var request = http.Request;
+        var fileId = http.GetRouteValue(FileIdParameterName)?.ToString() ?? string.Empty;
 
-        var isHead = IsHead(request.Method);
-        var isPatch = IsPatch(request.Method) || (IsPost(request.Method) && IsPatch(request.Headers[TusHeaderNames.HttpMethodOverride]!));
-
-        if (!isHead && !isPatch)
+        var pre = await UploadLogic.Pre(http, fileId);
+        if (pre.TryGetValue(out var error))
         {
-            // Skip to next
-            await next();
-            return;
-        }
-
-        var response = http.Response;
-        var cancel = context.HttpContext.RequestAborted;
-
-        var uploadFlow = http.RequestServices.GetService<UploadFlow>();
-        if (uploadFlow is null)
-        {
-            context.Result = new ObjectResult("Internal server error")
+            http.AddHeaderErrors(error);
+            context.Result = new ObjectResult(error.Message)
             {
-                StatusCode = 500
+                StatusCode = error.StatusCode
             };
             return;
         }
 
-        var fileId = http.GetRouteValue(FileIdParameterName)?.ToString() ?? string.Empty;
-        var tusResult = TusResult.Create(request, response);
-
-        if (isHead)
-        {
-            tusResult = await tusResult.Bind(async c => await uploadFlow.GetUploadStatusAsync(c, fileId, cancel));
-            if (tusResult.TryGetError(out var error))
-            {
-                context.Result = new ObjectResult(error.Message)
-                {
-                    StatusCode = error.StatusCode
-                };
-                return;
-            }
-
-            return;
-        }
-
-        if (isPatch)
-        {
-            tusResult = await tusResult.Bind(async c => await uploadFlow.PreUploadAsync(c, fileId, cancel));
-            if (tusResult.TryGetError(out var error))
-            {
-                // Short circuit on error
-                context.Result = new ObjectResult(error.Message)
-                {
-                    StatusCode = error.StatusCode
-                };
-                return;
-            }
-
-            tusResult.TryGetValue(out var actual);
-            context.HttpContext.Items[TusResult.Name] = actual;
-
-            // Callback before sending headers add all TUS headers
-            context.HttpContext.Response.OnStarting(state =>
-            {
-                var ctx = (ActionExecutingContext)state;
-                var uploadFlow = http.RequestServices.GetService<UploadFlow>();
-                if (uploadFlow is null)
-                {
-                    ctx.Result = new ObjectResult("Internal server error")
-                    {
-                        StatusCode = 500
-                    };
-                    return Task.CompletedTask;
-                }
-
-                if (ctx.HttpContext.Items[HttpContextExtensions.UploadResultName] is not Result<TusResult, HttpError> postAction)
-                {
-                    ctx.Result = new ObjectResult("Internal server error")
-                    {
-                        StatusCode = 500
-                    };
-                    return Task.CompletedTask;
-                }
-
-                if (postAction.TryGetError(out var postError))
-                {
-                    ctx.Result = new ObjectResult(postError.Message)
-                    {
-                        StatusCode = postError.StatusCode
-                    };
-                    return Task.CompletedTask;
-                }
-
-                postAction.Map(uploadFlow.PostUpload);
-                return Task.CompletedTask;
-            }, context);
-        }
-
-        // Consider try catch ?! to move the
+        http.Response.OnStarting(UploadLogic.SetHeadersCallback, http);
         await next();
     }
 

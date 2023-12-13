@@ -17,31 +17,38 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.Map("", () => "yoo");
-
-var summaries = new[]
+app.MapTusUpload("/{fileId}", async (HttpContext http, string fileId) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    var upload = http
+        .TusUpload(fileId)
+        .OnUploadFinished(info =>
+        {
+            Console.WriteLine($"Finished upload ${info.OnDiskFilename}");
+            return Task.CompletedTask;
+        })
+        .Build();
+    await http.StartAppendDataAsync(upload);
+    return Results.NoContent();
+});
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+
+// app
+//     .MapGet(
+//         "/message/{hello}",
+//         (HttpContext ctx, string hello) =>
+//         {
+//             ctx.Response.Headers.Clear();
+//             return Results.Ok();
+//         }
+//     )
+//     .AddEndpointFilter(async (ctx, next) =>
+//     {
+//         var headers = ctx.HttpContext.Response.Headers;
+//         var input = ctx.GetArgument<string>(1);
+//         headers.TryAdd("MyHeaders", input);
+//         await next(ctx);
+//         return Results.NoContent();
+//         // return await next(ctx);
+//     });
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

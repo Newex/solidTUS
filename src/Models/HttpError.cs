@@ -1,3 +1,4 @@
+using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
 
 namespace SolidTUS.Models;
@@ -79,4 +80,18 @@ public record struct HttpError(int StatusCode, IHeaderDictionary Headers, string
     /// <param name="message">Optional message</param>
     /// <returns>An http error</returns>
     public static HttpError InternalServerError(string? message = null) => new(500, new HeaderDictionary(), message);
+
+    /// <summary>
+    /// Convert error to <see cref="Microsoft.AspNetCore.Http.IResult"/>
+    /// </summary>
+    /// <returns>A response result</returns>
+    public readonly Microsoft.AspNetCore.Http.IResult ToResponseResult
+    {
+        get
+        {
+            return !string.IsNullOrWhiteSpace(Message)
+                ? Results.Text(Message, "text/plain", statusCode: StatusCode)
+                : Results.StatusCode(StatusCode);
+        }
+    }
 }

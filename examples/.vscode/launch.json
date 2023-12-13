@@ -21,6 +21,22 @@
             }
         },
         {
+            "name": "minimal",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-minimal",
+            "program": "${workspaceFolder}/minimalapi/bin/Debug/net8.0/MinimalApi.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/minimalapi",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/minimalapi/Views"
+            }
+        },
+        {
             "name": "sveltedotnet",
             "type": "coreclr",
             "request": "launch",
