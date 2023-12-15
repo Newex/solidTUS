@@ -135,6 +135,14 @@ public static class HttpContextExtensions
         }
     }
 
+    internal static void SetErrorHeaders(this HttpContext context, HttpError error)
+    {
+        foreach (var (key, value) in error.Headers)
+        {
+            context.Response.Headers.Append(key, value);
+        }
+    }
+
     /// <summary>
     /// The result of the <see cref="StartCreationAsync(HttpContext, TusCreationContext)"/> stored in <see cref="HttpContext.Items"/>
     /// </summary>

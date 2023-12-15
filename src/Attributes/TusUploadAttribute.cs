@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Constants;
+using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.ProtocolFlows;
 using static Microsoft.AspNetCore.Http.HttpMethods;
@@ -98,7 +99,18 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         }
 
         tusResult = await tusResult.Bind(async c => await uploadFlow.PreUploadAsync(c, fileId, cancel));
-        context.HttpContext.Items[TusResult.Name] = tusResult;
+        var (isSuccess, isFailure, tus, error) = tusResult;
+        if (isFailure)
+        {
+            http.SetErrorHeaders(error);
+            context.Result = new ObjectResult(error.Message)
+            {
+                StatusCode = error.StatusCode
+            };
+            return;
+        }
+
+        context.HttpContext.Items[TusResult.Name] = tus;
         await next();
     }
 
