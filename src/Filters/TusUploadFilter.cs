@@ -1,8 +1,8 @@
 using System.Threading.Tasks;
+using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using SolidTUS.Extensions;
-using SolidTUS.Pipelines;
+using SolidTUS.Models;
 using SolidTUS.ProtocolFlows;
 
 namespace SolidTUS.Filters;
@@ -20,14 +20,15 @@ internal class TusUploadFilter : IEndpointFilter
     {
         var fileId = context.GetArgument<string>(index);
         var http = context.HttpContext;
-        var uploadFlow = context.HttpContext.RequestServices.GetService<UploadFlow>();
-        var upload = await UploadPipeline.Begin(http, fileId, uploadFlow);
-        if (upload.TryGetValue(out var error))
+        if (context.HttpContext.RequestServices.GetService<UploadFlow>() is not UploadFlow uploadFlow)
         {
-            http.AddHeaderErrors(error);
-            return error.ToResponseResult;
+            return Results.StatusCode(500);
         }
 
+        var tusResult = await TusResult
+            .Create(context.HttpContext.Request, context.HttpContext.Response)
+            .Bind(async c => await uploadFlow.PreUploadAsync(c, fileId, context.HttpContext.RequestAborted));
+        context.HttpContext.Items[TusResult.Name] = tusResult;
         var result = await next(context);
 
         // Force to 204 no content or keep error

@@ -2,14 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
+using CSharpFunctionalExtensions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Constants;
-using SolidTUS.Extensions;
-using SolidTUS.Pipelines;
+using SolidTUS.Models;
 using SolidTUS.ProtocolFlows;
 using static Microsoft.AspNetCore.Http.HttpMethods;
 
@@ -59,18 +60,45 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         var http = context.HttpContext;
         var fileId = http.GetRouteValue(FileIdParameterName)?.ToString() ?? string.Empty;
 
-        var uploadFlow = context.HttpContext.RequestServices.GetService<UploadFlow>();
-        var pre = await UploadPipeline.Begin(http, fileId, uploadFlow);
-        if (pre.TryGetValue(out var error))
+        if (context.HttpContext.RequestServices.GetService<UploadFlow>() is not UploadFlow uploadFlow)
         {
-            http.AddHeaderErrors(error);
-            context.Result = new ObjectResult(error.Message)
+            context.Result = new ObjectResult("Internal server error")
             {
-                StatusCode = error.StatusCode
+                StatusCode = 500
             };
             return;
         }
 
+        var isHead = IsHead(http.Request.Method);
+        var isPatch = IsPatch(http.Request.Method) || (IsPost(http.Request.Method) && IsPatch(http.Request.Headers[TusHeaderNames.HttpMethodOverride]!));
+
+        var tusResult = TusResult.Create(context.HttpContext.Request, context.HttpContext.Response);
+        var cancel = context.HttpContext.RequestAborted;
+        if (isHead)
+        {
+            var status = await tusResult.Bind(async c => await uploadFlow.GetUploadStatusAsync(c, fileId, cancel));
+            var (statusSuccess, statusFailure, statusResult, statusError) = status;
+            var headers = statusSuccess ? statusResult.ResponseHeaders : statusError.Headers;
+            foreach (var (key, value) in headers)
+            {
+                context.HttpContext.Response.Headers.Append(key, value);
+            }
+
+            context.HttpContext.Response.StatusCode = statusSuccess ? 200 : statusError.StatusCode;
+            return;
+        }
+
+        if (!isPatch)
+        {
+            context.Result = new ObjectResult("Must be a PATCH or X-HTTP-Method-Override request to upload to a TUS endpoint")
+            {
+                StatusCode = 400
+            };
+            return;
+        }
+
+        tusResult = await tusResult.Bind(async c => await uploadFlow.PreUploadAsync(c, fileId, cancel));
+        context.HttpContext.Items[TusResult.Name] = tusResult;
         await next();
     }
 

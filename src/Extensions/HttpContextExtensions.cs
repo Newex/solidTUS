@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
+using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Builders;
 using SolidTUS.Contexts;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
+using SolidTUS.ProtocolFlows;
 
 namespace SolidTUS.Extensions;
 
@@ -103,12 +104,13 @@ public static class HttpContextExtensions
     /// <param name="context">The http context</param>
     /// <param name="uploadContext">The tus upload settings</param>
     /// <returns>An awaitable task</returns>
-    /// <exception cref="InvalidOperationException">Thrown when missing TusUpload attribute</exception>
+    /// <exception cref="InvalidOperationException">Thrown when SolidTus is not registered on startup</exception>
     public static async Task StartAppendDataAsync(this HttpContext context, TusUploadContext uploadContext)
     {
-        if (context.RequestServices.GetService(typeof(UploadHandler)) is not UploadHandler uploadHandler)
+        if (context.RequestServices.GetService(typeof(UploadHandler)) is not UploadHandler uploadHandler
+        || context.RequestServices.GetService(typeof(UploadFlow)) is not UploadFlow uploadFlow)
         {
-            throw new UnreachableException();
+            throw new InvalidOperationException("Remember to register SolidTUS on program startup");
         }
 
         if (context.Items[TusResult.Name] is not TusResult tusResult)
@@ -116,15 +118,20 @@ public static class HttpContextExtensions
             throw new InvalidOperationException("Can only use this method in conjuction with either endpoint filter or action filter.");
         }
 
-        var result = await uploadHandler.HandleUploadAsync(context.Request.BodyReader, uploadContext, tusResult, context.RequestAborted);
-        context.Items[UploadResultName] = result;
-    }
+        var cancel = context.RequestAborted;
+        var upload = await uploadHandler.HandleUploadAsync(context.Request.BodyReader, uploadContext, tusResult, cancel);
 
-    internal static void AddHeaderErrors(this HttpContext context, HttpError error)
-    {
-        foreach (var (key, value) in error.Headers)
+        // POST result handling
+        var result = upload.Map(uploadFlow.PostUpload);
+        if (result.TryGetError(out var error))
         {
-            context.Response.Headers.TryAdd(key, value);
+            context.Response.StatusCode = error.StatusCode;
+        }
+
+        var headers = result.Match(s => s.ResponseHeaders, e => e.Headers);
+        foreach (var (key, value) in headers)
+        {
+            context.Response.Headers.Append(key, value);
         }
     }
 
@@ -132,9 +139,4 @@ public static class HttpContextExtensions
     /// The result of the <see cref="StartCreationAsync(HttpContext, TusCreationContext)"/> stored in <see cref="HttpContext.Items"/>
     /// </summary>
     public const string CreationResultName = "__SolidTusCreationUploadInfo__";
-
-    /// <summary>
-    /// The result of the start appending data method
-    /// </summary>
-    public const string UploadResultName = "__SolidTusUploadResult__";
 }
