@@ -30,6 +30,10 @@ Extensions:
 \* Checksum feature does not implement the trailing header feature, i.e. A checksum value must be provided upon sending the http request.  
 \** Termination must be implemented by yourself. See examples and [documentation](https://github.com/Newex/solidTUS/wiki/TUS-Termination) on how to and why.
 
+**Other:**  
+The API is not stable, still trying to find an easy to use and understandable API - thus I might experiment and change usage.  
+Versioning does not follow semantic versioning.
+
 ### Other TUS libraries for C#
 * [tusdotnet](https://github.com/tusdotnet/tusdotnet)
 
