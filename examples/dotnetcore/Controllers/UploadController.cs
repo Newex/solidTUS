@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -13,14 +15,17 @@ namespace ExampleSite.Controllers;
 [Route("upload")]
 public class UploadController : ControllerBase
 {
+    private readonly IEnumerable<EndpointDataSource> endpointsSources;
     private readonly IUploadStorageHandler uploadStorageHandler;
     private readonly IUploadMetaHandler uploadMetaHandler;
 
     public UploadController(
+        IEnumerable<EndpointDataSource> endpointsSources,
         IUploadStorageHandler uploadStorageHandler,
         IUploadMetaHandler uploadMetaHandler
     )
     {
+        this.endpointsSources = endpointsSources;
         this.uploadStorageHandler = uploadStorageHandler;
         this.uploadMetaHandler = uploadMetaHandler;
     }
@@ -69,10 +74,10 @@ public class UploadController : ControllerBase
         var ctx = HttpContext
             .TusCreation(id)
             .SetRouteName("CustomRouteNameUpload")
-            .Build("{fileId}/hello/{name}", "fileId", ("name", "World"));
+            .Build("fileId", ("name", "World"));
 
-        // Start creation (IuploadStorageHandler.CreateResource())
-        await HttpContext.StartCreationAsync(ctx);
+        // Start creation (IUploadStorageHandler.CreateResource())
+        await ctx.StartCreationAsync(HttpContext);
 
         // Converts a success to 201 created
         return Ok();
@@ -85,7 +90,7 @@ public class UploadController : ControllerBase
         var ctx = HttpContext
             .TusUpload(fileId)
             .Build();
-        await HttpContext.StartAppendDataAsync(ctx);
+        await ctx.StartAppendDataAsync(HttpContext);
 
         // Must always return 204 on upload success with no Body content
         return NoContent();
@@ -138,5 +143,34 @@ public class UploadController : ControllerBase
         await uploadStorageHandler.DeleteFileAsync(info, cancellationToken);
         await uploadMetaHandler.DeleteUploadFileInfoAsync(info, cancellationToken);
         return NoContent();
+    }
+
+    [HttpGet]
+    public ActionResult GetEndpoints()
+    {
+        var endpoints = endpointsSources.SelectMany(es => es.Endpoints).OfType<RouteEndpoint>();
+        var createRoute = "";
+        var createName = "";
+        var uploadRoute = "";
+        var uploadName = "";
+        foreach (var endpoint in endpoints)
+        {
+            if (endpoint.Metadata.OfType<TusCreationAttribute>().Any())
+            {
+                createRoute = endpoint.RoutePattern.RawText;
+                createName = endpoint.Metadata.OfType<RouteNameMetadata>().FirstOrDefault()?.RouteName;
+                // RouteNameMetadata
+            }
+            else if (endpoint.Metadata.OfType<TusUploadAttribute>().Any())
+            {
+                uploadRoute = endpoint.RoutePattern.RawText;
+                uploadName = endpoint.Metadata.OfType<RouteNameMetadata>().FirstOrDefault()?.RouteName;
+            }
+        }
+
+        var metadata = endpoints.Select(m => m.Metadata);
+        var test = metadata.SelectMany(m => m);
+
+        throw new NotImplementedException();
     }
 }

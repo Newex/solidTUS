@@ -32,7 +32,7 @@ public interface ILinkGeneratorWrapper
 public class LinkGeneratorWrapper : ILinkGeneratorWrapper
 {
     private readonly LinkGenerator linkGenerator;
-    private readonly RouteValueDictionary routeValueDictionary = new();
+    private readonly RouteValueDictionary routeValueDictionary = [];
 
     /// <summary>
     /// Instantiate a new wrapper
@@ -44,7 +44,7 @@ public class LinkGeneratorWrapper : ILinkGeneratorWrapper
     }
 
     /// <inheritdoc />
-    public string? GetPathByName(string routeName, (string, object) fileIdRouteValue, params (string Key, object Value)[] routeValues)
+    public string? GetPathByName(string routeName, (string, object) fileIdRouteValue, params (string, object)[] routeValues)
     {
         foreach (var (key, value) in routeValues)
         {

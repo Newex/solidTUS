@@ -30,6 +30,10 @@ Extensions:
 \* Checksum feature does not implement the trailing header feature, i.e. A checksum value must be provided upon sending the http request.  
 \** Termination must be implemented by yourself. See examples and [documentation](https://github.com/Newex/solidTUS/wiki/TUS-Termination) on how to and why.
 
+**Other:**  
+The API is not stable, still trying to find an easy to use and understandable API - thus I might experiment and change usage.  
+Versioning does not follow semantic versioning.
+
 ### Other TUS libraries for C#
 * [tusdotnet](https://github.com/tusdotnet/tusdotnet)
 
@@ -47,29 +51,119 @@ Register the service in the startup process:
 builder.Services.AddTUS();
 ```
 
+## Using MVC
 In your `Controller` add the `TusCreation`-attribute to the action method endpoint.
 
-![create_upload](/assets/tus-creation-method.png)
+### Get upload info
+```csharp
+[TusCreation("/upload/{myArg}")]
+[Microsoft.AspNetCore.Mvc.RequestSizeLimit(5_000_000_000)]
+public async Task<ActionResult> CreateFileInfo(string myArg)
+{
+    // Create a globally unique file id string
+    var myFileId = Guid.NewGuid().ToString("N");
 
-The `builder` has multiple configuration options that can be tweaked, see the wiki for more configurations.
+    // Read Metadata
+    var metadata = HttpContext.TusMetadata();
+    if (metadata is not null)
+    {
+        // The client (uploader) sets the metadata
+        // so they may not exist
+        var filename = metadata["filename"];
+        var mime = metadata["contentType"];
+        Console.WriteLine("Filename is: {0}\nMime-type is: {1}", filename, mime);
+    }
+
+    // Construct upload URL
+    TusCreationContext ctx = HttpContext
+        .TusCreation(myFileId)
+        .Build("fileId", ("name", "World"));
+        // Must provide the name of the file id parameter
+        // and any additional parameters for the endpoint
+
+    // Note if the request contains upload data in the body
+    // This will start the upload - normally upload data is
+    // done on TusUpload endpoint.
+    await ctx.StartCreationAsync(HttpContext);
+
+    // Converts a success to 201 created
+    // With a Location header to the upload URL
+    return Ok();
+}
+```
 
 This will not upload any file (unless the client explicitly uses the TUS-extension `Creation-With-Upload` feature).  
 This only sets the ground work for getting information such as file size, and where to upload the data.
 
-The `routeTemplate` argument must match the actual route template for the `TusUpload` endpoint and the `fileIdParameterName` 
-MUST match the one in the route template.
+When building the `TusCreationContext ctx` the `Build` method must have the name of the parameter name for the file id.
+Any extra arguments should be in the tuple format `("parameterName", "value")`.
 
 The upload URL is constructed using these values to set the Location header, furthermore, these values will be used when decoding `Upload-Concat` requests from the client.
 
+The `RequestSizeLimit` is the actual allowed upload size when using `Creation-With-Upload` TUS-extension, which is different from the `TusOptions.MaxSize`. The `TusOptions.MaxSize` checks the `Content-Length` header if it is within the limit.
 
-Next the upload.
+### Next the upload
 
-![start_upload](/assets/tus-upload-method.png)
+```csharp
+[TusUpload("{fileId}/hello/{name}")]
+[RequestSizeLimit(5_000_000_000)]
+public async Task<ActionResult> Upload(string fileId, string name)
+{
+    var ctx = HttpContext
+        .TusUpload(fileId)
+        .Build();
+    await ctx.StartAppendDataAsync(HttpContext);
 
-Both the extension methods for the `HttpContext` live in `SolidTUS.Extensions` namespace.  
+    // Must always return 204 on upload success with no Body content
+    return NoContent();
+}
+```
+
 _And done..._
 
-Congratulations you now have a very basic upload / pause / resume functionality. If you want to add [TUS-termination](https://tus.io/protocols/resumable-upload#termination) then you can add the `TusDelete` attribute to an action. The only requirement is that you ensure the route to the upload endpoint matches the route to the termination endpoint. To see how to implement `Tus-Termination` endpoint or how to configure parallel uploads see the [wiki](https://github.com/Newex/solidTUS/wiki).
+Congratulations you now have a very basic upload / pause / resume functionality.
+
+## Using minimal API
+Add an endpoint to your minimal api:
+
+```csharp
+app.MapTusCreation("/upload/{myArg}", async (HttpContext context, string myArg) =>
+{
+    var myFileId = Guid.NewGuid().ToString("N");
+    var create = context
+        .TusCreation(myFileId)
+        .Build("fileId", ("hello", "world"));
+
+    await create.StartCreationAsync(context);
+
+    // A success will be converted to 201
+    // with a Location header pointing to the upload endpoint
+    return Results.Ok();
+});
+```
+
+Then define the upload endpoint:
+
+```csharp
+app.MapTusUpload("/upload/{fileId}/{hello}", async (HttpContext http, string fileId, string hello) =>
+{
+    var upload = http
+        .TusUpload(fileId)
+        .Build();
+    await upload.StartAppendDataAsync(http);
+    return Results.NoContent();
+});
+```
+
+Important: The fileId in the `MapTusUpload` method assumes that the 2nd parameter is `fileId` (index = 1).  
+To change it call the `MapTusUpload` method like so:
+
+```csharp
+app.MapTusUpload("/upload/{fileId}/{hello}", async (string fileId, [FromServices] HttpContext http, string hello) =>
+{
+    // ... Omitted
+}, fileIdIndex: 0);
+```
 
 # Extra options
 To see all the configurations go to the [wiki](https://github.com/Newex/solidTUS/wiki).
@@ -85,7 +179,8 @@ builder.Services
   .AllowEmptyMetadata(true)
   .Configuration(options =>
   {
-    // This max size is different than the ASP.NET specified max size. To change the request size limit do it per Action with an attribute (recommended).
+    // This max size is different than the ASP.NET specified max size.
+    // To change the request size limit do it per Action with an attribute (recommended).
     options.MaxSize = 5_000_000_000;
   });
 ```
@@ -197,6 +292,8 @@ Using unit tests and manually making TUS-request with the official javascript cl
 - [ ] Create wiki pages for all the configuration options
 - [ ] Create wiki pages for library design, and how to extend
 - [ ] Add section in readme for examples
+- [ ] Make `TusDeleteAttribute` automatically detect upload url template
+- [ ] Add `TusDelete` minimal API extension
 
 # References
 * [TUS-protocol](https://tus.io/protocols/resumable-upload.html#core-protocol)

@@ -1,0 +1,30 @@
+@minimalapi_HostAddress = http://localhost:5151
+
+# Create tus upload
+@location = response.location
+
+POST {{minimalapi_HostAddress}}/create
+Content-Length: 0
+Upload-Length: 5
+Tus-Resumable: 1.0.0
+Content-Type: application/offset+octet-stream
+
+###
+
+PATCH {{minimalapi_HostAddress}}/upload/random_fileId/world
+Content-Type: application/offset+octet-stream
+Content-Length: 5
+Upload-Offset: 0
+Tus-Resumable: 1.0.0
+
+Hello
+
+###
+
+HEAD {{minimalapi_HostAddress}}/upload/random_fileId/world
+Tus-Resumable: 1.0.0
+
+
+###
+
+OPTIONS {{minimalapi_HostAddress}}/create
