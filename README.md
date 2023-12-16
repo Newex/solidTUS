@@ -121,7 +121,49 @@ public async Task<ActionResult> Upload(string fileId, string name)
 
 _And done..._
 
-Congratulations you now have a very basic upload / pause / resume functionality. If you want to add [TUS-termination](https://tus.io/protocols/resumable-upload#termination) then you can add the `TusDelete` attribute to an action. The only requirement is that you ensure the route to the upload endpoint matches the route to the termination endpoint. To see how to implement `Tus-Termination` endpoint or how to configure parallel uploads see the [wiki](https://github.com/Newex/solidTUS/wiki).
+Congratulations you now have a very basic upload / pause / resume functionality.
+
+## Minimal API
+Add an endpoint to your minimal api:
+
+```csharp
+app.MapTusCreation("/upload/{myArg}", async (HttpContext context, string myArg) =>
+{
+    var myFileId = Guid.NewGuid().ToString("N");
+    var create = context
+        .TusCreation(myFileId)
+        .Build("fileId", ("hello", "world"));
+
+    await create.StartCreationAsync(context);
+
+    // A success will be converted to 201
+    // with a Location header pointing to the upload endpoint
+    return Results.Ok();
+});
+```
+
+Then define the upload endpoint:
+
+```csharp
+app.MapTusUpload("/upload/{fileId}/{hello}", async (HttpContext http, string fileId, string hello) =>
+{
+    var upload = http
+        .TusUpload(fileId)
+        .Build();
+    await upload.StartAppendDataAsync(http);
+    return Results.NoContent();
+});
+```
+
+Important: The fileId in the `MapTusUpload` method assumes that the 2nd parameter is `fileId` (index = 1).  
+To change it call the `MapTusUpload` method like so:
+
+```csharp
+app.MapTusUpload("/upload/{fileId}/{hello}", async (string fileId, [FromServices] HttpContext http, string hello) =>
+{
+    // ... Omitted
+}, fileIdIndex: 0);
+```
 
 # Extra options
 To see all the configurations go to the [wiki](https://github.com/Newex/solidTUS/wiki).
@@ -137,7 +179,8 @@ builder.Services
   .AllowEmptyMetadata(true)
   .Configuration(options =>
   {
-    // This max size is different than the ASP.NET specified max size. To change the request size limit do it per Action with an attribute (recommended).
+    // This max size is different than the ASP.NET specified max size.
+    // To change the request size limit do it per Action with an attribute (recommended).
     options.MaxSize = 5_000_000_000;
   });
 ```
@@ -249,6 +292,8 @@ Using unit tests and manually making TUS-request with the official javascript cl
 - [ ] Create wiki pages for all the configuration options
 - [ ] Create wiki pages for library design, and how to extend
 - [ ] Add section in readme for examples
+- [ ] Make `TusDeleteAttribute` automatically detect upload url template
+- [ ] Add `TusDelete` minimal API extension
 
 # References
 * [TUS-protocol](https://tus.io/protocols/resumable-upload.html#core-protocol)
