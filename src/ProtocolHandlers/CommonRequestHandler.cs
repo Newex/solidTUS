@@ -87,9 +87,11 @@ internal class CommonRequestHandler
     /// <returns>A request context</returns>
     public static void SetUploadByteOffset(TusResult context)
     {
-        if (context.UploadFileInfo is not null)
+        var offset = context.UploadFileInfo?.ByteOffset ?? 0;
+        var hasUpload = context.RequestHeaders.ContentLength is not null and > 0;
+        if (context.UploadFileInfo is not null && (offset > 0 || hasUpload))
         {
-            context.ResponseHeaders.Append(TusHeaderNames.UploadOffset, context.UploadFileInfo?.ByteOffset.ToString());
+            context.ResponseHeaders.Append(TusHeaderNames.UploadOffset, offset.ToString());
         }
     }
 
