@@ -83,6 +83,9 @@ internal record TusResult
     /// </summary>
     public string? LocationUrl { get; internal set; }
 
+    internal string? UploadRouteTemplate { get; set; }
+    internal string? UploadRouteName { get; set; }
+
     /// <summary>
     /// Create new <see cref="TusResult"/> if request is supported by the server otherwise <see cref="HttpError"/>
     /// </summary>

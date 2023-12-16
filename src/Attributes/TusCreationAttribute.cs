@@ -8,13 +8,15 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Constants;
-using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.ProtocolFlows;
 using SolidTUS.ProtocolHandlers;
+using System.Diagnostics;
+using System.Linq;
+using Microsoft.AspNetCore.Routing;
+using Endpoints = System.Collections.Generic.IEnumerable<Microsoft.AspNetCore.Routing.EndpointDataSource>;
 
 using static Microsoft.AspNetCore.Http.HttpMethods;
-
 namespace SolidTUS.Attributes;
 
 /// <summary>
@@ -94,7 +96,37 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
                 throw new InvalidOperationException("Must register SolidTus on startup to use the functionalities");
             }
 
-            var result = TusResult.Create(request, response);
+            if (http.RequestServices.GetService<Endpoints>() is not Endpoints endpointSources)
+            {
+                throw new UnreachableException();
+            }
+
+            var endpoints = endpointSources.SelectMany(es => es.Endpoints).OfType<RouteEndpoint>();
+            string? uploadRoute = null;
+            string? uploadName = null;
+            foreach (var endpoint in endpoints)
+            {
+                if (endpoint.Metadata.OfType<TusUploadAttribute>().Any())
+                {
+                    uploadRoute = endpoint.RoutePattern.RawText;
+                    uploadName = endpoint.Metadata.OfType<RouteNameMetadata>().FirstOrDefault()?.RouteName;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(uploadRoute))
+            {
+                // TODO: Consider mix matching attribute + filters
+                // Minimal + Controllers
+                throw new InvalidOperationException("Must have a TUS upload endpoint route");
+            }
+
+            var result = TusResult
+                .Create(request, response)
+                .Map(c => c with
+                {
+                    UploadRouteName = uploadName,
+                    UploadRouteTemplate = uploadRoute
+                });
             result = result.Bind(creationFlow.PreResourceCreation);
             if (result.TryGetError(out var error))
             {
@@ -108,53 +140,6 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
             result.TryGetValue(out var ctx);
             context.HttpContext.Items[TusResult.Name] = ctx;
         }
-
-        response.OnStarting(state =>
-        {
-            var ctx = (ActionExecutingContext)state;
-            if (isPost)
-            {
-                if (ctx.HttpContext.Items[HttpContextExtensions.CreationResultName] is not Result<TusResult, HttpError> postAction)
-                {
-                    ctx.Result = new ObjectResult("Internal server error")
-                    {
-                        StatusCode = 500
-                    };
-                    return Task.CompletedTask;
-                }
-
-                if (postAction.TryGetError(out var error))
-                {
-                    ctx.Result = new ObjectResult(error.Message)
-                    {
-                        StatusCode = error.StatusCode
-                    };
-                    return Task.CompletedTask;
-                }
-
-                var creationFlow = http.RequestServices.GetService<CreationFlow>();
-                if (creationFlow is null)
-                {
-                    ctx.Result = new ObjectResult("Internal server error")
-                    {
-                        StatusCode = 500
-                    };
-                    return Task.CompletedTask;
-                }
-
-                var postCreation = postAction.Map(creationFlow.PostResourceCreation);
-                if (postCreation.TryGetError(out var postError))
-                {
-                    ctx.Result = new ObjectResult(postError.Message)
-                    {
-                        StatusCode = postError.StatusCode
-                    };
-                    return Task.CompletedTask;
-                }
-            }
-
-            return Task.CompletedTask;
-        }, context);
 
         await next();
     }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Net.Http.Headers;
 using SolidTUS.Builders;
 using SolidTUS.Contexts;
 using SolidTUS.Handlers;
@@ -27,49 +26,6 @@ public static class HttpContextExtensions
     public static TusCreationContextBuilder TusCreation(this HttpContext context, string fileId)
     {
         return new(fileId);
-    }
-
-    /// <summary>
-    /// Start either:
-    /// <para>
-    /// - Create single resource metadata, which could include upload data
-    /// </para>
-    /// <para>
-    /// - Create partial resource metadata
-    /// </para>
-    /// - Start merge partial resources into single file
-    /// </summary>
-    /// <param name="context">The http context</param>
-    /// <param name="creationContext">The tus creation context</param>
-    /// <returns>An awaitable task</returns>
-    public static async Task StartCreationAsync(this HttpContext context, TusCreationContext creationContext)
-    {
-        if (context.RequestServices.GetService(typeof(ResourceCreationHandler)) is not ResourceCreationHandler resource)
-        {
-            throw new InvalidOperationException("Remember to register SolidTUS on program startup");
-        }
-
-        if (context.Items[TusResult.Name] is not TusResult tusResult)
-        {
-            throw new InvalidOperationException("Can only use this method in conjuction with either endpoint filter or action filter.");
-        }
-
-        resource.SetDetails(creationContext, tusResult);
-        resource.SetPipeReader(context.Request.BodyReader);
-
-        var hasLength = long.TryParse(context.Request.Headers[HeaderNames.ContentLength], out var contentLength);
-        var isUpload = hasLength && contentLength > 0;
-        var cancel = context.RequestAborted;
-
-        var response = tusResult.PartialMode switch
-        {
-            PartialMode.None => await resource.CreateResourceAsync(isUpload, cancel),
-            PartialMode.Partial => await resource.CreateResourceAsync(isUpload, cancel),
-            PartialMode.Final => await resource.MergeFilesAsync(cancel),
-            _ => throw new NotImplementedException(),
-        };
-
-        context.Items[CreationResultName] = response;
     }
 
     /// <summary>
@@ -131,7 +87,7 @@ public static class HttpContextExtensions
         var headers = result.Match(s => s.ResponseHeaders, e => e.Headers);
         foreach (var (key, value) in headers)
         {
-            context.Response.Headers.Append(key, value);
+            context.Response.Headers.TryAdd(key, value);
         }
     }
 
@@ -142,9 +98,4 @@ public static class HttpContextExtensions
             context.Response.Headers.Append(key, value);
         }
     }
-
-    /// <summary>
-    /// The result of the <see cref="StartCreationAsync(HttpContext, TusCreationContext)"/> stored in <see cref="HttpContext.Items"/>
-    /// </summary>
-    public const string CreationResultName = "__SolidTusCreationUploadInfo__";
 }

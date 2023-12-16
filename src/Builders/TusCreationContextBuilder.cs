@@ -109,17 +109,15 @@ public sealed class TusCreationContextBuilder
     /// <summary>
     /// Construct the tus creation context used in the TUS request
     /// </summary>
-    /// <param name="routeTemplate">The route template</param>
     /// <param name="fileIdParameterName">The name of the parameter for the file id</param>
     /// <param name="routeValues">The extra route values</param>
     /// <returns>A tus creation context</returns>
-    public TusCreationContext Build(string routeTemplate, string fileIdParameterName, params (string, object)[] routeValues)
+    public TusCreationContext Build(string fileIdParameterName, params (string, object)[] routeValues)
     {
         return new TusCreationContext(
             fileId,
-            routeTemplate,
-            RouteName ?? EndpointNames.UploadEndpoint,
             fileIdParameterName,
+            RouteName,
             routeValues,
             Filename,
             Directory,
