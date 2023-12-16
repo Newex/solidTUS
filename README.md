@@ -51,7 +51,7 @@ Register the service in the startup process:
 builder.Services.AddTUS();
 ```
 
-## MVC
+## Using MVC
 In your `Controller` add the `TusCreation`-attribute to the action method endpoint.
 
 ### Get upload info
@@ -123,7 +123,7 @@ _And done..._
 
 Congratulations you now have a very basic upload / pause / resume functionality.
 
-## Minimal API
+## Using minimal API
 Add an endpoint to your minimal api:
 
 ```csharp
