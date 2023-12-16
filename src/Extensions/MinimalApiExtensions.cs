@@ -41,4 +41,27 @@ public static class MinimalApiExtensions
             .AddEndpointFilter(new TusStatusFilter(fileIdIndex))
             .AddEndpointFilter(new TusUploadFilter(fileIdIndex));
     }
+
+    /// <summary>
+    /// Maps an endpoint for TUS file creation.
+    /// </summary>
+    /// <param name="app">The web application</param>
+    /// <param name="route">The route path</param>
+    /// <param name="handler">The route handler</param>
+    /// <param name="routeName">Optional route name</param>
+    /// <returns>A route handler builder</returns>
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Does not give warning in a minimal api.")]
+    [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "Does not give warning in a minimal api.")]
+    public static RouteHandlerBuilder MapTusCreation(this WebApplication app,
+                                                        [StringSyntax("Route")] string route,
+                                                        Delegate handler,
+                                                        string? routeName = null)
+    {
+        return app
+            .Map(route, handler)
+            .WithName(routeName ?? EndpointNames.CreationEpoint)
+            .WithMetadata(new SolidTusMetadataEndpoint(EndpointNames.CreationEpoint, route, SolidTusEndpointType.Create))
+            .AddEndpointFilter(new TusDiscoveryFilter())
+            .AddEndpointFilter(new TusCreationFilter());
+    }
 }
