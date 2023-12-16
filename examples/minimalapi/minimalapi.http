@@ -14,3 +14,7 @@ PATCH http://localhost:5151/test
 Content-Length: 5
 Tus-Resumable: 1.0.0
 Hello
+
+###
+
+GET http://localhost:5151/test
