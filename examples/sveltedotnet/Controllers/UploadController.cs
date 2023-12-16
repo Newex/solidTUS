@@ -64,7 +64,7 @@ public class UploadController : ControllerBase
             return Task.CompletedTask;
         });
         var ctx = ctxBuilder.Build();
-        await HttpContext.StartAppendDataAsync(ctx);
+        await ctx.StartAppendDataAsync(HttpContext);
 
         // Must always return 204 on upload success with no Body content
         return NoContent();

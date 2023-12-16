@@ -90,7 +90,7 @@ public class UploadController : ControllerBase
         var ctx = HttpContext
             .TusUpload(fileId)
             .Build();
-        await HttpContext.StartAppendDataAsync(ctx);
+        await ctx.StartAppendDataAsync(HttpContext);
 
         // Must always return 204 on upload success with no Body content
         return NoContent();

@@ -43,7 +43,7 @@ app.MapTusUpload("/upload/{fileId}/{hello}", async (HttpContext http, string fil
             return Task.CompletedTask;
         })
         .Build();
-    await http.StartAppendDataAsync(upload);
+    await upload.StartAppendDataAsync(http);
     return Results.NoContent();
 });
 
