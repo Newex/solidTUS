@@ -118,12 +118,9 @@ internal partial class ConcatenationRequestHandler
         pattern = MyRegex().Replace(pattern, @"(?<$1>[^/]+)");
 
         var match = Regex.Match(input, pattern);
-        if (match.Success && match.Groups[token].Success)
-        {
-            return match.Groups[token].Value;
-        }
-
-        return null;
+        return match.Success && match.Groups[token].Success
+            ? match.Groups[token].Value
+            : null;
     }
 
     [GeneratedRegex(@"{([^:]+)(:[^}]+)?}")]
