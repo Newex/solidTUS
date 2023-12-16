@@ -76,7 +76,7 @@ public class UploadController : ControllerBase
             .SetRouteName("CustomRouteNameUpload")
             .Build("fileId", ("name", "World"));
 
-        // Start creation (IuploadStorageHandler.CreateResource())
+        // Start creation (IUploadStorageHandler.CreateResource())
         await ctx.StartCreationAsync(HttpContext);
 
         // Converts a success to 201 created
