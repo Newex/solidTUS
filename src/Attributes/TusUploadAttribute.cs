@@ -79,13 +79,11 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         {
             var status = await tusResult.Bind(async c => await uploadFlow.GetUploadStatusAsync(c, fileId, cancel));
             var (statusSuccess, statusFailure, statusResult, statusError) = status;
-            var headers = statusSuccess ? statusResult.ResponseHeaders : statusError.Headers;
-            foreach (var (key, value) in headers)
+            http.Response.StatusCode = statusSuccess ? 200 : statusError.StatusCode;
+            if (statusFailure)
             {
-                context.HttpContext.Response.Headers.Append(key, value);
+                http.SetErrorHeaders(statusError);
             }
-
-            context.HttpContext.Response.StatusCode = statusSuccess ? 200 : statusError.StatusCode;
             return;
         }
 
