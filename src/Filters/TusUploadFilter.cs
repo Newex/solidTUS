@@ -25,7 +25,7 @@ internal class TusUploadFilter : IEndpointFilter
         var isPatch = IsPatch(http.Request.Method) || (IsPost(http.Request.Method) && IsPatch(http.Request.Headers[TusHeaderNames.HttpMethodOverride]!));
         if (!isPatch)
         {
-            return Results.BadRequest("Must be a PATCH or X-HTTP-Method-Override request to upload to a TUS endpoint");
+            return Results.BadRequest("Must be a PATCH or POST X-HTTP-Method-Override request to upload to a TUS endpoint");
         }
 
         var fileId = context.GetArgument<string>(index);
