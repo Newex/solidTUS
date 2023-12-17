@@ -45,11 +45,8 @@ public sealed class UploadEndpointRouteHandlerBuilder : IEndpointConventionBuild
     [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "Does not give warning in a minimal api.")]
     public RouteHandlerBuilder WithTusDelete(Delegate delete)
     {
-        // 1. Add handler for the DELETE method
         routeHandlerBuilder = app
             .MapDelete(routeTemplate, delete)
-
-        // 2. Convert response to 204
             .AddEndpointFilter(async (context, next) =>
             {
                 var tusResult = TusResult.Create(context.HttpContext.Request, context.HttpContext.Response);
