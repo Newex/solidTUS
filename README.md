@@ -292,8 +292,6 @@ Using unit tests and manually making TUS-request with the official javascript cl
 - [ ] Create wiki pages for all the configuration options
 - [ ] Create wiki pages for library design, and how to extend
 - [ ] Add section in readme for examples
-- [ ] Make `TusDeleteAttribute` automatically detect upload url template
-- [ ] Add `TusDelete` minimal API extension
 
 # References
 * [TUS-protocol](https://tus.io/protocols/resumable-upload.html#core-protocol)
