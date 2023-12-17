@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,8 +11,10 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Constants;
+using SolidTUS.Extensions;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
+using Endpoints = System.Collections.Generic.IEnumerable<Microsoft.AspNetCore.Routing.EndpointDataSource>;
 
 namespace SolidTUS.Attributes;
 
@@ -62,7 +65,7 @@ public class TusDeleteAttribute : ActionFilterAttribute, IActionHttpMethodProvid
     /// <remarks>
     /// Default name is "SolidTusUploadEndpoint".
     /// </remarks>
-    public string? UploadNameEndpoint { get; set; } = EndpointNames.UploadEndpoint;
+    public string? UploadNameEndpoint { get; set; }
 
     /// <inheritdoc />
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -72,18 +75,32 @@ public class TusDeleteAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         var terminateRequest = context.HttpContext.RequestServices.GetService<TerminationRequestHandler>();
         if (terminateRequest is null)
         {
-            context.Result = new ObjectResult("Error")
+            context.Result = new ObjectResult("Internal server error")
             {
                 StatusCode = 500
             };
             return;
         }
 
+        if (context.HttpContext.RequestServices.GetService<Endpoints>() is not Endpoints endpointSources)
+        {
+            throw new UnreachableException();
+        }
+        var endpoints = endpointSources.SelectMany(es => es.Endpoints).OfType<RouteEndpoint>();
+        string? uploadName = null;
+        foreach (var endpoint in endpoints)
+        {
+            if (endpoint.Metadata.OfType<TusUploadAttribute>().Any())
+            {
+                uploadName = endpoint.Metadata.OfType<RouteNameMetadata>().FirstOrDefault()?.RouteName;
+            }
+        }
         var values = context.RouteData.Values.AsEnumerable().Where(x => x.Key != "action" && x.Key != "controller");
         var routeData = new RouteValueDictionary(values);
-        requestContext = requestContext.Bind(c => terminateRequest.ValidateRoute(c, Name, UploadNameEndpoint, routeData));
+        requestContext = requestContext.Bind(c => terminateRequest.ValidateRoute(c, Name, UploadNameEndpoint ?? uploadName ?? EndpointNames.UploadEndpoint, routeData));
         if (requestContext.TryGetError(out var error))
         {
+            context.HttpContext.SetErrorHeaders(error);
             context.Result = new ObjectResult(error.Message)
             {
                 StatusCode = error.StatusCode
