@@ -116,8 +116,8 @@ public class UploadController : ControllerBase
     }
 
     // Must have same route as the Upload route
-    [TusDelete("{fileId}", UploadNameEndpoint = "CustomRouteNameUpload")]
-    public async Task<ActionResult> DeleteUpload(string fileId, CancellationToken cancellationToken)
+    [TusDelete("{fileId}/hello/{name}", UploadNameEndpoint = "CustomRouteNameUpload")]
+    public async Task<ActionResult> DeleteUpload(string fileId, string name, CancellationToken cancellationToken)
     {
         // No questions asked - just delete
         var info = await uploadMetaHandler.GetResourceAsync(fileId, cancellationToken);
