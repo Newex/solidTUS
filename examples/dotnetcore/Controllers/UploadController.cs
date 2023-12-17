@@ -116,8 +116,8 @@ public class UploadController : ControllerBase
     }
 
     // Must have same route as the Upload route
-    [TusDelete("{fileId}", UploadNameEndpoint = "CustomRouteNameUpload")]
-    public async Task<ActionResult> DeleteUpload(string fileId, CancellationToken cancellationToken)
+    [TusDelete("{fileId}/hello/{name}", UploadNameEndpoint = "CustomRouteNameUpload")]
+    public async Task<ActionResult> DeleteUpload(string fileId, string name, CancellationToken cancellationToken)
     {
         // No questions asked - just delete
         var info = await uploadMetaHandler.GetResourceAsync(fileId, cancellationToken);
@@ -143,34 +143,5 @@ public class UploadController : ControllerBase
         await uploadStorageHandler.DeleteFileAsync(info, cancellationToken);
         await uploadMetaHandler.DeleteUploadFileInfoAsync(info, cancellationToken);
         return NoContent();
-    }
-
-    [HttpGet]
-    public ActionResult GetEndpoints()
-    {
-        var endpoints = endpointsSources.SelectMany(es => es.Endpoints).OfType<RouteEndpoint>();
-        var createRoute = "";
-        var createName = "";
-        var uploadRoute = "";
-        var uploadName = "";
-        foreach (var endpoint in endpoints)
-        {
-            if (endpoint.Metadata.OfType<TusCreationAttribute>().Any())
-            {
-                createRoute = endpoint.RoutePattern.RawText;
-                createName = endpoint.Metadata.OfType<RouteNameMetadata>().FirstOrDefault()?.RouteName;
-                // RouteNameMetadata
-            }
-            else if (endpoint.Metadata.OfType<TusUploadAttribute>().Any())
-            {
-                uploadRoute = endpoint.RoutePattern.RawText;
-                uploadName = endpoint.Metadata.OfType<RouteNameMetadata>().FirstOrDefault()?.RouteName;
-            }
-        }
-
-        var metadata = endpoints.Select(m => m.Metadata);
-        var test = metadata.SelectMany(m => m);
-
-        throw new NotImplementedException();
     }
 }

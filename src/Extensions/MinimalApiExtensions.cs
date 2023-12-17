@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using SolidTUS.Constants;
 using SolidTUS.Filters;
 using SolidTUS.Models;
+using SolidTUS.TusEndpoints;
 
 namespace SolidTUS.Extensions;
 
@@ -28,18 +29,20 @@ public static class MinimalApiExtensions
     /// <returns>A route handler builder</returns>
     [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Does not give warning in a minimal api.")]
     [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "Does not give warning in a minimal api.")]
-    public static RouteHandlerBuilder MapTusUpload(this WebApplication app,
+    public static UploadEndpointRouteHandlerBuilder MapTusUpload(this WebApplication app,
                                                    [StringSyntax("Route")] string route,
                                                    Delegate handler,
                                                    int fileIdIndex = 1,
                                                    string? routeName = null)
     {
-        return app
+        var upload = app
             .Map(route, handler)
             .WithName(routeName ?? EndpointNames.UploadEndpoint)
             .WithMetadata(new SolidTusMetadataEndpoint(EndpointNames.UploadEndpoint, route, SolidTusEndpointType.Upload))
             .AddEndpointFilter(new TusStatusFilter(fileIdIndex))
             .AddEndpointFilter(new TusUploadFilter(fileIdIndex));
+
+        return new UploadEndpointRouteHandlerBuilder(route, upload, app);
     }
 
     /// <summary>

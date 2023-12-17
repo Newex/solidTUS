@@ -28,3 +28,8 @@ Tus-Resumable: 1.0.0
 ###
 
 OPTIONS {{minimalapi_HostAddress}}/create
+
+###
+
+DELETE {{minimalapi_HostAddress}}/upload/not_existing/file
+Tus-Resumable: 1.0.0
