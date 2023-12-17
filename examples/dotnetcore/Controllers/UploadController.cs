@@ -144,33 +144,4 @@ public class UploadController : ControllerBase
         await uploadMetaHandler.DeleteUploadFileInfoAsync(info, cancellationToken);
         return NoContent();
     }
-
-    [HttpGet]
-    public ActionResult GetEndpoints()
-    {
-        var endpoints = endpointsSources.SelectMany(es => es.Endpoints).OfType<RouteEndpoint>();
-        var createRoute = "";
-        var createName = "";
-        var uploadRoute = "";
-        var uploadName = "";
-        foreach (var endpoint in endpoints)
-        {
-            if (endpoint.Metadata.OfType<TusCreationAttribute>().Any())
-            {
-                createRoute = endpoint.RoutePattern.RawText;
-                createName = endpoint.Metadata.OfType<RouteNameMetadata>().FirstOrDefault()?.RouteName;
-                // RouteNameMetadata
-            }
-            else if (endpoint.Metadata.OfType<TusUploadAttribute>().Any())
-            {
-                uploadRoute = endpoint.RoutePattern.RawText;
-                uploadName = endpoint.Metadata.OfType<RouteNameMetadata>().FirstOrDefault()?.RouteName;
-            }
-        }
-
-        var metadata = endpoints.Select(m => m.Metadata);
-        var test = metadata.SelectMany(m => m);
-
-        throw new NotImplementedException();
-    }
 }
