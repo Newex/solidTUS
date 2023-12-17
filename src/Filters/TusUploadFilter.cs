@@ -45,11 +45,19 @@ internal class TusUploadFilter : IEndpointFilter
         }
 
         context.HttpContext.Items[TusResult.Name] = tus;
-        var result = await next(context);
 
-        // Force to 204 no content or keep error
-        return http.Response.StatusCode is not 204 and >= 200 and < 300
-            ? Results.NoContent()
-            : result;
+        // Force 204 on success
+        context.HttpContext.Response.OnStarting(state =>
+        {
+            var ctx = (HttpContext)state;
+            if (ctx.Response.StatusCode is >= 200 and < 300)
+            {
+                ctx.Response.StatusCode = 204;
+            }
+
+            return Task.CompletedTask;
+        }, context.HttpContext);
+
+        return await next(context);
     }
 }
