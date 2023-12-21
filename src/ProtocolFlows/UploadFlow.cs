@@ -97,7 +97,7 @@ internal class UploadFlow
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>A collection of headers</returns>
-    public TusResult PostUpload(TusResult context)
+    public static TusResult PostUpload(TusResult context)
     {
         context = ExpirationRequestHandler.SetExpiration(context);
         CommonRequestHandler.SetUploadByteOffset(context);
