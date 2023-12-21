@@ -36,11 +36,17 @@ public static class MinimalApiExtensions
                                                    string? routeName = null)
     {
         var upload = app
-            .Map(route, handler)
+            .MapMethods(route, ["HEAD", "PATCH", "POST"], handler)
             .WithName(routeName ?? EndpointNames.UploadEndpoint)
             .WithMetadata(new SolidTusMetadataEndpoint(EndpointNames.UploadEndpoint, route, SolidTusEndpointType.Upload))
             .AddEndpointFilter(new TusStatusFilter(fileIdIndex))
-            .AddEndpointFilter(new TusUploadFilter(fileIdIndex));
+            .AddEndpointFilter(new TusUploadFilter(fileIdIndex))
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status410Gone)
+            .ProducesProblem(StatusCodes.Status415UnsupportedMediaType)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         return new UploadEndpointRouteHandlerBuilder(route, upload, app);
     }
@@ -61,10 +67,14 @@ public static class MinimalApiExtensions
                                                         string? routeName = null)
     {
         return app
-            .Map(route, handler)
+            .MapMethods(route, ["OPTIONS", "POST"], handler)
             .WithName(routeName ?? EndpointNames.CreationEpoint)
             .WithMetadata(new SolidTusMetadataEndpoint(EndpointNames.CreationEpoint, route, SolidTusEndpointType.Create))
             .AddEndpointFilter(new TusDiscoveryFilter())
-            .AddEndpointFilter(new TusCreationFilter());
+            .AddEndpointFilter(new TusCreationFilter())
+            .Produces(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status413PayloadTooLarge)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
     }
 }
