@@ -7,6 +7,7 @@ var builder = WebApplication.CreateSlimBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddProblemDetails();
 builder.Services
     .AddTus()
     .FileStorageConfiguration(options =>
@@ -32,7 +33,8 @@ app.MapTusCreation("/create", async (HttpContext context) =>
 
     await create.StartCreationAsync(context);
     return Results.Ok();
-});
+})
+.WithDescription("Description testing");
 
 app.MapTusUpload("/upload/{fileId}/{hello}", async (HttpContext http, string fileId, string hello) =>
 {
@@ -63,7 +65,6 @@ app.MapTusUpload("/upload/{fileId}/{hello}", async (HttpContext http, string fil
 
         await upload.DeleteFileAsync(info, cancel);
         return Results.NoContent();
-    }
-);
+    });
 
 app.Run();

@@ -7,7 +7,7 @@
     <InvariantGlobalization>true</InvariantGlobalization>
     <AssemblyName>MinimalApi</AssemblyName>
     <RootNamespace>MinimalApi</RootNamespace>
-    <PublishAot>true</PublishAot>
+    <!-- <PublishAot>true</PublishAot> -->
   </PropertyGroup>
 
   <ItemGroup>
