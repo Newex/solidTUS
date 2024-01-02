@@ -35,6 +35,7 @@ public static class HttpContextExtensions
             ? throw new InvalidOperationException("Can only use this method in conjuction with either endpoint filter or action filter.")
             : new TusInfo(
             request.Metadata,
+            request.RawMetadata,
             request.FileSize,
             request.ChecksumContext
         );

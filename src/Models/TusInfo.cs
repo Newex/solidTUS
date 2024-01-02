@@ -12,14 +12,18 @@ public sealed record class TusInfo
     /// Instantiate a new tus info
     /// </summary>
     /// <param name="metadata">The tus metadata</param>
+    /// <param name="rawMetadata"></param>
     /// <param name="fileSize">The total file size</param>
     /// <param name="checksum">The file checksum</param>
     public TusInfo(
         IReadOnlyDictionary<string, string>? metadata,
+        string? rawMetadata,
         long? fileSize,
         ChecksumContext? checksum = null)
     {
         Metadata = metadata;
+        RawMetadata = rawMetadata;
+
         FileSize = fileSize;
         Checksum = checksum;
     }
@@ -28,6 +32,12 @@ public sealed record class TusInfo
     /// Get the tus metadata
     /// </summary>
     public IReadOnlyDictionary<string, string>? Metadata { get; }
+
+    /// <summary>
+    /// Get the raw string tus metadata
+    /// </summary>
+    public string? RawMetadata { get; }
+
 
     /// <summary>
     /// The total file size, as given by the <c>Upload-Length</c> header.
