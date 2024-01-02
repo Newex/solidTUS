@@ -64,7 +64,7 @@ public async Task<ActionResult> CreateFileInfo(string myArg)
     var myFileId = Guid.NewGuid().ToString("N");
 
     // Read Metadata
-    var metadata = HttpContext.TusMetadata();
+    var metadata = HttpContext.TusInfo().TusMetadata();
     if (metadata is not null)
     {
         // The client (uploader) sets the metadata

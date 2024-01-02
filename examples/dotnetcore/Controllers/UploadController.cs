@@ -62,7 +62,7 @@ public class UploadController : ControllerBase
         var id = Guid.NewGuid().ToString("N");
 
         // Read Metadata
-        var metadata = HttpContext.TusMetadata();
+        var metadata = HttpContext.TusInfo().Metadata;
         if (metadata is not null)
         {
             var filename = metadata["filename"];
