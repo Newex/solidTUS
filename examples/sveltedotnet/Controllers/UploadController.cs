@@ -27,7 +27,7 @@ public class UploadController : ControllerBase
     [RequestSizeLimit(5_000_000_000)]
     public async Task<ActionResult> CreateFile()
     {
-        var metadata = HttpContext.TusMetadata();
+        var metadata = HttpContext.TusInfo().Metadata;
         if (metadata is not null)
         {
             // Read Metadata
