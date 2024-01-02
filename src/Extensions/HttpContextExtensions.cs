@@ -24,18 +24,20 @@ public static class HttpContextExtensions
     }
 
     /// <summary>
-    /// Get tus metadata if there are any
+    /// The tus file info
     /// </summary>
     /// <param name="context">The http context</param>
-    /// <returns>A tus metadata dictionary</returns>
-    public static IReadOnlyDictionary<string, string>? TusMetadata(this HttpContext context)
+    /// <returns>A tus info</returns>
+    /// <exception cref="InvalidOperationException">Thrown if missing tus creation context service</exception>
+    public static TusInfo TusInfo(this HttpContext context)
     {
-        if (context.Items[TusResult.Name] is not TusResult request)
-        {
-            throw new InvalidOperationException("Can only use this method in conjuction with either endpoint filter or action filter.");
-        }
-
-        return request.Metadata;
+        return context.Items[TusResult.Name] is not TusResult request
+            ? throw new InvalidOperationException("Can only use this method in conjuction with either endpoint filter or action filter.")
+            : new TusInfo(
+            request.Metadata,
+            request.FileSize,
+            request.ChecksumContext
+        );
     }
 
     /// <summary>
