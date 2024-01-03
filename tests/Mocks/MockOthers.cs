@@ -1,6 +1,8 @@
 using System;
 using Microsoft.Extensions.Internal;
 using Moq;
+using SolidTUS.Models;
+using SolidTUS.Tests.Fakes;
 
 using SolidTUS.Wrappers;
 
@@ -25,6 +27,14 @@ public static class MockOthers
         mock.Setup(x => x.GetPathByName(It.IsAny<string>(), It.IsAny<(string, object)>(), It.IsAny<(string, object)[]>()))
         .Returns(url);
 
+        return mock.Object;
+    }
+
+    internal static TusResult TusResult(UploadFileInfo info)
+    {
+        var mock = new Mock<TusResult>();
+        // mock.SetupProperty(t => t.UploadFileInfo).SetReturnsDefault(RandomEntities.UploadFileInfo());
+        mock.SetupGet(t => t.UploadFileInfo).Returns(info);
         return mock.Object;
     }
 }

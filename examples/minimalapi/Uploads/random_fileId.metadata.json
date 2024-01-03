@@ -1,11 +1,11 @@
 {
   "FileId": "random_fileId",
   "ByteOffset": 5,
-  "FileSize": 5,
+  "FileSize": 11,
   "IsPartial": false,
   "OnDiskFilename": "random_fileId",
   "OnDiskDirectoryPath": "/home/johnny/dev/projects/opensource/SolidTUS/examples/minimalapi/Uploads",
   "ExpirationDate": null,
-  "CreatedDate": "2023-12-16T21:01:26.6365287+00:00",
-  "LastUpdatedDate": "2023-12-16T21:05:09.7982756+00:00"
+  "CreatedDate": "2024-01-03T09:21:30.6419599+00:00",
+  "LastUpdatedDate": "2024-01-03T09:25:30.6158964+00:00"
 }

@@ -5,7 +5,7 @@
 
 POST {{minimalapi_HostAddress}}/create
 Content-Length: 0
-Upload-Length: 5
+Upload-Length: 11
 Tus-Resumable: 1.0.0
 Content-Type: application/offset+octet-stream
 
@@ -18,6 +18,23 @@ Upload-Offset: 0
 Tus-Resumable: 1.0.0
 
 Hello
+
+###
+PATCH {{minimalapi_HostAddress}}/upload/random_fileId/world
+Content-Type: application/offset+octet-stream
+Content-Length: 0
+Upload-Offset: 5
+Tus-Resumable: 1.0.0
+
+###
+
+PATCH {{minimalapi_HostAddress}}/upload/random_fileId/world
+Content-Type: application/offset+octet-stream
+Content-Length: 6
+Upload-Offset: 5
+Tus-Resumable: 1.0.0
+
+ World
 
 ###
 

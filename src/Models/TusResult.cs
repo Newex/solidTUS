@@ -11,6 +11,13 @@ namespace SolidTUS.Models;
 /// </summary>
 internal record TusResult
 {
+
+    #pragma warning disable CS8618 // Testable
+    internal TusResult()
+    {
+    }
+    #pragma warning restore CS8618 // Testable
+
     /// <summary>
     /// Instantiate a new <see cref="TusResult"/>
     /// </summary>
@@ -76,7 +83,7 @@ internal record TusResult
     /// <summary>
     /// Get the related upload file info
     /// </summary>
-    public UploadFileInfo? UploadFileInfo { get; internal set; }
+    public virtual UploadFileInfo? UploadFileInfo { get; internal set; }
 
     /// <summary>
     /// Get the created location url
