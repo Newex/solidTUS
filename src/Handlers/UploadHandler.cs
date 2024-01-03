@@ -72,10 +72,8 @@ internal class UploadHandler
             {
                 await uploadContext.UploadFinishedCallback(info);
             }
-
-            return tusResult;
         }
 
-        return HttpError.InternalServerError();
+        return tusResult;
     }
 }
