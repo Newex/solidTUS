@@ -1,12 +1,14 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
+using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.OpenApi.Models;
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
 using SolidTUS.Models;
+using SolidTUS.ProtocolHandlers;
 
 namespace SolidTUS.TusEndpoints;
 
@@ -52,7 +54,9 @@ public sealed class UploadEndpointRouteHandlerBuilder : IEndpointConventionBuild
             .MapDelete(routeTemplate, delete)
             .AddEndpointFilter(async (context, next) =>
             {
-                var tusResult = TusResult.Create(context.HttpContext.Request, context.HttpContext.Response);
+                var tusResult = TusResult
+                    .Create(context.HttpContext.Request, context.HttpContext.Response)
+                    .Map(CommonRequestHandler.SetTusResumableHeader);
                 if (tusResult.TryGetError(out var error))
                 {
                     context.HttpContext.SetErrorHeaders(error);
