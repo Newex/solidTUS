@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using SolidTUS.Constants;
 using SolidTUS.Extensions;
 using SolidTUS.Models;
 
@@ -68,6 +69,23 @@ public sealed class UploadEndpointRouteHandlerBuilder : IEndpointConventionBuild
                 }, context.HttpContext);
 
                 return await next(context);
+            })
+            .WithDescription("The Tus-Termination endpoint.")
+            .Produces(StatusCodes.Status204NoContent)
+            .WithOpenApi(open =>
+            {
+                open.Parameters.Add(new()
+                {
+                    Name = TusHeaderNames.Resumable,
+                    Required = true,
+                    Description = TusHeaderValues.TusPreferredVersion,
+                    Schema = new()
+                    {
+                        Type = "string"
+                    }
+                });
+                open.Responses["204"].Description = "No Content. Upload resource deleted.";
+                return open;
             });
 
         return routeHandlerBuilder;
