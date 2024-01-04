@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
 using SolidTUS.Models;
+using SolidTUS.ProtocolHandlers;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 using Endpoints = System.Collections.Generic.IEnumerable<Microsoft.AspNetCore.Routing.EndpointDataSource>;
 
@@ -72,6 +73,7 @@ public class TusDeleteAttribute : ActionFilterAttribute, IActionHttpMethodProvid
     {
         var cancel = context.HttpContext.RequestAborted;
         var requestContext = TusResult.Create(context.HttpContext.Request, context.HttpContext.Response);
+        requestContext = requestContext.Map(CommonRequestHandler.SetTusResumableHeader);
         var terminateRequest = context.HttpContext.RequestServices.GetService<TerminationRequestHandler>();
         if (terminateRequest is null)
         {

@@ -40,7 +40,7 @@ internal class UploadHandler
         this.expiredUploadHandler = expiredUploadHandler;
     }
 
-    public async Task<Result<TusResult, HttpError>> HandleUploadAsync(PipeReader reader, TusUploadContext uploadContext, TusResult tusResult, CancellationToken cancellationToken)
+    public async Task<TusResult> HandleUploadAsync(PipeReader reader, TusUploadContext uploadContext, TusResult tusResult, CancellationToken cancellationToken)
     {
         var info = tusResult.UploadFileInfo;
         if (info is null)

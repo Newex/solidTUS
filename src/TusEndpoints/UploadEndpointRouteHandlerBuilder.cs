@@ -1,10 +1,14 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
+using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.OpenApi.Models;
+using SolidTUS.Constants;
 using SolidTUS.Extensions;
 using SolidTUS.Models;
+using SolidTUS.ProtocolHandlers;
 
 namespace SolidTUS.TusEndpoints;
 
@@ -16,18 +20,19 @@ public sealed class UploadEndpointRouteHandlerBuilder : IEndpointConventionBuild
     private readonly string routeTemplate;
     private RouteHandlerBuilder routeHandlerBuilder;
     private readonly WebApplication app;
-
+    private readonly string? tags;
 
     internal UploadEndpointRouteHandlerBuilder(
         string routeTemplate,
         RouteHandlerBuilder routeHandlerBuilder,
-        WebApplication app
+        WebApplication app,
+        string? tags
     )
     {
         this.routeTemplate = routeTemplate;
         this.routeHandlerBuilder = routeHandlerBuilder;
         this.app = app;
-
+        this.tags = tags;
     }
 
     /// <inheritdoc />
@@ -49,7 +54,9 @@ public sealed class UploadEndpointRouteHandlerBuilder : IEndpointConventionBuild
             .MapDelete(routeTemplate, delete)
             .AddEndpointFilter(async (context, next) =>
             {
-                var tusResult = TusResult.Create(context.HttpContext.Request, context.HttpContext.Response);
+                var tusResult = TusResult
+                    .Create(context.HttpContext.Request, context.HttpContext.Response)
+                    .Map(CommonRequestHandler.SetTusResumableHeader);
                 if (tusResult.TryGetError(out var error))
                 {
                     context.HttpContext.SetErrorHeaders(error);
@@ -68,7 +75,30 @@ public sealed class UploadEndpointRouteHandlerBuilder : IEndpointConventionBuild
                 }, context.HttpContext);
 
                 return await next(context);
+            })
+            .WithDescription("The Tus-Termination endpoint.")
+            .Produces(StatusCodes.Status204NoContent)
+            .WithOpenApi(open =>
+            {
+                open.Parameters.Add(new()
+                {
+                    Name = TusHeaderNames.Resumable,
+                    In = ParameterLocation.Header,
+                    Required = true,
+                    Description = TusHeaderValues.TusPreferredVersion,
+                    Schema = new()
+                    {
+                        Type = "string"
+                    }
+                });
+                open.Responses["204"].Description = "No Content. Upload resource deleted.";
+                return open;
             });
+
+        if (!string.IsNullOrEmpty(tags))
+        {
+            routeHandlerBuilder.WithTags(tags);
+        }
 
         return routeHandlerBuilder;
     }

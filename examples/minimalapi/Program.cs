@@ -33,8 +33,8 @@ app.MapTusCreation("/create", async (HttpContext context) =>
 
     await create.StartCreationAsync(context);
     return Results.Ok();
-})
-.WithDescription("Description testing");
+}, tags: "Create")
+.WithOpenApi();
 
 app.MapTusUpload("/upload/{fileId}/{hello}", async (HttpContext http, string fileId, string hello) =>
 {
@@ -48,7 +48,7 @@ app.MapTusUpload("/upload/{fileId}/{hello}", async (HttpContext http, string fil
         .Build();
     await upload.StartAppendDataAsync(http);
     return Results.NoContent();
-})
+}, tags: "Upload")
 .WithTusDelete(
     async (IUploadMetaHandler meta, string fileId, IUploadStorageHandler upload, CancellationToken cancel) =>
     {

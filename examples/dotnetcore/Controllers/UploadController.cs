@@ -136,7 +136,8 @@ public class UploadController : ControllerBase
             // the upload IS finished!
 
             // We say "no" by 403 forbidden
-            return Forbid();
+            // Note: Forbid() expects a default Authentication Scheme.
+            return StatusCode(403);
         }
 
         // Delete info and file respond 204

@@ -53,13 +53,6 @@ public sealed record class TusUploadContext
 
         var cancel = context.RequestAborted;
         var upload = await uploadHandler.HandleUploadAsync(context.Request.BodyReader, this, tusResult, cancel);
-
-        // POST result handling
-        var result = upload.Map(UploadFlow.PostUpload);
-        if (result.TryGetError(out var error))
-        {
-            context.Response.StatusCode = error.StatusCode;
-            context.SetErrorHeaders(error);
-        }
+        UploadFlow.PostUpload(upload);
     }
 }

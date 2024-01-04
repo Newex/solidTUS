@@ -1,3 +1,4 @@
+using System;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
@@ -48,9 +49,9 @@ public class PostUploadHandlerTests
         var cancel = CancellationToken.None;
 
         // Act
-        var result = await uploadHandler.HandleUploadAsync(pipeReader, tusUploadContext, tusResult, cancel);
+        var act = async () => await uploadHandler.HandleUploadAsync(pipeReader, tusUploadContext, tusResult, cancel);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
+        await act.Should().NotThrowAsync();
     }
 }
