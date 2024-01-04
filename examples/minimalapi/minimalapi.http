@@ -4,10 +4,8 @@
 @location = response.location
 
 POST {{minimalapi_HostAddress}}/create
-Content-Length: 0
 Upload-Length: 11
 Tus-Resumable: 1.0.0
-Content-Type: application/offset+octet-stream
 
 ###
 
@@ -48,5 +46,5 @@ OPTIONS {{minimalapi_HostAddress}}/create
 
 ###
 
-DELETE {{minimalapi_HostAddress}}/upload/not_existing/file
+DELETE {{minimalapi_HostAddress}}/upload/random_fileId/world
 Tus-Resumable: 1.0.0
