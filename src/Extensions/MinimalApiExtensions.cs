@@ -192,6 +192,14 @@ public static class MinimalApiExtensions
                 var headers = open.Responses["204"].Headers;
                 headers.Add(resumable.Key, resumable.Header);
                 headers.Add(uploadOffset.Key, uploadOffset.Header);
+                headers.Add(TusHeaderNames.UploadMetadata, new()
+                {
+                    Description = "The Tus Upload-Metadata echoed as provided during creation.",
+                    Schema = new()
+                    {
+                        Type = "string"
+                    }
+                });
                 return open;
             });
 
@@ -303,6 +311,18 @@ public static class MinimalApiExtensions
                     Name = TusHeaderNames.UploadConcat,
                     Example = new OpenApiString("partial"),
                     Description = "Optional header if starting a parallel upload using the Concatenation Tus-Extension. Can be 'partial' or 'final'.",
+                    Required = false,
+                    Schema = new()
+                    {
+                        Type = "string"
+                    }
+                });
+                open.Parameters.Add(new()
+                {
+                    In = ParameterLocation.Header,
+                    Name = TusHeaderNames.UploadMetadata,
+                    Example = new OpenApiString("filename d29ybGRfZG9taW5hdGlvbl9wbGFuLnBkZg==,is_confidential"),
+                    Description = "Optional header containing Tus metadata encoded in a key value pair, where the value is in base64. Note the server may impose constraints on the metadata.",
                     Required = false,
                     Schema = new()
                     {
