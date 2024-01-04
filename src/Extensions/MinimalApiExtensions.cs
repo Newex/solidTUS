@@ -77,6 +77,7 @@ public static class MinimalApiExtensions
     /// <param name="fileIdIndex">The fileId argument index</param>
     /// <param name="routeName">Optional route name</param>
     /// <param name="tags">The optional open api tags</param>
+    /// <param name="requireAuth">True if HEAD, POST and PATCH should require authorization</param>
     /// <returns>A route handler builder</returns>
     [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Does not give warning in a minimal api.")]
     [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "Does not give warning in a minimal api.")]
@@ -85,7 +86,8 @@ public static class MinimalApiExtensions
                                                    Delegate handler,
                                                    int fileIdIndex = 1,
                                                    string? routeName = null,
-                                                   string? tags = null)
+                                                   string? tags = null,
+                                                   bool requireAuth = false)
     {
         var status = app
             .MapMethods(route, ["HEAD"], handler)
@@ -205,9 +207,16 @@ public static class MinimalApiExtensions
 
         if (!string.IsNullOrEmpty(tags))
         {
-            status.WithTags(tags);
-            bypass.WithTags(tags);
-            upload.WithTags(tags);
+            status = status.WithTags(tags);
+            bypass = bypass.WithTags(tags);
+            upload = upload.WithTags(tags);
+        }
+
+        if (requireAuth)
+        {
+            status = status.RequireAuthorization();
+            bypass = bypass.RequireAuthorization();
+            upload = upload.RequireAuthorization();
         }
 
         return new UploadEndpointRouteHandlerBuilder(route, upload, app, tags);
@@ -221,6 +230,7 @@ public static class MinimalApiExtensions
     /// <param name="handler">The route handler</param>
     /// <param name="routeName">Optional route name</param>
     /// <param name="tags">The optional open api tags</param>
+    /// <param name="requireAuth">True if both POST and OPTIONS should require authorization</param>
     /// <returns>A route handler builder</returns>
     [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Does not give warning in a minimal api.")]
     [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "Does not give warning in a minimal api.")]
@@ -228,7 +238,8 @@ public static class MinimalApiExtensions
                                                         [StringSyntax("Route")] string route,
                                                         Delegate handler,
                                                         string? routeName = null,
-                                                        string? tags = null)
+                                                        string? tags = null,
+                                                        bool requireAuth = false)
     {
         var status = app.MapMethods(route, ["OPTIONS"], handler)
             .WithDescription("Discover Tus-Server capabilities.")
@@ -366,8 +377,14 @@ public static class MinimalApiExtensions
 
         if (!string.IsNullOrEmpty(tags))
         {
-            status.WithTags(tags);
-            create.WithTags(tags);
+            status = status.WithTags(tags);
+            create = create.WithTags(tags);
+        }
+
+        if (requireAuth)
+        {
+            status = status.RequireAuthorization();
+            create = create.RequireAuthorization();
         }
 
         return create;
