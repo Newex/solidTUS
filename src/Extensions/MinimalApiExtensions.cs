@@ -90,7 +90,7 @@ public static class MinimalApiExtensions
         var status = app
             .MapMethods(route, ["HEAD"], handler)
             .AddEndpointFilter(new TusStatusFilter(fileIdIndex))
-            .WithDescription("Get the status of a TUS upload.")
+            .WithDescription("Get the status of a Tus upload.")
             .Produces(200)
             .WithOpenApi(open =>
             {
@@ -109,7 +109,22 @@ public static class MinimalApiExtensions
             .AddEndpointFilter(new TusUploadFilter(fileIdIndex))
             .WithDescription("Use X-Http-Method-Override request using POST to send as PATCH. If possible use PATCH. See PATCH for details.")
             .Produces(StatusCodes.Status204NoContent)
-            .WithOpenApi();
+            .WithOpenApi(open =>
+            {
+                open.Parameters.Add(new()
+                {
+                    In = ParameterLocation.Header,
+                    Name = "X-Http-Method-Override",
+                    Example = new OpenApiString("PATCH"),
+                    Description = "Send a PATCH request as a POST request.",
+                    Required = true,
+                    Schema = new()
+                    {
+                        Type = "string"
+                    }
+                });
+                return open;
+            });
 
         var upload = app
             .MapPatch(route, handler)
@@ -208,7 +223,7 @@ public static class MinimalApiExtensions
                                                         string? tags = null)
     {
         var status = app.MapMethods(route, ["OPTIONS"], handler)
-            .WithDescription("Discover Tus-Server capabilities")
+            .WithDescription("Discover Tus-Server capabilities.")
             .AddEndpointFilter(new TusDiscoveryFilter())
             .Produces(StatusCodes.Status204NoContent)
             .WithOpenApi(open =>
@@ -247,6 +262,7 @@ public static class MinimalApiExtensions
         var create = app
             .MapPost(route, handler)
             .WithName(routeName ?? EndpointNames.CreationEpoint)
+            .WithDescription("Request creating a new Tus upload. If request is accepted you may upload using a PATCH request.")
             .WithMetadata(new SolidTusMetadataEndpoint(EndpointNames.CreationEpoint, route, SolidTusEndpointType.Create))
             .AddEndpointFilter(new TusCreationFilter())
             .Produces(StatusCodes.Status201Created)
@@ -281,10 +297,22 @@ public static class MinimalApiExtensions
                         Type = "number"
                     }
                 });
+                open.Parameters.Add(new()
+                {
+                    In = ParameterLocation.Header,
+                    Name = TusHeaderNames.UploadConcat,
+                    Example = new OpenApiString("partial"),
+                    Description = "Optional header if starting a parallel upload using the Concatenation Tus-Extension. Can be 'partial' or 'final'.",
+                    Required = false,
+                    Schema = new()
+                    {
+                        Type = "string"
+                    }
+                });
 
                 open.RequestBody = new OpenApiRequestBody()
                 {
-                    Description = "The upload body content.",
+                    Description = "The optional upload body content. Using the Creation-With-Upload Tus-Extension.",
                     Content = new Dictionary<string, OpenApiMediaType>()
                     {
                         { TusHeaderValues.PatchContentType, new OpenApiMediaType()
