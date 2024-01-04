@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.OpenApi.Models;
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
 using SolidTUS.Models;
@@ -17,18 +18,19 @@ public sealed class UploadEndpointRouteHandlerBuilder : IEndpointConventionBuild
     private readonly string routeTemplate;
     private RouteHandlerBuilder routeHandlerBuilder;
     private readonly WebApplication app;
-
+    private readonly string? tags;
 
     internal UploadEndpointRouteHandlerBuilder(
         string routeTemplate,
         RouteHandlerBuilder routeHandlerBuilder,
-        WebApplication app
+        WebApplication app,
+        string? tags
     )
     {
         this.routeTemplate = routeTemplate;
         this.routeHandlerBuilder = routeHandlerBuilder;
         this.app = app;
-
+        this.tags = tags;
     }
 
     /// <inheritdoc />
@@ -77,6 +79,7 @@ public sealed class UploadEndpointRouteHandlerBuilder : IEndpointConventionBuild
                 open.Parameters.Add(new()
                 {
                     Name = TusHeaderNames.Resumable,
+                    In = ParameterLocation.Header,
                     Required = true,
                     Description = TusHeaderValues.TusPreferredVersion,
                     Schema = new()
@@ -87,6 +90,11 @@ public sealed class UploadEndpointRouteHandlerBuilder : IEndpointConventionBuild
                 open.Responses["204"].Description = "No Content. Upload resource deleted.";
                 return open;
             });
+
+        if (!string.IsNullOrEmpty(tags))
+        {
+            routeHandlerBuilder.WithTags(tags);
+        }
 
         return routeHandlerBuilder;
     }

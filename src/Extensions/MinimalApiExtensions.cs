@@ -202,7 +202,7 @@ public static class MinimalApiExtensions
             upload.WithTags(tags);
         }
 
-        return new UploadEndpointRouteHandlerBuilder(route, upload, app);
+        return new UploadEndpointRouteHandlerBuilder(route, upload, app, tags);
     }
 
     /// <summary>

@@ -48,7 +48,7 @@ app.MapTusUpload("/upload/{fileId}/{hello}", async (HttpContext http, string fil
         .Build();
     await upload.StartAppendDataAsync(http);
     return Results.NoContent();
-})
+}, tags: "Upload")
 .WithTusDelete(
     async (IUploadMetaHandler meta, string fileId, IUploadStorageHandler upload, CancellationToken cancel) =>
     {
