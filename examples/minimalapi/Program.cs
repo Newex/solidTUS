@@ -1,4 +1,5 @@
 using SolidTUS.Extensions;
+using SolidTUS.Filters;
 using SolidTUS.Handlers;
 
 var builder = WebApplication.CreateSlimBuilder(args);
@@ -10,6 +11,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddProblemDetails();
 builder.Services
     .AddTus()
+    .Configuration(options => options.HasTermination = true)
     .FileStorageConfiguration(options =>
     {
         options.DirectoryPath = "./Uploads";
@@ -48,9 +50,10 @@ app.MapTusUpload("/upload/{fileId}/{hello}", async (HttpContext http, string fil
         .Build();
     await upload.StartAppendDataAsync(http);
     return Results.NoContent();
-}, tags: "Upload")
-.WithTusDelete(
-    async (IUploadMetaHandler meta, string fileId, IUploadStorageHandler upload, CancellationToken cancel) =>
+}, tags: "Upload");
+
+app.MapTusDelete("/upload/{fileId}/{hello}",
+    async (IUploadMetaHandler meta, string fileId, string hello, IUploadStorageHandler upload, CancellationToken cancel) =>
     {
         var info = await meta.GetResourceAsync(fileId, cancel);
         if (info is null)
@@ -65,6 +68,8 @@ app.MapTusUpload("/upload/{fileId}/{hello}", async (HttpContext http, string fil
 
         await upload.DeleteFileAsync(info, cancel);
         return Results.NoContent();
-    });
+    })
+    .WithTags("Termination")
+    .WithOpenApi();
 
 app.Run();
