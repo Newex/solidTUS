@@ -8,7 +8,6 @@ using Microsoft.OpenApi.Models;
 using SolidTUS.Constants;
 using SolidTUS.Filters;
 using SolidTUS.Models;
-using SolidTUS.TusEndpoints;
 
 namespace SolidTUS.Extensions;
 
@@ -81,7 +80,7 @@ public static class MinimalApiExtensions
     /// <returns>A route handler builder</returns>
     [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Does not give warning in a minimal api.")]
     [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "Does not give warning in a minimal api.")]
-    public static UploadEndpointRouteHandlerBuilder MapTusUpload(this WebApplication app,
+    public static RouteHandlerBuilder MapTusUpload(this WebApplication app,
                                                    [StringSyntax("Route")] string route,
                                                    Delegate handler,
                                                    int fileIdIndex = 1,
@@ -219,7 +218,7 @@ public static class MinimalApiExtensions
             upload = upload.RequireAuthorization();
         }
 
-        return new UploadEndpointRouteHandlerBuilder(route, upload, app, tags);
+        return upload;
     }
 
     /// <summary>
@@ -388,5 +387,23 @@ public static class MinimalApiExtensions
         }
 
         return create;
+    }
+
+    /// <summary>
+    /// Maps an endpoint for the Tus-Termination. Must match the Tus upload route.
+    /// </summary>
+    /// <param name="app">The web application</param>
+    /// <param name="route">The route pattern</param>
+    /// <param name="handler">The termination handler</param>
+    /// <returns>A route handler builder</returns>
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Does not give warning in a minimal api.")]
+    [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "Does not give warning in a minimal api.")]
+    public static RouteHandlerBuilder MapTusDelete(this WebApplication app,
+                                                   [StringSyntax("Route")] string route,
+                                                   Delegate handler)
+    {
+        return app
+            .MapDelete(route, handler)
+            .AddEndpointFilter<TusDeleteFilter>();
     }
 }

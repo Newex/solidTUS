@@ -174,15 +174,14 @@ SolidTUS can be configured through the `TusOptions` object, either on startup or
 ```csharp
 // Custom metadata provider or set maximum TUS protocol file size
 builder.Services
-  .AddTUS()
-  .SetMetadataValidator(metadata => metadata.ContainsKey("filename"))
-  .AllowEmptyMetadata(true)
-  .Configuration(options =>
+  .AddTUS(options =>
   {
     // This max size is different than the ASP.NET specified max size.
     // To change the request size limit do it per Action with an attribute (recommended).
     options.MaxSize = 5_000_000_000;
-  });
+  })
+  .SetMetadataValidator(metadata => metadata.ContainsKey("filename"))
+  .AllowEmptyMetadata(true);
 ```
 All options are mentioned in the [wiki/tus-options](https://github.com/Newex/solidTUS/wiki/TusOptions)  
 Note: to change request size limits see: [Microsoft documentation](https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-7.0#kestrel-maximum-request-body-size)
