@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Builders;
@@ -28,12 +29,30 @@ public static class ServiceCollectionExtensions
     /// </summary>
     /// <param name="services">The services collection</param>
     /// <param name="configuration">The configuration</param>
+    /// <param name="configure">Optional configure options</param>
     /// <returns>A TUS builder</returns>
-    public static TusBuilder AddTus(this IServiceCollection services, IConfiguration configuration)
+    public static TusBuilder AddTus(this IServiceCollection services, IConfiguration configuration, Action<TusOptions>? configure = null)
     {
         var tusSection = configuration.GetSection(TusOptions.TusConfigurationSection);
         services.Configure<TusOptions>(tusSection);
         services.Configure<FileStorageOptions>(tusSection);
+
+        if (configure is not null)
+        {
+            services.Configure(configure);
+        }
+        return TusBuilder.Create(services);
+    }
+
+    /// <summary>
+    /// Add services for TUS
+    /// </summary>
+    /// <param name="services">The services collection</param>
+    /// <param name="configuration">The tus option configuration</param>
+    /// <returns>A TUS builder</returns>
+    public static TusBuilder AddTus(this IServiceCollection services, Action<TusOptions> configuration)
+    {
+        services.Configure(configuration);
         return TusBuilder.Create(services);
     }
 }

@@ -14,8 +14,9 @@ builder.Services.AddSwaggerGen();
 // Can load from configuration
 // builder.Services.AddTus(builder.Configuration);
 builder.Services
-    .AddTus(builder.Configuration)
-    .Configuration(options => options.HasTermination = true)
+    .AddTus(
+        builder.Configuration,
+        options => options.HasTermination = true)
     .SetMetadataValidator(m => m.ContainsKey("filename") && m.ContainsKey("contentType"))
     .FileStorageConfiguration(options =>
     {

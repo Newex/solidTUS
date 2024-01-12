@@ -115,17 +115,6 @@ public sealed class TusBuilder
     }
 
     /// <summary>
-    /// Configures TUS options
-    /// </summary>
-    /// <param name="options">The TUS options</param>
-    /// <returns>builder</returns>
-    public TusBuilder Configuration(Action<TusOptions> options)
-    {
-        services.Configure(options);
-        return this;
-    }
-
-    /// <summary>
     /// Configure the default file storage upload handler
     /// </summary>
     /// <param name="options">File storage options</param>

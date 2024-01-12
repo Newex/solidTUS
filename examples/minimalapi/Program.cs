@@ -10,8 +10,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddProblemDetails();
 builder.Services
-    .AddTus()
-    .Configuration(options => options.HasTermination = true)
+    .AddTus(options => options.HasTermination = true)
     .FileStorageConfiguration(options =>
     {
         options.DirectoryPath = "./Uploads";

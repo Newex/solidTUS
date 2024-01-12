@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddTus().Configuration(options =>
+builder.Services.AddTus(options =>
 {
     options.MaxSize = 5_000_000_000;
     options.ExpirationJobRunnerInterval = TimeSpan.FromMinutes(5);
