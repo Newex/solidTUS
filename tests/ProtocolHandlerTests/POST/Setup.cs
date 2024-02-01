@@ -1,6 +1,6 @@
-using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
 using SolidTUS.Constants;
+using SolidTUS.Functional.Models;
 using SolidTUS.Models;
 using SolidTUS.Tests.Mocks;
 

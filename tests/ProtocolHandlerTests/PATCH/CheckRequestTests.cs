@@ -1,6 +1,6 @@
-using CSharpFunctionalExtensions;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
+using SolidTUS.Functional.Models;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.Tests.Fakes;

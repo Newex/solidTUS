@@ -21,7 +21,10 @@
       "name": "tests"
     },
     {
-      "path": "./src",
+      "path": "./src/functional"
+    },
+    {
+      "path": "./src/solidtus",
       "name": "solidtus"
     },
   ],
@@ -41,7 +44,7 @@
       "**/CVS": true,
       "**/.DS_Store": true,
       "**/Thumbs.db": true,
-      "tests/**/*": true
+      // "tests/**/*": true
     }
   }
 }

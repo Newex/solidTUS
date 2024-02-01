@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>SolidTUS</RootNamespace>
+    <AssemblyName>SolidTUS</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Authors>Johnny Kristian Moeberg Sørensen</Authors>
+    <Description>An implementation of the TUS protocol for dotnet</Description>
+    <PackageProjectUrl>https://github.com/Newex/solidTUS</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Newex/solidTUS</RepositoryUrl>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+    <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Microsoft.Extensions.Configuration.Binder.SourceGeneration</InterceptorsPreviewNamespaces>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="SolidTUS.Tests" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- <PackageReference Include="CSharpFunctionalExtensions" Version="2.40.3">
+      <PrivateAssets>none</PrivateAssets>
+    </PackageReference> -->
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\functional\functional.csproj" />
+  </ItemGroup>
+</Project>

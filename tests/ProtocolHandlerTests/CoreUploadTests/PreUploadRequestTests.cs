@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Moq;
+using SolidTUS.Functional.Models;
 using SolidTUS.Models;
 using SolidTUS.Options;
 using SolidTUS.ProtocolFlows;
@@ -72,7 +73,7 @@ public class PreUploadRequestTests
         );
 
         // TusResult
-        var context = TusResult.Create(http, new Mock<HttpResponse>().Object).Value;
+        var (context, _) = TusResult.Create(http, new Mock<HttpResponse>().Object);
 
 
         // Act

@@ -5,10 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
-
 using Microsoft.Extensions.Internal;
-
-
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.Options;

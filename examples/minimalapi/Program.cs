@@ -1,5 +1,4 @@
 using SolidTUS.Extensions;
-using SolidTUS.Filters;
 using SolidTUS.Handlers;
 
 var builder = WebApplication.CreateSlimBuilder(args);

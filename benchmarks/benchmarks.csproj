@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\solidtus.csproj" />
+    <ProjectReference Include="..\src\solidtus\solidtus.csproj" />
   </ItemGroup>
 
   <ItemGroup>
