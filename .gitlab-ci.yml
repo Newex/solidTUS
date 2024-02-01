@@ -3,7 +3,7 @@ image: registry.digify/dotnet/sdk:8.0
 
 variables:
   GITLAB_NUGET_URL: ${CI_API_V4_URL}/projects/5/packages/nuget/index.json
-  MAIN_PROJECT: ${CI_PROJECT_DIR}/src/solidtus.csproj
+  MAIN_PROJECT: ${CI_PROJECT_DIR}/src/solidtus/solidtus.csproj
   TEST_PROJECT: ${CI_PROJECT_DIR}/tests/tests.csproj
   ASSEMBLY: SolidTUS
   USERNAME: ${GITLAB_PACKAGE_REGISTRY_USERNAME}
