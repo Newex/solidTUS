@@ -1,6 +1,6 @@
 using System;
-using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Routing;
+using SolidTUS.Functional.Models;
 using SolidTUS.Models;
 
 namespace SolidTUS.ProtocolHandlers.ProtocolExtensions;

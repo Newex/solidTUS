@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using CSharpFunctionalExtensions;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -11,6 +9,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
+using SolidTUS.Functional.Models;
 using SolidTUS.Models;
 using SolidTUS.ProtocolFlows;
 using static Microsoft.AspNetCore.Http.HttpMethods;
@@ -78,9 +77,9 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         if (isHead)
         {
             var status = await tusResult.Bind(async c => await uploadFlow.GetUploadStatusAsync(c, fileId, cancel));
-            var (statusSuccess, statusFailure, statusResult, statusError) = status;
+            var (statusSuccess, statusResult, statusError) = status;
             http.Response.StatusCode = statusSuccess ? 200 : statusError.StatusCode;
-            if (statusFailure)
+            if (!statusSuccess)
             {
                 http.SetErrorHeaders(statusError);
             }
@@ -97,8 +96,8 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         }
 
         tusResult = await tusResult.Bind(async c => await uploadFlow.PreUploadAsync(c, fileId, cancel));
-        var (isSuccess, isFailure, tus, error) = tusResult;
-        if (isFailure)
+        var (isSuccess, tus, error) = tusResult;
+        if (!isSuccess)
         {
             http.SetErrorHeaders(error);
             context.Result = new ObjectResult(error.Message)

@@ -1,6 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
-using CSharpFunctionalExtensions;
+using SolidTUS.Functional.Models;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;

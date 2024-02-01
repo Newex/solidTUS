@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
 using SolidTUS.Contexts;
+using SolidTUS.Functional.Models;
 using SolidTUS.ProtocolHandlers;
 
 namespace SolidTUS.Models;

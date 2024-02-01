@@ -1,9 +1,9 @@
 using System.Threading;
 using System.Threading.Tasks;
-using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Internal;
 using SolidTUS.Constants;
+using SolidTUS.Functional.Models;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.Validators;

@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
-using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -12,6 +11,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
+using SolidTUS.Functional.Models;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
@@ -100,7 +100,8 @@ public class TusDeleteAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         var values = context.RouteData.Values.AsEnumerable().Where(x => x.Key != "action" && x.Key != "controller");
         var routeData = new RouteValueDictionary(values);
         requestContext = requestContext.Bind(c => terminateRequest.ValidateRoute(c, Name, UploadNameEndpoint ?? uploadName ?? EndpointNames.UploadEndpoint, routeData));
-        if (requestContext.TryGetError(out var error))
+        var (isSuccess, _, error) = requestContext;
+        if (!isSuccess)
         {
             context.HttpContext.SetErrorHeaders(error);
             context.Result = new ObjectResult(error.Message)
@@ -122,7 +123,8 @@ public class TusDeleteAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         {
             var ctx = (ResultExecutingContext)state;
             var status = ctx.HttpContext.Response.StatusCode;
-            if (requestContext.TryGetError(out var error))
+            var (isSuccess, _, error) = requestContext;
+            if (isSuccess)
             {
                 ctx.HttpContext.Response.StatusCode = 204;
                 return Task.CompletedTask;

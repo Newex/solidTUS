@@ -10,6 +10,7 @@ using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 using SolidTUS.Validators;
 using SolidTUS.ProtocolFlows;
 using System.Threading;
+using SolidTUS.Functional.Models;
 
 namespace SolidTUS.Tests.ProtocolHandlerTests.CoreUploadTests;
 
@@ -79,12 +80,12 @@ public class UploadStatusRequestTests
         var response = MockHttps.HttpResponse(responseHeaders);
 
         // TusResult
-        var context = TusResult.Create(request, response).Value;
+        var (context, _) = TusResult.Create(request, response);
 
 
         // Act
-        var status = await sut.GetUploadStatusAsync(context!, fileId, CancellationToken.None);
-        var result = status.Value!.ResponseHeaders.ToDictionary(x => x.Key.ToString(), x => x.Value.ToString());
+        var (status, _) = await sut.GetUploadStatusAsync(context!, fileId, CancellationToken.None);
+        var result = status?.ResponseHeaders.ToDictionary(x => x.Key.ToString(), x => x.Value.ToString());
 
         // Assert
         result.Should().Contain(

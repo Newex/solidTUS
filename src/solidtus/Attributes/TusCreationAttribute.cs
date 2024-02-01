@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -17,6 +16,7 @@ using Microsoft.AspNetCore.Routing;
 using Endpoints = System.Collections.Generic.IEnumerable<Microsoft.AspNetCore.Routing.EndpointDataSource>;
 
 using static Microsoft.AspNetCore.Http.HttpMethods;
+using SolidTUS.Functional.Models;
 namespace SolidTUS.Attributes;
 
 /// <summary>
@@ -128,7 +128,8 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
                     UploadRouteTemplate = uploadRoute
                 });
             result = result.Bind(creationFlow.PreResourceCreation);
-            if (result.TryGetError(out var error))
+            var (isSuccess, ctx, error) = result;
+            if (!isSuccess)
             {
                 context.Result = new ObjectResult(error.Message)
                 {
@@ -137,7 +138,6 @@ public class TusCreationAttribute : ActionFilterAttribute, IActionHttpMethodProv
                 return;
             }
 
-            result.TryGetValue(out var ctx);
             context.HttpContext.Items[TusResult.Name] = ctx;
         }
 

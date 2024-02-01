@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
 
 namespace SolidTUS.Models;

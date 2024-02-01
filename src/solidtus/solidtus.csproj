@@ -28,9 +28,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CSharpFunctionalExtensions" Version="2.40.3">
+    <!-- <PackageReference Include="CSharpFunctionalExtensions" Version="2.40.3">
       <PrivateAssets>none</PrivateAssets>
-    </PackageReference>
+    </PackageReference> -->
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\functional\functional.csproj" />
   </ItemGroup>
 </Project>

@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
+using SolidTUS.Functional.Models;
 using SolidTUS.Models;
 using SolidTUS.Options;
 using SolidTUS.Parsers;
@@ -112,7 +112,7 @@ internal class PostRequestHandler
     /// </summary>
     /// <param name="context">The request context</param>
     /// <returns>Either an error or a request context</returns>
-    public Result<TusResult, HttpError> ParseAndValidateMetadata(TusResult context)
+    internal Result<TusResult, HttpError> ParseAndValidateMetadata(TusResult context)
     {
         if (context.PartialMode == PartialMode.Partial)
         {
@@ -124,7 +124,7 @@ internal class PostRequestHandler
         var metadata = metadataParser.Parse(rawMetadata);
         var result = metadata.Map(m =>
         {
-            context.Metadata = m?.AsReadOnly();
+            context.Metadata = m.AsReadOnly();
             context.RawMetadata = rawMetadata;
             return context;
         });

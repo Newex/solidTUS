@@ -1,4 +1,4 @@
-using CSharpFunctionalExtensions;
+using SolidTUS.Functional.Models;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;

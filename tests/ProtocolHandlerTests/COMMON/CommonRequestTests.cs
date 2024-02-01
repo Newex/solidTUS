@@ -1,6 +1,6 @@
 using System.Threading;
-using CSharpFunctionalExtensions;
 using SolidTUS.Constants;
+using SolidTUS.Functional.Models;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.Tests.Fakes;

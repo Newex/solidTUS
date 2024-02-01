@@ -1,4 +1,5 @@
 using System.Linq;
+using SolidTUS.Functional.Models;
 using SolidTUS.Models;
 using SolidTUS.Options;
 using SolidTUS.Parsers;
@@ -62,7 +63,7 @@ public class PostUploadRequestTests
         var response = MockHttps.HttpResponse();
 
         // TusResult
-        var context = TusResult.Create(request, response).Value;
+        var (context, _) = TusResult.Create(request, response);
 
         // Act
         var pre = sut.PreResourceCreation(context!);

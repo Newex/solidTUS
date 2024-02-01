@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Extensions;
+using SolidTUS.Functional.Models;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.ProtocolFlows;
@@ -156,7 +156,8 @@ public sealed record class TusCreationContext
 
         var result = response.Map(creationFlow.PostResourceCreation);
 
-        if (result.TryGetError(out var error))
+        var (isSuccess, _, error) = result;
+        if (!isSuccess)
         {
             context.Response.StatusCode = error.StatusCode;
             context.SetErrorHeaders(error);

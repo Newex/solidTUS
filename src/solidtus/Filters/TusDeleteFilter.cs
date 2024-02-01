@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
-using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
 using SolidTUS.Extensions;
+using SolidTUS.Functional.Models;
 using SolidTUS.Models;
 using SolidTUS.ProtocolHandlers;
 using static Microsoft.AspNetCore.Http.HttpMethods;
@@ -29,7 +29,8 @@ internal class TusDeleteFilter : IEndpointFilter
             .Create(http.Request, http.Response)
             .Map(CommonRequestHandler.SetTusResumableHeader);
 
-        if (tusResult.TryGetError(out var error))
+        var (isSuccess, _, error) = tusResult;
+        if (!isSuccess)
         {
             http.SetErrorHeaders(error);
             return error.ToResponseResult;

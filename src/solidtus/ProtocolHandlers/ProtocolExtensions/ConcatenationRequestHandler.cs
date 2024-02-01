@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Options;
 using SolidTUS.Constants;
+using SolidTUS.Functional.Models;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
 using SolidTUS.Options;

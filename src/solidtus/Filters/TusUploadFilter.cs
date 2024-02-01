@@ -1,9 +1,9 @@
 using System.Threading.Tasks;
-using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Constants;
 using SolidTUS.Extensions;
+using SolidTUS.Functional.Models;
 using SolidTUS.Models;
 using SolidTUS.ProtocolFlows;
 using static Microsoft.AspNetCore.Http.HttpMethods;
@@ -37,8 +37,8 @@ internal class TusUploadFilter : IEndpointFilter
         var tusResult = await TusResult
             .Create(context.HttpContext.Request, context.HttpContext.Response)
             .Bind(async c => await uploadFlow.PreUploadAsync(c, fileId, context.HttpContext.RequestAborted));
-        var (isSuccess, isFailure, tus, error) = tusResult;
-        if (isFailure)
+        var (isSuccess, tus, error) = tusResult;
+        if (!isSuccess)
         {
             http.SetErrorHeaders(error);
             return error.ToResponseResult;

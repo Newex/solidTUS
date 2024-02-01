@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using CSharpFunctionalExtensions;
 using SolidTUS.Constants;
 using SolidTUS.Contexts;
+using SolidTUS.Functional.Models;
 using SolidTUS.Models;
 using SolidTUS.Parsers;
 using SolidTUS.Validators;
@@ -60,13 +60,14 @@ internal class ChecksumRequestHandler
             return context;
         }
 
-        var checksum = ParseChecksum(context);
-        if (checksum.TryGetError(out var error))
+        var (isParsed, parse, error) = ParseChecksum(context);
+        if (!isParsed)
         {
-            return HttpError.BadRequest("Invalid checksum request");
+            return error;
         }
 
-        var validator = validators.SingleOrDefault(v => v.AlgorithmName.Equals(checksum.Value.AlgorithmName, StringComparison.OrdinalIgnoreCase));
+        var (algorithm, cipher) = parse!.Value;
+        var validator = validators.SingleOrDefault(v => v.AlgorithmName.Equals(algorithm, StringComparison.OrdinalIgnoreCase));
         if (validator is null)
         {
             return HttpError.BadRequest("Checksum not supported");
@@ -74,8 +75,8 @@ internal class ChecksumRequestHandler
 
         context.ChecksumContext = new ChecksumContext
         {
-            AlgorithmName = checksum.Value.AlgorithmName,
-            Checksum = checksum.Value.Cipher,
+            AlgorithmName = algorithm,
+            Checksum = cipher,
             Validator = validator
         };
 

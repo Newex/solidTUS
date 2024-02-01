@@ -1,10 +1,10 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Extensions;
+using SolidTUS.Functional.Models;
 using SolidTUS.Models;
 using SolidTUS.ProtocolFlows;
 
@@ -57,8 +57,8 @@ internal class TusCreationFilter : IEndpointFilter
             })
             .Bind(creationFlow.PreResourceCreation);
 
-        var (isSuccess, isFailure, tus, error) = tusResult;
-        if (isFailure)
+        var (isSuccess, tus, error) = tusResult;
+        if (!isSuccess)
         {
             http.SetErrorHeaders(error);
             return error.ToResponseResult;
