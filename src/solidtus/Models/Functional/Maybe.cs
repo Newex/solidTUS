@@ -8,7 +8,7 @@ namespace SolidTUS.Models.Functional;
 /// </summary>
 /// <typeparam name="T">The wrapped maybe type</typeparam>
 [DebuggerDisplay("{DebugDisplay,nq}")]
-public readonly record struct Maybe<T> : IMaybe<T>
+internal readonly record struct Maybe<T> : IMaybe<T>
 where T : notnull
 {
     internal readonly T? value;

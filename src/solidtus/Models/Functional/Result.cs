@@ -9,7 +9,7 @@ namespace SolidTUS.Models.Functional;
 /// <typeparam name="T">The success type</typeparam>
 /// <typeparam name="E">The error type</typeparam>
 [DebuggerDisplay("{DebugDisplay,nq}")]
-public readonly record struct Result<T, E> : IResult<T, E>
+internal readonly record struct Result<T, E> : IResult<T, E>
     where T : notnull
 {
     internal readonly T? value;

@@ -6,7 +6,7 @@ namespace SolidTUS.Models.Functional;
 /// Maybe covariant interface
 /// </summary>
 /// <typeparam name="T">The wrapped maybe type</typeparam>
-public interface IMaybe<out T>
+internal interface IMaybe<out T>
 {
     /// <summary>
     /// Extract the maybe values by some or none functions.

@@ -9,7 +9,7 @@ namespace SolidTUS.Parsers;
 /// <summary>
 /// TUS Metadata parser
 /// </summary>
-public class MetadataParser
+internal class MetadataParser
 {
     private readonly MetadataValidatorFunc metadataValidator;
     private readonly AllowEmptyMetadataFunc allowEmpty;

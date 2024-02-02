@@ -7,7 +7,7 @@ namespace SolidTUS.Models.Functional;
 /// </summary>
 /// <typeparam name="T">The success type</typeparam>
 /// <typeparam name="E">The error type</typeparam>
-public interface IResult<out T, out E>
+internal interface IResult<out T, out E>
 where T : notnull
 {
     /// <summary>

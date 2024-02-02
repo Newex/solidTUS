@@ -6,7 +6,7 @@ namespace SolidTUS.Models.Functional;
 /// <summary>
 /// Result extensions
 /// </summary>
-public static class ResultExtensions
+internal static class ResultExtensions
 {
     /// <summary>
     /// Flat map a result.
