@@ -7,7 +7,7 @@ using SolidTUS.Options;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 using SolidTUS.Tests.Mocks;
 using System.Threading.Tasks;
-using SolidTUS.Functional.Models;
+using SolidTUS.Models.Functional;
 
 namespace SolidTUS.Tests.ProtocolHandlerTests.ExpirationTests;
 

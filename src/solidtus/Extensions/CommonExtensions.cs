@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using SolidTUS.Functional.Models;
 using SolidTUS.Models;
+using SolidTUS.Models.Functional;
 
 namespace SolidTUS.Extensions;
 

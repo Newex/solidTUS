@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace SolidTUS.Functional.Models;
+namespace SolidTUS.Models.Functional;
 
 /// <summary>
 /// Maybe extensions

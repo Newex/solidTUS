@@ -16,7 +16,7 @@ using Microsoft.AspNetCore.Routing;
 using Endpoints = System.Collections.Generic.IEnumerable<Microsoft.AspNetCore.Routing.EndpointDataSource>;
 
 using static Microsoft.AspNetCore.Http.HttpMethods;
-using SolidTUS.Functional.Models;
+using SolidTUS.Models.Functional;
 namespace SolidTUS.Attributes;
 
 /// <summary>

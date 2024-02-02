@@ -1,8 +1,8 @@
 using System.Threading;
 using System.Threading.Tasks;
-using SolidTUS.Functional.Models;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
+using SolidTUS.Models.Functional;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 

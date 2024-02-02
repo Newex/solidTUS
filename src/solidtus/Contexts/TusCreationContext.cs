@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Extensions;
-using SolidTUS.Functional.Models;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
+using SolidTUS.Models.Functional;
 using SolidTUS.ProtocolFlows;
 
 namespace SolidTUS.Contexts;

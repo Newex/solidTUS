@@ -1,6 +1,6 @@
 using System;
 
-namespace SolidTUS.Functional.Models;
+namespace SolidTUS.Models.Functional;
 
 /// <summary>
 /// A covariant result interface.

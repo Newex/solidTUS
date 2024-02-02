@@ -2,8 +2,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using SolidTUS.Extensions;
-using SolidTUS.Functional.Models;
 using SolidTUS.Models;
+using SolidTUS.Models.Functional;
 using SolidTUS.ProtocolFlows;
 
 using static Microsoft.AspNetCore.Http.HttpMethods;

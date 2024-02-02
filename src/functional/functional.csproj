@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <AssemblyName>SolidTUS.Functional</AssemblyName>
     <RootNamespace>SolidTUS.Functional</RootNamespace>
     <Authors>Johnny Kristian Moeberg Sørensen</Authors>
     <Description>Functional helpers</Description>
@@ -10,10 +9,6 @@
     <Nullable>enable</Nullable>
     <NoWarn>$(NoWarn);NU1803;IDE0008;IDE0007;IDE0022</NoWarn>
     <PackageTags>C# tools functional</PackageTags>
-    <IsTrimmable>true</IsTrimmable>
-    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
-    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
-    <EnableAotAnalyzer>true</EnableAotAnalyzer>
   </PropertyGroup>
 
   <ItemGroup>

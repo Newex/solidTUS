@@ -1,7 +1,7 @@
 using System;
 using Microsoft.AspNetCore.Routing;
-using SolidTUS.Functional.Models;
 using SolidTUS.Models;
+using SolidTUS.Models.Functional;
 
 namespace SolidTUS.ProtocolHandlers.ProtocolExtensions;
 

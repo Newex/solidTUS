@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
-using SolidTUS.Functional.Models;
 using SolidTUS.Models;
+using SolidTUS.Models.Functional;
 using SolidTUS.Options;
 using SolidTUS.Parsers;
 

@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 
-namespace SolidTUS.Functional.Models;
+namespace SolidTUS.Models.Functional;
 
 /// <summary>
 /// A maybe result containing either some value or none. If the wrapped value is a null value the maybe will be none.

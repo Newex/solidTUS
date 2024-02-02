@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using SolidTUS.Functional.Models;
 using SolidTUS.Models;
+using SolidTUS.Models.Functional;
 using SolidTUS.Validators;
 
 namespace SolidTUS.Parsers;

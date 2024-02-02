@@ -10,7 +10,7 @@ using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 using SolidTUS.Validators;
 using SolidTUS.ProtocolFlows;
 using System.Threading;
-using SolidTUS.Functional.Models;
+using SolidTUS.Models.Functional;
 
 namespace SolidTUS.Tests.ProtocolHandlerTests.CoreUploadTests;
 

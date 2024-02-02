@@ -3,8 +3,8 @@ using SolidTUS.Options;
 using SolidTUS.Parsers;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.Tests.Tools;
-using SolidTUS.Functional.Models;
 using MSOptions = Microsoft.Extensions.Options.Options;
+using SolidTUS.Models.Functional;
 
 namespace SolidTUS.Tests.ProtocolHandlerTests.POST;
 

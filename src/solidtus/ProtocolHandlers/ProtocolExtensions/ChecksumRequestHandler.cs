@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using SolidTUS.Constants;
 using SolidTUS.Contexts;
-using SolidTUS.Functional.Models;
 using SolidTUS.Models;
+using SolidTUS.Models.Functional;
 using SolidTUS.Parsers;
 using SolidTUS.Validators;
 

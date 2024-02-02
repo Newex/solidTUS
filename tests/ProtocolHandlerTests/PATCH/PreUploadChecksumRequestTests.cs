@@ -1,6 +1,6 @@
 using SolidTUS.Constants;
-using SolidTUS.Functional.Models;
 using SolidTUS.Models;
+using SolidTUS.Models.Functional;
 using SolidTUS.Parsers;
 using SolidTUS.ProtocolHandlers.ProtocolExtensions;
 using SolidTUS.Tests.Mocks;

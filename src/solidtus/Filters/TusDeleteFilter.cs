@@ -1,8 +1,8 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using SolidTUS.Extensions;
-using SolidTUS.Functional.Models;
 using SolidTUS.Models;
+using SolidTUS.Models.Functional;
 using SolidTUS.ProtocolHandlers;
 using static Microsoft.AspNetCore.Http.HttpMethods;
 

@@ -1,6 +1,6 @@
 using System.Linq;
-using SolidTUS.Functional.Models;
 using SolidTUS.Models;
+using SolidTUS.Models.Functional;
 using SolidTUS.Options;
 using SolidTUS.Parsers;
 using SolidTUS.ProtocolFlows;

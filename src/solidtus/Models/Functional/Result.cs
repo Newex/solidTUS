@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 
-namespace SolidTUS.Functional.Models;
+namespace SolidTUS.Models.Functional;
 
 /// <summary>
 /// A result representing a success or an error.

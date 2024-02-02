@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Internal;
 using SolidTUS.Constants;
-using SolidTUS.Functional.Models;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
+using SolidTUS.Models.Functional;
 using SolidTUS.Validators;
 
 namespace SolidTUS.ProtocolHandlers;

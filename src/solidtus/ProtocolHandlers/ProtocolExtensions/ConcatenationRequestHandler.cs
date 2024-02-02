@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Options;
 using SolidTUS.Constants;
-using SolidTUS.Functional.Models;
 using SolidTUS.Handlers;
 using SolidTUS.Models;
+using SolidTUS.Models.Functional;
 using SolidTUS.Options;
 
 namespace SolidTUS.ProtocolHandlers.ProtocolExtensions;

@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using SolidTUS.Functional.Models;
+using SolidTUS.Models.Functional;
 
 namespace SolidTUS.Functional.Functional.ValueTaskExtensions;
 

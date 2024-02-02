@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using SolidTUS.Constants;
-using SolidTUS.Functional.Models;
 using SolidTUS.Models;
+using SolidTUS.Models.Functional;
 using SolidTUS.Tests.Mocks;
 
 namespace SolidTUS.Tests.ProtocolHandlerTests.POST;

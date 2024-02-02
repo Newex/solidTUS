@@ -1,7 +1,7 @@
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
-using SolidTUS.Functional.Models;
 using SolidTUS.Models;
+using SolidTUS.Models.Functional;
 using SolidTUS.ProtocolHandlers;
 using SolidTUS.Tests.Fakes;
 using SolidTUS.Tests.Mocks;

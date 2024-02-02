@@ -1,8 +1,7 @@
 using System;
 using System.Threading.Tasks;
-using SolidTUS.Functional.Models;
 
-namespace SolidTUS.Functional.Functional.ValueTaskExtensions;
+namespace SolidTUS.Models.Functional.ValueTaskExtensions;
 
 /// <summary>
 /// Extensions for functional <see cref="Maybe{T}"/> <see cref="ValueTask"/>
