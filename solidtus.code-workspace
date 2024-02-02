@@ -21,9 +21,6 @@
       "name": "tests"
     },
     {
-      "path": "./src/functional"
-    },
-    {
       "path": "./src/solidtus",
       "name": "solidtus"
     },

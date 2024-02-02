@@ -33,8 +33,4 @@
     </PackageReference> -->
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
   </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\functional\functional.csproj" />
-  </ItemGroup>
 </Project>
