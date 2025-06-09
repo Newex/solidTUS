@@ -122,18 +122,21 @@ public class TusDeleteAttribute : ActionFilterAttribute, IActionHttpMethodProvid
         context.HttpContext.Response.OnStarting(state =>
         {
             var ctx = (ResultExecutingContext)state;
-            var status = ctx.HttpContext.Response.StatusCode;
+            var statusCode = ctx.HttpContext.Response.StatusCode;
             var (isSuccess, _, error) = requestContext;
-            if (isSuccess)
+
+            if (isSuccess && statusCode is >= 200 and < 300)
             {
                 ctx.HttpContext.Response.StatusCode = 204;
+
                 return Task.CompletedTask;
             }
 
-            ctx.Result = new ObjectResult(error.Message)
+            if (!isSuccess)
             {
-                StatusCode = error.StatusCode
-            };
+                ctx.Result = new ObjectResult(error.Message) { StatusCode = error.StatusCode };
+            }
+
             return Task.CompletedTask;
         }, context);
 
