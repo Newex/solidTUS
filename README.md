@@ -2,6 +2,9 @@
 # What is it?
 A C# dotnet 8 implementation of the [TUS-protocol](https://tus.io/protocols/resumable-upload.html#core-protocol) for resumable file uploads for an ASP.NET Core application.
 
+**Status**  
+Project status is currently only maintained when I have time. This is on a per hobby basis.
+
 **Why create another TUS library?**  
 This library's purpose is to be simple and give the consumer more options on how to authorize and authenticate requests.  
 Which I felt that other libraries did not provide.  
