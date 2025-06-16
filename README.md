@@ -1,6 +1,6 @@
 ![](https://badgen.net/nuget/v/SolidTus)
 # What is it?
-A C# dotnet 8 implementation of the [TUS-protocol](https://tus.io/protocols/resumable-upload.html#core-protocol) for resumable file uploads for an ASP.NET Core application.
+A C# dotnet 9 implementation of the [TUS-protocol](https://tus.io/protocols/resumable-upload.html#core-protocol) for resumable file uploads for an ASP.NET Core application.
 
 **Status**  
 Project status is currently only maintained when I have time. This is on a per hobby basis.
