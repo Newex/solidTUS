@@ -71,7 +71,7 @@ public sealed class TusBuilder
     /// <returns>builder</returns>
     public TusBuilder SetMetadataValidator(Func<Dictionary<string, string>, bool> validator)
     {
-        services.RemoveAll(typeof(MetadataValidatorFunc));
+        services.RemoveAll<MetadataValidatorFunc>();
         services.TryAddSingleton<MetadataValidatorFunc>(provider => (m) => validator(m));
         return this;
     }
@@ -84,7 +84,7 @@ public sealed class TusBuilder
     /// <returns>builder</returns>
     public TusBuilder AllowEmptyMetadata(bool allow)
     {
-        services.RemoveAll(typeof(AllowEmptyMetadataFunc));
+        services.RemoveAll<AllowEmptyMetadataFunc>();
         services.TryAddSingleton<AllowEmptyMetadataFunc>(provider => () => allow);
         return this;
     }

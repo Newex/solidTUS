@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
@@ -40,7 +41,7 @@ public class OptionsRequestHandler
 
         if (maxSize.HasValue)
         {
-            responseHeaders.Append(TusHeaderNames.MaxSize, maxSize.Value.ToString());
+            responseHeaders.Append(TusHeaderNames.MaxSize, maxSize.Value.ToString(CultureInfo.InvariantCulture));
         }
 
         // TUS protocol extensions

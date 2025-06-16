@@ -86,7 +86,7 @@ internal partial class ConcatenationRequestHandler
         }
 
         var header = context.RequestHeaders[TusHeaderNames.UploadConcat].ToString();
-        var list = header[(header.IndexOf(";") + 1)..];
+        var list = header[(header.IndexOf(';') + 1)..];
         if (list.Length == 0)
         {
             return HttpError.BadRequest("Must provide a list of files to concatenate");

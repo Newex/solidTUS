@@ -49,7 +49,7 @@ public class TusUploadAttribute : ActionFilterAttribute, IActionHttpMethodProvid
     /// <summary>
     /// The file id parameter name
     /// </summary>
-    public string FileIdParameterName = ParameterNames.FileIdParameterName;
+    public string FileIdParameterName { get; set; } = ParameterNames.FileIdParameterName;
 
     /// <inheritdoc />
     int? IRouteTemplateProvider.Order => Order;

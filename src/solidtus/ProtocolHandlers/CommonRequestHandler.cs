@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -91,7 +92,7 @@ internal class CommonRequestHandler
         var hasUpload = context.RequestHeaders.ContentLength is not null and > 0;
         if (context.UploadFileInfo is not null && (offset > 0 || hasUpload))
         {
-            context.ResponseHeaders.Append(TusHeaderNames.UploadOffset, offset.ToString());
+            context.ResponseHeaders.Append(TusHeaderNames.UploadOffset, offset.ToString(CultureInfo.InvariantCulture));
         }
     }
 

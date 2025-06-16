@@ -17,7 +17,9 @@ public class SHA1ChecksumValidator : IChecksumValidator
     /// <inheritdoc />
     public async Task<bool> ValidateChecksumAsync(PipeReader file, byte[] checksum)
     {
+#pragma warning disable CA5350 // Is not sensitive info
         var hasher = SHA1.Create();
+#pragma warning restore CA5350 // Do Not Use Weak Cryptographic Algorithms
         var cipher = await hasher.ComputeHashAsync(file.AsStream());
         if (cipher is null)
         {

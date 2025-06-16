@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 using SolidTUS.Constants;
@@ -36,7 +37,7 @@ internal static class HeadRequestHandler
         else
         {
             context.FileSize = size;
-            context.ResponseHeaders.Append(TusHeaderNames.UploadLength, context.FileSize.GetValueOrDefault().ToString());
+            context.ResponseHeaders.Append(TusHeaderNames.UploadLength, context.FileSize.GetValueOrDefault().ToString(CultureInfo.InvariantCulture));
         }
 
         return context;
@@ -61,7 +62,7 @@ internal static class HeadRequestHandler
     public static TusResult SetUploadOffsetHeader(TusResult context)
     {
         var file = context.UploadFileInfo;
-        var offset = file?.ByteOffset.ToString();
+        var offset = file?.ByteOffset.ToString(CultureInfo.InvariantCulture);
 
         context.ResponseHeaders.Append(TusHeaderNames.UploadOffset, offset);
         return context;

@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using SolidTUS.Handlers;
+using SolidTUS.Logging;
 using SolidTUS.Options;
 
 namespace SolidTUS.Jobs;
@@ -47,8 +48,8 @@ public class ExpirationJob : BackgroundService
     /// <returns>An awaitable task</returns>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Starting expired uploads scanner job, every {Interval}", interval);
-        while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync())
+        logger.LogStartScanExpiredUploads(interval);
+        while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
         {
             await Scan(stoppingToken);
         }
@@ -56,7 +57,7 @@ public class ExpirationJob : BackgroundService
 
     private async Task Scan(CancellationToken cancellationToken)
     {
-        logger.LogInformation("Scanning for expired uploads...");
+        logger.LogScanningForExpiredUploads();
         using var scope = serviceProvider.CreateScope();
         var handler = scope.ServiceProvider.GetRequiredService<IExpiredUploadHandler>();
 

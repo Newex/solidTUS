@@ -17,7 +17,9 @@ public class MD5ChecksumValidator : IChecksumValidator
     /// <inheritdoc />
     public async Task<bool> ValidateChecksumAsync(PipeReader file, byte[] checksum)
     {
+#pragma warning disable CA5351 // Is not sensitive info
         var hasher = MD5.Create();
+#pragma warning restore CA5351 // Do Not Use Broken Cryptographic Algorithms
         var cipher = await hasher.ComputeHashAsync(file.AsStream());
         if (cipher is null)
         {
