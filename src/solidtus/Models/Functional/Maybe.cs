@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace SolidTUS.Models.Functional;
 
@@ -135,8 +136,8 @@ where T : notnull
         get
         {
             return hasValue
-                ? string.Format("Some: {0}", value)
-                : string.Format("None");
+                ? string.Format(CultureInfo.InvariantCulture, "Some: {0}", value)
+                : string.Format(CultureInfo.InvariantCulture, "None");
         }
     }
 }

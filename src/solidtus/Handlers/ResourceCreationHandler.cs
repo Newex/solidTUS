@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using SolidTUS.Constants;
 using SolidTUS.Contexts;
+using SolidTUS.Logging;
 using SolidTUS.Models;
 using SolidTUS.Models.Functional;
 using SolidTUS.Options;
@@ -100,7 +101,7 @@ internal class ResourceCreationHandler
 
         if (userOptions.FileId is null)
         {
-            logger.LogError("Must provide file id for the resource");
+            logger.LogMustProvideFileIdForResource();
             return HttpError.InternalServerError();
         }
 
@@ -109,7 +110,7 @@ internal class ResourceCreationHandler
         var uploadUrl = linkGenerator.GetPathByName(userOptions.RouteName ?? tusResult.UploadRouteName!, (userOptions.FileIdParameterName, fileId), userOptions.RouteValues);
         if (uploadUrl is null)
         {
-            logger.LogError("Must have an upload endpoint to upload the resource");
+            logger.LogMustHaveUploadEndpointForResource();
             return HttpError.InternalServerError();
         }
         tusResult.LocationUrl = uploadUrl;
@@ -146,7 +147,7 @@ internal class ResourceCreationHandler
                 {
                     await userOptions.ResourceCreatedCallback(uploadInfo);
                 }
-                logger.LogInformation("Created resource {@UploadFileInfo}", uploadInfo);
+                logger.LogCreatedResource(uploadInfo);
                 return tusResult;
             }
 
@@ -169,12 +170,12 @@ internal class ResourceCreationHandler
                     await userOptions.UploadFinishedCallback(uploadInfo);
                 }
 
-                logger.LogInformation("Created resource with upload data {@UploadFileInfo}", uploadInfo);
+                logger.LogFinishedUploadingResource(uploadInfo);
                 return tusResult;
             }
         }
 
-        logger.LogError("Could not create upload resource {@UploadInfo}", uploadInfo);
+        logger.LogCouldNotCreateUploadResource(uploadInfo);
         return HttpError.InternalServerError();
     }
 
@@ -201,26 +202,26 @@ internal class ResourceCreationHandler
             var partialId = ConcatenationRequestHandler.GetTemplateValue(url, tusResult.UploadRouteTemplate!, userOptions.FileIdParameterName);
             if (partialId is null)
             {
-                logger.LogError("Could not find partial resource with url {PartialUrl} for merging", url);
+                logger.LogCouldNotFindPartialResourceForMerging(url);
                 return HttpError.NotFound("Partial resource not found");
             }
 
             var info = await uploadMetaHandler.GetResourceAsync(partialId, cancellationToken);
             if (info is null)
             {
-                logger.LogError("Could not find partial resource with id {PartialId} for merging", partialId);
+                logger.LogCouldNotFindPartialResourceByIdForMerging(partialId);
                 return HttpError.InternalServerError();
             }
 
             if (!info.Done)
             {
-                logger.LogError("Partial resource {PartialId} has not yet finished uploading, cannot merge unfinished uploads", partialId);
+                logger.LogPartialResourceNotFinishedUploading(partialId);
                 return HttpError.BadRequest("Cannot merge partial files that have not finished uploading");
             }
 
             if (!info.IsPartial)
             {
-                logger.LogError("Cannot merge non-partial files {@File}", info);
+                logger.LogCannotMergeNonPartialFiles(info);
                 return HttpError.BadRequest("Cannot merge non-partial files");
             }
 
@@ -235,7 +236,7 @@ internal class ResourceCreationHandler
 
         if (!allowed)
         {
-            logger.LogInformation("Denied merge of {@Files}", infos);
+            logger.LogDeniedMergeOfFiles(infos);
             return HttpError.Forbidden();
         }
 
@@ -262,11 +263,11 @@ internal class ResourceCreationHandler
 
         if (merged is null)
         {
-            logger.LogError("Error occurred could not merge {@PartialFiles}", infos);
+            logger.LogErrorCouldNotMergePartialFiles(infos);
             return HttpError.InternalServerError();
         }
 
-        logger.LogInformation("Merged files into {@FinalInfo} with the {@PartialInfos}", merged, infos);
+        logger.LogMergedFiles(finalInfo, infos);
         tusResult.UploadFileInfo = merged;
 
         // Create url to new file

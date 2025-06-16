@@ -1,4 +1,3 @@
-using System;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,13 +25,11 @@ public class PostUploadHandlerTests
         var tusOptions = MSOptions.Create(new TusOptions());
         var metaHandler = MockHandlers.UploadMetaHandler();
         var storageHandler = MockHandlers.UploadStorageHandler();
-        var expiredHandler = MockHandlers.ExpiredUploadHandler();
         var uploadHandler = new UploadHandler(
             clock,
             tusOptions,
             metaHandler,
-            storageHandler,
-            expiredHandler
+            storageHandler
         );
 
         var pipeReader = new Pipe().Reader;

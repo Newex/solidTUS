@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace SolidTUS.Models.Functional;
 
@@ -144,8 +145,8 @@ internal readonly record struct Result<T, E> : IResult<T, E>
         get
         {
             return isSuccess
-                ? string.Format("Success: {0}", value)
-                : string.Format("Error: {0}", error);
+                ? string.Format(CultureInfo.InvariantCulture, "Success: {0}", value)
+                : string.Format(CultureInfo.InvariantCulture, "Error: {0}", error);
         }
     }
 }

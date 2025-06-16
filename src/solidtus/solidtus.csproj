@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <RootNamespace>SolidTUS</RootNamespace>
     <AssemblyName>SolidTUS</AssemblyName>
@@ -16,6 +16,7 @@
     <EnableAotAnalyzer>true</EnableAotAnalyzer>
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
     <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Microsoft.Extensions.Configuration.Binder.SourceGeneration</InterceptorsPreviewNamespaces>
+    <AnalysisMode>Recommended</AnalysisMode>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,6 +32,6 @@
     <!-- <PackageReference Include="CSharpFunctionalExtensions" Version="2.40.3">
       <PrivateAssets>none</PrivateAssets>
     </PackageReference> -->
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.6" />
   </ItemGroup>
 </Project>

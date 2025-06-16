@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using SolidTUS.Logging;
 using SolidTUS.Models;
 using SolidTUS.Options;
 
@@ -185,9 +186,9 @@ public class FileUploadMetaHandler : IUploadMetaHandler
             File.WriteAllText(path, content);
             return true;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            logger.LogError(ex, "Could not write upload file info {@UploadFileInfo}", fileInfo);
+            logger.LogCouldNotWriteUploadFileInfo(ex, fileInfo);
             return false;
         }
     }
@@ -212,7 +213,7 @@ public class FileUploadMetaHandler : IUploadMetaHandler
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Could not write partial upload file info {@PartialUpload}", fileInfo);
+            logger.LogCouldNotWritePartialUploadFileInfo(ex, fileInfo);
         }
 
         return false;
