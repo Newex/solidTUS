@@ -19,14 +19,12 @@ internal class UploadHandler
     private readonly ISystemClock clock;
     private readonly IUploadMetaHandler uploadMetaHandler;
     private readonly IUploadStorageHandler uploadStorageHandler;
-    private readonly IExpiredUploadHandler expiredUploadHandler;
 
     public UploadHandler(
         ISystemClock clock,
         IOptions<TusOptions> options,
         IUploadMetaHandler uploadMetaHandler,
-        IUploadStorageHandler uploadStorageHandler,
-        IExpiredUploadHandler expiredUploadHandler
+        IUploadStorageHandler uploadStorageHandler
     )
     {
         expirationStrategy = options.Value.ExpirationStrategy;
@@ -36,7 +34,6 @@ internal class UploadHandler
 
         this.uploadMetaHandler = uploadMetaHandler;
         this.uploadStorageHandler = uploadStorageHandler;
-        this.expiredUploadHandler = expiredUploadHandler;
     }
 
     public async Task<TusResult> HandleUploadAsync(PipeReader reader, TusUploadContext uploadContext, TusResult tusResult, CancellationToken cancellationToken)
